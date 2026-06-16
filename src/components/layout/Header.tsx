@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useTheme } from 'next-themes';
 import { useAppStore } from '@/store/app-store';
 import {
@@ -149,9 +151,9 @@ export function Header() {
         )}
 
         {/* User avatar */}
-        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center ml-1 text-accent text-xs font-semibold cursor-pointer hover:bg-accent/20 transition-colors">
+        <Link href="/" className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center ml-1 text-accent text-xs font-semibold cursor-pointer hover:bg-accent/20 transition-colors">
           RC
-        </div>
+        </Link>
       </div>
     </header>
   );
