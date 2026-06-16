@@ -112,23 +112,27 @@ export default function DashboardPage() {
           value={stats.activeCandidates}
           icon={Users}
           trend={{ value: 12, direction: 'up' }}
+          href="/candidates"
         />
         <KPICard
           label="Open Jobs"
           value={stats.activeJobs}
           icon={Briefcase}
           trend={{ value: 2, direction: 'up' }}
+          href="/jobs"
         />
         <KPICard
           label="Active Clients"
           value={stats.activeClients}
           icon={Building2}
+          href="/clients"
         />
         <KPICard
           label="Placements (MTD)"
           value={stats.placementsThisMonth}
           icon={TrendingUp}
           trend={{ value: 1, direction: 'up' }}
+          href="/placements"
         />
         <KPICard
           label="Revenue (MTD)"
@@ -136,6 +140,7 @@ export default function DashboardPage() {
           icon={DollarSign}
           trend={{ value: 8, direction: 'up' }}
           isMoney
+          href="/placements"
         />
         <KPICard
           label="Stalled"
@@ -143,6 +148,7 @@ export default function DashboardPage() {
           icon={AlertTriangle}
           trend={{ value: 1, direction: 'down' }}
           isAlert
+          href="/pipeline"
         />
       </div>
 
@@ -415,6 +421,7 @@ function KPICard({
   trend,
   isMoney,
   isAlert,
+  href,
 }: {
   label: string;
   value: string | number;
@@ -422,17 +429,18 @@ function KPICard({
   trend?: { value: number; direction: 'up' | 'down' };
   isMoney?: boolean;
   isAlert?: boolean;
+  href?: string;
 }) {
-  return (
-    <div className="kpi-card group">
+  const inner = (
+    <>
       <div className="flex items-center justify-between mb-3">
         <div
-          className={`p-2 rounded-md ${
-            isAlert ? 'bg-warning-soft' : 'bg-accent-soft'
+          className={`p-2 rounded-md transition-colors ${
+            isAlert ? 'bg-warning-soft group-hover:bg-warning/20' : 'bg-accent-soft group-hover:bg-accent/20'
           }`}
         >
           <Icon
-            className={`w-4 h-4 ${isAlert ? 'text-warning' : 'text-accent'}`}
+            className={`w-4 h-4 transition-colors ${isAlert ? 'text-warning group-hover:text-warning-hover' : 'text-accent group-hover:text-accent-hover'}`}
             strokeWidth={1.75}
           />
         </div>
@@ -451,8 +459,22 @@ function KPICard({
           </div>
         )}
       </div>
-      <div className="kpi-value">{value}</div>
+      <div className="kpi-value transition-colors group-hover:text-accent">{value}</div>
       <div className="kpi-label">{label}</div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="kpi-card group hover:shadow-md transition-all cursor-pointer block">
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="kpi-card group">
+      {inner}
     </div>
   );
 }
