@@ -13,6 +13,14 @@ interface AppState {
   openModal: (id: string, data?: Record<string, unknown>) => void;
   closeModal: () => void;
 
+  // Entity management
+  hiddenClientIds: string[];
+  hideClient: (id: string) => void;
+  hiddenCandidateIds: string[];
+  hideCandidate: (id: string) => void;
+  hiddenJobIds: string[];
+  hideJob: (id: string) => void;
+
   // Toast state
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
@@ -54,6 +62,13 @@ export const useAppStore = create<AppState>((set) => ({
   modalData: null,
   openModal: (id, data) => set({ activeModal: id, modalData: data || null }),
   closeModal: () => set({ activeModal: null, modalData: null }),
+
+  hiddenClientIds: [],
+  hideClient: (id) => set((state) => ({ hiddenClientIds: [...state.hiddenClientIds, id] })),
+  hiddenCandidateIds: [],
+  hideCandidate: (id) => set((state) => ({ hiddenCandidateIds: [...state.hiddenCandidateIds, id] })),
+  hiddenJobIds: [],
+  hideJob: (id) => set((state) => ({ hiddenJobIds: [...state.hiddenJobIds, id] })),
 
   toasts: [],
   addToast: (toast) => {

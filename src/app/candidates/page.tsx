@@ -15,6 +15,7 @@ import {
   FileText,
   Loader2,
   TableProperties,
+  Trash2,
 } from 'lucide-react';
 import { mockCandidates, statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -26,10 +27,11 @@ export default function CandidatesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
-  const { showCredentialPrompt } = useAppStore();
+  const { showCredentialPrompt, hiddenCandidateIds, hideCandidate } = useAppStore();
 
   const filtered = useMemo(() => {
     return mockCandidates.filter((c) => {
+      if (hiddenCandidateIds.includes(c.id)) return false;
       const matchSearch =
         !search ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -38,7 +40,7 @@ export default function CandidatesPage() {
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter]);
+  }, [search, statusFilter, hiddenCandidateIds]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -196,6 +198,18 @@ export default function CandidatesPage() {
                           <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
                         </a>
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (confirm(`Are you sure you want to delete ${candidate.name}?`)) {
+                            hideCandidate(candidate.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all ml-1"
+                        title="Delete Candidate"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                      </button>
                     </div>
                   </td>
                 </tr>

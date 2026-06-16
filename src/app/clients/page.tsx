@@ -8,6 +8,7 @@ import {
   Briefcase,
   Mail,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { mockClients, statusColors } from '@/lib/mock-data';
@@ -16,10 +17,11 @@ export default function ClientsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { showCredentialPrompt } = useAppStore();
+  const { showCredentialPrompt, hiddenClientIds, hideClient } = useAppStore();
 
   const filtered = useMemo(() => {
     return mockClients.filter((c) => {
+      if (hiddenClientIds.includes(c.id)) return false;
       const matchSearch =
         !search ||
         c.companyName.toLowerCase().includes(search.toLowerCase()) ||
@@ -27,7 +29,7 @@ export default function ClientsPage() {
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter]);
+  }, [search, statusFilter, hiddenClientIds]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -89,7 +91,21 @@ export default function ClientsPage() {
               <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-sm font-semibold flex-shrink-0">
                 {client.companyName.slice(0, 2).toUpperCase()}
               </div>
-              <span className={`badge ${statusColors[client.status]}`}>{client.status}</span>
+              <div className="flex items-center gap-2">
+                <span className={`badge ${statusColors[client.status]}`}>{client.status}</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
+                      hideClient(client.id);
+                    }
+                  }}
+                  className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Delete Client"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
               {client.companyName}

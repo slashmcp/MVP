@@ -9,6 +9,7 @@ import {
   DollarSign,
   Users,
   X,
+  Trash2,
 } from 'lucide-react';
 import { mockJobs, statusColors, jobPipelineStages } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
@@ -17,10 +18,11 @@ export default function JobsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { showCredentialPrompt } = useAppStore();
+  const { showCredentialPrompt, hiddenJobIds, hideJob } = useAppStore();
 
   const filtered = useMemo(() => {
     return mockJobs.filter((j) => {
+      if (hiddenJobIds.includes(j.id)) return false;
       const matchSearch =
         !search ||
         j.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -29,7 +31,7 @@ export default function JobsPage() {
       const matchStatus = statusFilter === 'all' || j.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter]);
+  }, [search, statusFilter, hiddenJobIds]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -99,7 +101,21 @@ export default function JobsPage() {
             className="card p-5 group hover:shadow-md transition-all duration-150"
           >
             <div className="flex items-start justify-between mb-3">
-              <span className={`badge ${statusColors[job.status]}`}>{job.status}</span>
+              <div className="flex items-center gap-2">
+                <span className={`badge ${statusColors[job.status]}`}>{job.status}</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirm(`Are you sure you want to delete ${job.title}?`)) {
+                      hideJob(job.id);
+                    }
+                  }}
+                  className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Delete Job"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
               <span className="text-xs text-text-tertiary font-mono">
                 {job.createdAt
                   ? new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
