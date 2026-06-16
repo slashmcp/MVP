@@ -237,3 +237,51 @@ export async function analyzeJob(description: string): Promise<{
   const content = response.choices[0]?.message?.content;
   return content ? JSON.parse(content) : { requirements: [], idealProfile: '', sourcingKeywords: [] };
 }
+
+export async function mapCsvHeaders(headers: string[], sampleRows: Record<string, string>[]): Promise<Record<string, string>> {
+  const client = getOpenAIClient();
+  if (!client) {
+    throw new Error('AI mapping requires OpenAI API configuration.');
+  }
+
+  const response = await client.chat.completions.create({
+    model: MODEL,
+    temperature: 0.1,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `You are an intelligent data mapping assistant. Your job is to map an arbitrary set of CSV headers to our standardized candidate schema.
+        
+Our required schema fields are:
+- name (Full name of candidate)
+- email (Email address)
+- phone (Phone number)
+- linkedinUrl (LinkedIn profile URL)
+- skills (Technical or soft skills)
+- notes (General notes, summary, or background)
+- status (e.g. New, Screening, Interview, Offered, Rejected)
+
+Input will be the arbitrary CSV headers and a few sample rows to give you context.
+Return a JSON object where the keys are the ORIGINAL arbitrary CSV headers, and the values are our STANDARD schema fields. 
+If an original header does not match any of our standard fields, map it to "notes". If multiple columns map to "notes", that is perfectly fine.
+
+Example output:
+{
+  "Candidate Full Name": "name",
+  "Contact No.": "phone",
+  "Email Addr": "email",
+  "Technologies": "skills",
+  "Resume URL": "notes"
+}`,
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({ headers, sampleRows }),
+      },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+  return content ? JSON.parse(content) : {};
+}
