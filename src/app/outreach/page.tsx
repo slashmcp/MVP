@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Mail,
   Send,
@@ -44,6 +45,8 @@ const mockCommHistory = [
   {
     id: '1',
     to: 'Sarah Chen',
+    entityId: 'c1',
+    entityType: 'candidate' as const,
     subject: 'Exciting Senior Full-Stack Opportunity',
     date: '2026-06-14',
     status: 'Sent' as const,
@@ -52,6 +55,8 @@ const mockCommHistory = [
   {
     id: '2',
     to: 'Marcus Johnson',
+    entityId: 'c2',
+    entityType: 'candidate' as const,
     subject: 'Interview Prep — DataFlow Analytics ML Engineer',
     date: '2026-06-15',
     status: 'Opened' as const,
@@ -60,6 +65,8 @@ const mockCommHistory = [
   {
     id: '3',
     to: 'Amanda Foster (TechVentures)',
+    entityId: 'cl1',
+    entityType: 'client' as const,
     subject: 'Weekly Pipeline Update — Engineering Roles',
     date: '2026-06-13',
     status: 'Replied' as const,
@@ -68,6 +75,8 @@ const mockCommHistory = [
   {
     id: '4',
     to: 'James Park',
+    entityId: 'c4',
+    entityType: 'candidate' as const,
     subject: 'Following Up — Product Designer Role',
     date: '2026-06-10',
     status: 'Sent' as const,
@@ -225,7 +234,12 @@ export default function OutreachPage() {
                 className="px-5 py-3.5 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-text-primary">{comm.to}</span>
+                  <Link
+                    href={`/${comm.entityType}s/${comm.entityId}`}
+                    className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
+                  >
+                    {comm.to}
+                  </Link>
                   <span className={`badge text-[10px] ${statusBadge[comm.status]}`}>
                     {comm.status}
                   </span>

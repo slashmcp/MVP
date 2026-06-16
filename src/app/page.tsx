@@ -370,9 +370,21 @@ export default function DashboardPage() {
             <tbody>
               {mockPlacements.map((p) => (
                 <tr key={p.id}>
-                  <td className="font-medium text-text-primary">{p.candidateName}</td>
-                  <td className="text-text-secondary">{p.jobTitle}</td>
-                  <td className="text-text-secondary">{p.clientName}</td>
+                  <td className="font-medium">
+                    <Link href={`/candidates/${p.candidateId}`} className="text-text-primary hover:text-accent transition-colors">
+                      {p.candidateName}
+                    </Link>
+                  </td>
+                  <td>
+                    <Link href={`/jobs/${p.jobId}`} className="text-text-secondary hover:text-accent transition-colors">
+                      {p.jobTitle}
+                    </Link>
+                  </td>
+                  <td>
+                    <Link href={`/clients/${p.clientId}`} className="text-text-secondary hover:text-accent transition-colors">
+                      {p.clientName}
+                    </Link>
+                  </td>
                   <td className="text-text-secondary font-mono text-xs">
                     {new Date(p.date).toLocaleDateString('en-US', {
                       month: 'short',
