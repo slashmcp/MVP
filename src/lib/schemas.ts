@@ -11,6 +11,11 @@ export const candidateSchema = z.object({
   resume: z.string().optional(),
   linkedinUrl: z.string().url().optional(),
   websiteUrl: z.string().url().optional(),
+  role: z.string().optional(),
+  company: z.string().optional(),
+  location: z.string().optional(),
+  rating: z.number().optional(),
+  experience: z.string().optional(),
   skills: z.array(z.string()).default([]),
   status: z.enum([
     'New',
@@ -22,6 +27,7 @@ export const candidateSchema = z.object({
     'Rejected',
   ]).default('New'),
   notes: z.string().optional(),
+  lastContact: z.string().optional(),
   lastContactDate: z.string().optional(),
   seniority: z.string().optional(),
   aiFitScore: z.number().optional(),
@@ -40,8 +46,11 @@ export const jobSchema = z.object({
   id: z.string(),
   title: z.string(),
   client: z.string(),
-  requirements: z.string().optional(),
+  clientId: z.string().optional(),
+  requirements: z.union([z.string(), z.array(z.string())]).optional(),
   location: z.string().optional(),
+  type: z.string().optional(),
+  salary: z.string().optional(),
   salaryMin: z.number().optional(),
   salaryMax: z.number().optional(),
   status: z.enum([
@@ -51,6 +60,9 @@ export const jobSchema = z.object({
     'Offer',
     'Filled',
   ]).default('Open'),
+  priority: z.enum(['High', 'Medium', 'Low']).optional(),
+  postedDate: z.string().optional(),
+  applicants: z.number().optional(),
   createdAt: z.string().optional(),
 });
 
@@ -62,10 +74,14 @@ export type Job = z.infer<typeof jobSchema>;
 export const clientSchema = z.object({
   id: z.string(),
   companyName: z.string(),
+  industry: z.string().optional(),
+  location: z.string().optional(),
   contactPerson: z.string().optional(),
   email: z.string().email().optional(),
   openRoles: z.number().default(0),
+  totalPlacements: z.number().optional(),
   status: z.enum(['Active', 'Inactive', 'Prospect']).default('Active'),
+  activeSince: z.string().optional(),
   notes: z.string().optional(),
   createdAt: z.string().optional(),
 });

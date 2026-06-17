@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         location: 'Unknown Location', // Difficult to extract reliably from a snippet
         status: 'Prospect',
         contactPerson: 'Requires Outreach',
-        contactEmail: 'N/A',
+        email: 'N/A',
         openRoles: Math.floor(Math.random() * 5) + 1, // Simulated active roles for demo
         totalPlacements: 0,
         activeSince: new Date().toISOString().split('T')[0],

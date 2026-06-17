@@ -190,10 +190,10 @@ export default function ClientsPage() {
                 <Briefcase className="w-3.5 h-3.5" strokeWidth={1.75} />
                 {client.openRoles} open role{client.openRoles !== 1 ? 's' : ''}
               </span>
-              {client.contactEmail && (
+              {client.email && (
                 <span className="flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                  {client.contactEmail}
+                  {client.email}
                 </span>
               )}
             </div>
