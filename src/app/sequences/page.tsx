@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Pause, Plus, MoreVertical, Mail, Linkedin, Clock, Search, Workflow, Target, Send, ShieldAlert } from 'lucide-react';
+import { Play, Pause, Plus, MoreVertical, Mail, MessageCircle, Clock, Search, Workflow, Target, Send, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
 // Mock sequences data
@@ -138,7 +138,7 @@ export default function SequencesPage() {
                     </div>
                     <div className="flex items-center gap-2 p-2 rounded-md bg-[var(--surface-elevated)] border border-border flex-1">
                       {step.type === 'Email' ? <Mail className="w-3.5 h-3.5 text-text-secondary" /> : 
-                       step.type === 'LinkedIn' ? <Linkedin className="w-3.5 h-3.5 text-text-secondary" /> :
+                       step.type === 'LinkedIn' ? <MessageCircle className="w-3.5 h-3.5 text-text-secondary" /> :
                        <Clock className="w-3.5 h-3.5 text-text-secondary" />}
                       <span className="text-xs font-medium text-text-primary">{step.type}</span>
                       <span className="text-[10px] text-text-tertiary ml-auto bg-surface px-1.5 py-0.5 rounded">{step.delay}</span>
