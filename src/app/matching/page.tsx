@@ -33,7 +33,7 @@ const mockMatchResults: MatchResult[] = [
     jobId: 'j_02',
     jobTitle: 'AI/ML Software Engineer (C++)',
     fitScore: 89,
-    reasoning: 'Strong Machine Learning background. Matches Creativity Software\\'s requirement for AI/ML expertise.',
+    reasoning: "Strong Machine Learning background. Matches Creativity Software's requirement for AI/ML expertise.",
     strengths: ['Machine Learning', 'Data Science', 'Senior level'],
     gaps: ['C++ depth unclear'],
   },

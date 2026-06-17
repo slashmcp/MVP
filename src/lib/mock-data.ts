@@ -974,7 +974,7 @@ export let mockClients: Client[] = [
     industry: 'Defense & Aerospace',
     location: 'Frimley, Surrey',
     status: 'Prospect',
-    contactPerson: 'Liam O\\'Connor',
+    contactPerson: "Liam O'Connor",
     email: 'liam.oconnor@baesystems.com',
     openRoles: 0,
     totalPlacements: 0,
