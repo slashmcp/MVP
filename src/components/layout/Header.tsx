@@ -109,57 +109,8 @@ export function Header() {
           </Link>
         )}
 
-        <div className="relative flex-1 max-w-md hidden sm:block" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
-          <input
-            type="text"
-            placeholder="Search candidates, jobs, clients..."
-            value={globalSearch}
-            onChange={(e) => setGlobalSearch(e.target.value)}
-            className="input pl-10 py-1.5 bg-[var(--surface-elevated)] border-transparent focus:border-accent text-sm w-full"
-          />
-          
-          {/* Desktop Search Results Dropdown */}
-          {searchResults && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 max-h-[400px] overflow-y-auto animate-fade-in">
-              {searchResults.candidates.length > 0 && (
-                <div className="py-2">
-                  <div className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Candidates</div>
-                  {searchResults.candidates.slice(0, 3).map(c => (
-                    <Link key={c.id} href={`/candidates/${c.id}`} onClick={() => setGlobalSearch('')} className="block px-4 py-2 hover:bg-[var(--surface-elevated)] transition-colors">
-                      <div className="text-sm font-medium text-text-primary">{c.name}</div>
-                      <div className="text-xs text-text-secondary">{c.status} • {c.seniority}</div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-              {searchResults.jobs.length > 0 && (
-                <div className="py-2 border-t border-border">
-                  <div className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Jobs</div>
-                  {searchResults.jobs.slice(0, 3).map(j => (
-                    <Link key={j.id} href={`/jobs/${j.id}`} onClick={() => setGlobalSearch('')} className="block px-4 py-2 hover:bg-[var(--surface-elevated)] transition-colors">
-                      <div className="text-sm font-medium text-text-primary">{j.title}</div>
-                      <div className="text-xs text-text-secondary">{j.client} • {j.status}</div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-              {searchResults.clients.length > 0 && (
-                <div className="py-2 border-t border-border">
-                  <div className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Clients</div>
-                  {searchResults.clients.slice(0, 3).map(cl => (
-                    <Link key={cl.id} href={`/clients/${cl.id}`} onClick={() => setGlobalSearch('')} className="block px-4 py-2 hover:bg-[var(--surface-elevated)] transition-colors">
-                      <div className="text-sm font-medium text-text-primary">{cl.companyName}</div>
-                      <div className="text-xs text-text-secondary">{cl.openRoles} open roles</div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-              {searchResults.candidates.length === 0 && searchResults.jobs.length === 0 && searchResults.clients.length === 0 && (
-                <div className="px-4 py-3 text-sm text-text-tertiary">No results found for "{globalSearch}"</div>
-              )}
-            </div>
-          )}
+        <div className="hidden md:flex flex-1 max-w-xl mx-8 relative">
+          {/* Global Search Bar Removed - AI Sourcing Engine is now the primary search */}
         </div>
 
         <button
