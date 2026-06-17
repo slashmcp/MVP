@@ -52,7 +52,7 @@ export function Header() {
     { id: 'openai', title: 'Connect OpenAI', desc: 'Required for AI insights', icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-500/10' },
     { id: 'outlook', title: 'Connect Outlook', desc: 'Required for email outreach', icon: Mail, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { id: 'n8n', title: 'Connect n8n', desc: 'Required for automations', icon: Workflow, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { id: 'apollo', title: 'Connect Apollo', desc: 'Required for sourcing leads', icon: Search, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+    { id: 'serper', title: 'Connect Google Search', desc: 'Required for live sourcing (Serper.dev)', icon: Search, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
     { id: 'apify', title: 'Connect Apify', desc: 'Required for LinkedIn scraping', icon: Database, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
   ];
 

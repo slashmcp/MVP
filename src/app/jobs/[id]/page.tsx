@@ -54,7 +54,7 @@ export default function JobDetailPage({
       });
       const data = await res.json();
       if (data.error === 'MISSING_API_KEY') {
-        showCredentialPrompt({ service: 'apollo', feature: 'Live Apollo Sourcing' });
+        showCredentialPrompt({ service: 'serper', feature: 'Live Google Search Sourcing' });
         return;
       }
       

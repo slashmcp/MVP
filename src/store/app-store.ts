@@ -45,7 +45,7 @@ export interface Toast {
 }
 
 export interface CredentialPromptState {
-  service: 'google-sheets' | 'openai' | 'outlook' | 'n8n' | 'apollo' | 'apify';
+  service: 'google-sheets' | 'openai' | 'outlook' | 'n8n' | 'serper' | 'apify';
   feature: string;
 }
 

@@ -133,7 +133,7 @@ export default function DashboardPage() {
               AI Sourcing Engine
             </h2>
             <p className="text-sm text-text-secondary max-w-lg">
-              Paste a Job Description or enter a role title. The AI will instantly scrape Apollo and Apify to find the top 50 matches.
+              Paste a Job Description or enter a role title. The AI will instantly search Google and LinkedIn to find the top 50 matches.
             </p>
             <div className="relative max-w-xl flex gap-2 mt-4">
               <div className="relative flex-1">

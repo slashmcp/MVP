@@ -51,17 +51,17 @@ const SERVICE_CONFIG = {
     link: 'https://docs.n8n.io/integrations/core-nodes/n8n-nodes-base.webhook/',
     envVars: ['N8N_BASE_URL', 'N8N_WEBHOOK_SECRET'],
   },
-  'apollo': {
-    title: 'Apollo.io Connection Required',
-    description: 'To source new candidates from the Apollo database, you need to provide your Apollo API key.',
+  'serper': {
+    title: 'Serper.dev (Google Search) Required',
+    description: 'To source new candidates via Google Search and LinkedIn profiles, you need to provide your free Serper API key.',
     steps: [
-      'Log into your Apollo.io account.',
-      'Navigate to Settings > Integrations > API.',
-      'Generate a new API key.',
+      'Go to serper.dev and create a free account.',
+      'Navigate to the API Keys section.',
+      'Copy your API key.',
       'Add the API key to your .env.local file.',
     ],
-    link: 'https://developer.apollo.io/keys/',
-    envVars: ['APOLLO_API_KEY'],
+    link: 'https://serper.dev/api-key',
+    envVars: ['SERPER_API_KEY'],
   },
   'apify': {
     title: 'Apify Connection Required',
