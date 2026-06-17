@@ -10,28 +10,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job ID is required for sourcing.' }, { status: 400 });
     }
 
-    // Simulate network delay for sourcing (like scraping Apollo/LinkedIn)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Simulate a semantic search or keyword match over the mock external leads
-    // For MVP, we will just return a subset of the external leads based on the query or randomly.
-    const lowerQuery = (query || '').toLowerCase();
-    
-    let sourcedLeads = mockExternalLeads;
-
-    if (lowerQuery) {
-      sourcedLeads = mockExternalLeads.filter(lead => 
-        lead.skills.some(s => s.toLowerCase().includes(lowerQuery)) ||
-        lead.notes.toLowerCase().includes(lowerQuery) ||
-        lead.seniority.toLowerCase().includes(lowerQuery)
-      );
+    if (!process.env.APOLLO_API_KEY) {
+      return NextResponse.json({ error: 'MISSING_API_KEY', provider: 'apollo' }, { status: 401 });
     }
 
-    // Assign random AI Fit Scores just to simulate the AI Ranking step that would happen 
-    // simultaneously in a real pipeline.
-    const enrichedLeads = sourcedLeads.map(lead => ({
-      ...lead,
-      aiFitScore: Math.floor(Math.random() * 40) + 55, // Score between 55 and 95
+    // Call Apollo.io API
+    const response = await fetch('https://api.apollo.io/v1/mixed_people/search', {
+      method: 'POST',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        api_key: process.env.APOLLO_API_KEY,
+        q_keywords: query || "Software Engineer",
+        person_locations: ["United States"],
+        per_page: 10
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Apollo API Error:', errorData);
+      return NextResponse.json({ error: 'Failed to fetch from Apollo API' }, { status: response.status });
+    }
+
+    const data = await response.json();
+
+    // Map Apollo data to our internal lead format
+    const enrichedLeads = (data.people || []).map((person: any) => ({
+      id: person.id,
+      name: `${person.first_name} ${person.last_name}`,
+      email: person.email || 'No email found',
+      linkedinUrl: person.linkedin_url || '',
+      skills: person.seo_description ? [person.seo_description.substring(0, 50)] : ['Not specified'],
+      seniority: person.title || 'Unknown',
+      source: 'Apollo.io',
+      notes: `${person.title} at ${person.organization?.name || 'Unknown Company'}`,
+      aiFitScore: Math.floor(Math.random() * 40) + 55, // Still simulated for MVP UI
       status: 'New',
     }));
 

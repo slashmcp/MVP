@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { mockJobs, mockCandidates, statusColors } from '@/lib/mock-data';
+import { useAppStore } from '@/store/app-store';
 
 export default function JobDetailPage({
   params,
@@ -39,6 +40,7 @@ export default function JobDetailPage({
     );
   }
 
+  const { showCredentialPrompt } = useAppStore();
   const [isSourcing, setIsSourcing] = useState(false);
   const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
 
@@ -51,6 +53,11 @@ export default function JobDetailPage({
         body: JSON.stringify({ jobId: job.id, query: job.requirements }),
       });
       const data = await res.json();
+      if (data.error === 'MISSING_API_KEY') {
+        showCredentialPrompt({ service: 'apollo', feature: 'Live Apollo Sourcing' });
+        return;
+      }
+      
       if (data.success) {
         setSourcedLeads(data.leads);
       }
