@@ -94,6 +94,8 @@ export default function CandidatesPage() {
     return base.filter((c) => statusFilter === 'all' || c.status === statusFilter);
   }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults]);
 
+  const availableCandidates = useMemo(() => mockCandidates.filter((c) => !hiddenCandidateIds.includes(c.id)), [hiddenCandidateIds]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -101,7 +103,7 @@ export default function CandidatesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Candidates</h1>
           <p className="text-sm text-text-secondary mt-1">
-            {mockCandidates.length} total &middot; {mockCandidates.filter((c) => c.status !== 'Rejected' && c.status !== 'Placed').length} active
+            {availableCandidates.length} total &middot; {availableCandidates.filter((c) => c.status !== 'Rejected' && c.status !== 'Placed').length} active
           </p>
         </div>
         <div className="flex items-center gap-3">
