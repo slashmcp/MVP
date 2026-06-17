@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Crosshair,
   X,
+  Workflow,
 } from 'lucide-react';
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { label: 'Clients', href: '/clients', icon: Building2 },
   { label: 'Placements', href: '/placements', icon: ClipboardList },
   { label: 'Outreach', href: '/outreach', icon: Mail },
+  { label: 'Sequences', href: '/sequences', icon: Workflow },
   { label: 'Pipeline', href: '/pipeline', icon: GitBranchPlus },
   { label: 'Matching', href: '/matching', icon: Crosshair },
   { label: 'Daily Briefing', href: '/briefing', icon: Zap },

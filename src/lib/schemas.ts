@@ -24,6 +24,10 @@ export const candidateSchema = z.object({
   notes: z.string().optional(),
   lastContactDate: z.string().optional(),
   seniority: z.string().optional(),
+  aiFitScore: z.number().optional(),
+  source: z.string().optional(),
+  sequenceId: z.string().optional(),
+  sequenceStatus: z.enum(['Unenrolled', 'Active', 'Completed', 'Replied']).default('Unenrolled'),
   createdAt: z.string().optional(),
 });
 

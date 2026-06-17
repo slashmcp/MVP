@@ -13,7 +13,10 @@ import {
   Edit2,
   Users,
   Send,
+  Loader2,
+  Globe,
 } from 'lucide-react';
+import { useState } from 'react';
 import { mockJobs, mockCandidates, statusColors } from '@/lib/mock-data';
 
 export default function JobDetailPage({
@@ -35,6 +38,28 @@ export default function JobDetailPage({
       </div>
     );
   }
+
+  const [isSourcing, setIsSourcing] = useState(false);
+  const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
+
+  const handleSource = async () => {
+    setIsSourcing(true);
+    try {
+      const res = await fetch('/api/sourcing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: job.id, query: job.requirements }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSourcedLeads(data.leads);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSourcing(false);
+    }
+  };
 
   const matchedCandidates = mockCandidates.slice(0, 4).map((c, i) => ({
     ...c,
@@ -83,10 +108,16 @@ export default function JobDetailPage({
               )}
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm">
-            <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-            Edit
-          </button>
+          <div className="flex gap-2">
+            <button className="btn btn-secondary btn-sm">
+              <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+              Edit
+            </button>
+            <button className="btn btn-primary btn-sm bg-accent hover:bg-accent-hover border-transparent" onClick={handleSource} disabled={isSourcing}>
+              {isSourcing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />}
+              {isSourcing ? 'Sourcing...' : 'Find Candidates'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -131,6 +162,49 @@ export default function JobDetailPage({
               </div>
             </div>
           </div>
+
+          {/* Sourcing Engine Results */}
+          {sourcedLeads && (
+            <div className="card border-accent/20 animate-slide-up">
+              <div className="card-header bg-accent-soft border-b border-border">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-accent" strokeWidth={1.75} />
+                    <h2 className="text-base font-semibold text-text-primary">Sourced Leads</h2>
+                  </div>
+                  <span className="badge badge-blue">{sourcedLeads.length} Found</span>
+                </div>
+              </div>
+              <div className="divide-y divide-border">
+                {sourcedLeads.map((c) => (
+                  <div key={c.id} className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                          {c.name}
+                          <span className="badge badge-neutral text-[10px]">{c.source}</span>
+                        </h3>
+                        <p className="text-xs text-text-secondary mt-0.5">{c.seniority} • {c.email}</p>
+                      </div>
+                      <div className={`score-badge ${c.aiFitScore >= 80 ? 'score-high' : c.aiFitScore >= 60 ? 'score-medium' : 'score-low'}`}>
+                        {c.aiFitScore}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {c.skills.slice(0, 4).map((s: string) => (
+                        <span key={s} className="badge badge-neutral text-[10px]">{s}</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-text-tertiary mt-2 line-clamp-2">{c.notes}</p>
+                    <div className="mt-3 flex gap-2">
+                      <button className="btn btn-primary btn-xs bg-accent text-white">Add to CRM</button>
+                      <button className="btn btn-secondary btn-xs">Send to Sequence</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Matched Candidates */}

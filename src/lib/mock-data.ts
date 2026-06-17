@@ -477,3 +477,59 @@ export const statusColors: Record<string, string> = {
   'Inactive': 'badge-neutral',
   'Prospect': 'badge-blue',
 };
+
+// ========================================
+// Mock External Leads (Simulating Apollo.io / LinkedIn)
+// ========================================
+export const mockExternalLeads = [
+  {
+    id: 'ext_1',
+    name: 'Eleanor Vance',
+    email: 'eleanor.v@example.com',
+    linkedinUrl: 'https://linkedin.com/in/eleanorv',
+    skills: ['React', 'Next.js', 'TypeScript', 'Tailwind'],
+    seniority: 'Senior',
+    source: 'LinkedIn Sourcing',
+    notes: 'Strong frontend background, previously at Vercel.',
+  },
+  {
+    id: 'ext_2',
+    name: 'Marcus Thorne',
+    email: 'm.thorne@example.com',
+    linkedinUrl: 'https://linkedin.com/in/mthorne',
+    skills: ['Python', 'Django', 'AWS', 'PostgreSQL'],
+    seniority: 'Lead',
+    source: 'Apollo.io',
+    notes: 'Lead backend engineer at a fintech startup.',
+  },
+  {
+    id: 'ext_3',
+    name: 'Sophia Reynolds',
+    email: 'sophia.r@example.com',
+    linkedinUrl: 'https://linkedin.com/in/sophia-reynolds',
+    skills: ['Figma', 'UI/UX', 'Design Systems', 'User Research'],
+    seniority: 'Senior',
+    source: 'Dribbble Scraping',
+    notes: 'Incredible portfolio, heavily focused on SaaS dashboards.',
+  },
+  {
+    id: 'ext_4',
+    name: 'Julian Bates',
+    email: 'jbates99@example.com',
+    linkedinUrl: 'https://linkedin.com/in/julian-bates',
+    skills: ['Go', 'Kubernetes', 'Terraform', 'GCP'],
+    seniority: 'Staff',
+    source: 'GitHub',
+    notes: 'Active open-source contributor to container orchestration tools.',
+  },
+  {
+    id: 'ext_5',
+    name: 'Aria Chen',
+    email: 'aria.chen.dev@example.com',
+    linkedinUrl: 'https://linkedin.com/in/ariachen',
+    skills: ['React Native', 'Swift', 'Kotlin', 'Mobile Arch'],
+    seniority: 'Senior',
+    source: 'LinkedIn Sourcing',
+    notes: 'Built 3 top-100 apps in the App Store.',
+  }
+];

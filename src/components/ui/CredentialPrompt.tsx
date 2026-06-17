@@ -51,6 +51,30 @@ const SERVICE_CONFIG = {
     link: 'https://docs.n8n.io/integrations/core-nodes/n8n-nodes-base.webhook/',
     envVars: ['N8N_BASE_URL', 'N8N_WEBHOOK_SECRET'],
   },
+  'apollo': {
+    title: 'Apollo.io Connection Required',
+    description: 'To source new candidates from the Apollo database, you need to provide your Apollo API key.',
+    steps: [
+      'Log into your Apollo.io account.',
+      'Navigate to Settings > Integrations > API.',
+      'Generate a new API key.',
+      'Add the API key to your .env.local file.',
+    ],
+    link: 'https://developer.apollo.io/keys/',
+    envVars: ['APOLLO_API_KEY'],
+  },
+  'apify': {
+    title: 'Apify Connection Required',
+    description: 'To scrape LinkedIn profiles and live web data for sourcing, you need an Apify API key.',
+    steps: [
+      'Create an account on Apify.com.',
+      'Navigate to Settings > Integrations.',
+      'Copy your personal API token.',
+      'Add the token to your .env.local file.',
+    ],
+    link: 'https://console.apify.com/account/integrations',
+    envVars: ['APIFY_API_TOKEN'],
+  },
 };
 
 export function CredentialPrompt() {
