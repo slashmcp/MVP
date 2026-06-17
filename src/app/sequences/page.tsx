@@ -8,11 +8,11 @@ import Link from 'next/link';
 const mockSequences = [
   {
     id: 'seq_1',
-    name: 'Senior Frontend Developer Outreach',
+    name: 'Senior Frontend Dev (React) - Safe Software',
     status: 'Active',
-    enrolled: 42,
-    replied: 8,
-    bounced: 1,
+    enrolled: 0,
+    replied: 0,
+    bounced: 0,
     steps: [
       { id: 's1', type: 'Email', delay: 'Day 1' },
       { id: 's2', type: 'LinkedIn', delay: 'Day 3' },
@@ -21,27 +21,15 @@ const mockSequences = [
   },
   {
     id: 'seq_2',
-    name: 'Product Manager Warmup',
-    status: 'Paused',
-    enrolled: 15,
+    name: 'AI/ML Engineer (C++) - Creativity Software',
+    status: 'Active',
+    enrolled: 0,
     replied: 0,
     bounced: 0,
     steps: [
       { id: 's1', type: 'LinkedIn', delay: 'Day 1' },
       { id: 's2', type: 'Email', delay: 'Day 2' },
-    ]
-  },
-  {
-    id: 'seq_3',
-    name: 'Executive Search: VP Engineering',
-    status: 'Active',
-    enrolled: 5,
-    replied: 3,
-    bounced: 0,
-    steps: [
-      { id: 's1', type: 'Email', delay: 'Day 1' },
-      { id: 's2', type: 'Call', delay: 'Day 4' },
-      { id: 's3', type: 'Email', delay: 'Day 10' },
+      { id: 's3', type: 'Call', delay: 'Day 5' },
     ]
   }
 ];
