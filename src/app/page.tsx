@@ -4,10 +4,10 @@ import { useState } from 'react';
 import {
   Users,
   Briefcase,
-  Building2,
   TrendingUp,
-  DollarSign,
-  AlertTriangle,
+  Globe,
+  Mail,
+  Zap,
   ArrowUpRight,
   ArrowDownRight,
   Clock,
@@ -15,21 +15,15 @@ import {
   Calendar,
   Bell,
   Sparkles,
-  Lightbulb,
-  Target,
+  Search,
+  Workflow,
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAppStore } from '@/store/app-store';
 import {
-  mockDashboardStats,
   mockDailyActions,
-  mockAIInsights,
   mockCandidates,
-  mockJobs,
-  mockClients,
-  mockPlacements,
-  statusColors,
 } from '@/lib/mock-data';
 import {
   AreaChart,
@@ -39,391 +33,214 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
 
-// Revenue trend data
-const revenueTrend = [
-  { month: 'Jan', revenue: 18500 },
-  { month: 'Feb', revenue: 24000 },
-  { month: 'Mar', revenue: 21000 },
-  { month: 'Apr', revenue: 31500 },
-  { month: 'May', revenue: 24000 },
-  { month: 'Jun', revenue: 29250 },
+// Growth trend data (Leads Sourced)
+const sourcingTrend = [
+  { month: 'Jan', leads: 400 },
+  { month: 'Feb', leads: 850 },
+  { month: 'Mar', leads: 1200 },
+  { month: 'Apr', leads: 1800 },
+  { month: 'May', leads: 2400 },
+  { month: 'Jun', leads: 3200 },
 ];
-
-// Pipeline distribution
-const pipelineData = [
-  { name: 'New', value: 2, color: '#4F7BF7' },
-  { name: 'Contacted', value: 2, color: '#9CA3AF' },
-  { name: 'Engaged', value: 2, color: '#6395FF' },
-  { name: 'Interview', value: 1, color: '#E5A50A' },
-  { name: 'Submitted', value: 1, color: '#F59E0B' },
-  { name: 'Placed', value: 1, color: '#22C55E' },
-];
-
-const priorityConfig = {
-  high: { color: 'text-danger', bg: 'bg-danger-soft', label: 'High' },
-  medium: { color: 'text-warning', bg: 'bg-warning-soft', label: 'Med' },
-  low: { color: 'text-text-secondary', bg: 'bg-[var(--surface-elevated)]', label: 'Low' },
-};
-
-const actionIcons = {
-  'follow-up': Clock,
-  'contact': Phone,
-  'interview': Calendar,
-  'reminder': Bell,
-};
-
-const insightIcons = {
-  suggestion: Lightbulb,
-  alert: AlertTriangle,
-  opportunity: Target,
-};
-
-const insightColors = {
-  suggestion: 'text-accent',
-  alert: 'text-warning',
-  opportunity: 'text-success',
-};
 
 export default function DashboardPage() {
-  const { hiddenCandidateIds, hiddenJobIds, hiddenClientIds } = useAppStore();
-  
-  const stats = {
-    ...mockDashboardStats,
-    activeCandidates: mockCandidates.filter(c => !hiddenCandidateIds.includes(c.id) && c.status !== 'Rejected' && c.status !== 'Placed').length,
-    activeJobs: mockJobs.filter(j => !hiddenJobIds.includes(j.id) && j.status === 'Open').length,
-    activeClients: mockClients.filter(c => !hiddenClientIds.includes(c.id) && c.status === 'Active').length,
-  };
-  const [actionsFilter, setActionsFilter] = useState<'all' | 'high' | 'medium'>('all');
-
-  const filteredActions =
-    actionsFilter === 'all'
-      ? mockDailyActions
-      : mockDailyActions.filter((a) => a.priority === actionsFilter);
+  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Command Center</h1>
         <p className="text-sm text-text-secondary mt-1">
-          Welcome back. Here&apos;s your recruitment overview for today.
+          Your active sourcing and outreach engine overview.
         </p>
       </div>
 
+      {/* Quick Source Banner */}
+      <div className="card bg-accent-soft border border-accent/20 overflow-hidden relative">
+        <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-accent/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="p-6 relative z-10 flex flex-col md:flex-row gap-6 items-center">
+          <div className="flex-1 space-y-3">
+            <h2 className="text-lg font-semibold text-accent flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              AI Sourcing Engine
+            </h2>
+            <p className="text-sm text-text-secondary max-w-lg">
+              Paste a Job Description or enter a role title. The AI will instantly scrape Apollo and Apify to find the top 50 matches.
+            </p>
+            <div className="relative max-w-xl flex gap-2 mt-4">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+                <input 
+                  type="text" 
+                  className="input pl-10 w-full bg-surface border-border focus:border-accent/50" 
+                  placeholder="e.g. Senior Frontend Engineer with Next.js..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Link href="/jobs" className="btn btn-primary bg-accent hover:bg-accent-hover text-white border-transparent shadow-accent/25 shrink-0">
+                Start Sourcing
+              </Link>
+            </div>
+          </div>
+          <div className="hidden lg:flex gap-4">
+            <div className="bg-surface p-4 rounded-lg border border-border min-w-[140px]">
+              <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Leads Found</p>
+              <p className="text-2xl font-bold text-text-primary mt-1">3,204</p>
+              <p className="text-xs text-success mt-1 flex items-center gap-1"><ArrowUpRight className="w-3 h-3"/> +12% this week</p>
+            </div>
+            <div className="bg-surface p-4 rounded-lg border border-border min-w-[140px]">
+              <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">AI Screened</p>
+              <p className="text-2xl font-bold text-text-primary mt-1">2,890</p>
+              <p className="text-xs text-success mt-1 flex items-center gap-1"><ArrowUpRight className="w-3 h-3"/> 90% accuracy</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
         <KPICard
-          label="Active Candidates"
-          value={stats.activeCandidates}
+          label="Total Enrolled"
+          value={430}
           icon={Users}
-          trend={{ value: 12, direction: 'up' }}
-          href="/candidates"
+          trend={{ value: 45, direction: 'up' }}
+          href="/sequences"
         />
         <KPICard
-          label="Open Jobs"
-          value={stats.activeJobs}
-          icon={Briefcase}
-          trend={{ value: 2, direction: 'up' }}
-          href="/jobs"
+          label="Avg. Reply Rate"
+          value="18%"
+          icon={Mail}
+          trend={{ value: 2.4, direction: 'up' }}
+          href="/sequences"
         />
         <KPICard
-          label="Active Clients"
-          value={stats.activeClients}
-          icon={Building2}
-          href="/clients"
+          label="Active Sequences"
+          value="3"
+          icon={Workflow}
+          href="/sequences"
         />
         <KPICard
-          label="Placements (MTD)"
-          value={stats.placementsThisMonth}
-          icon={TrendingUp}
-          trend={{ value: 1, direction: 'up' }}
-          href="/placements"
-        />
-        <KPICard
-          label="Revenue (MTD)"
-          value={`$${(stats.revenueThisMonth / 1000).toFixed(1)}k`}
-          icon={DollarSign}
-          trend={{ value: 8, direction: 'up' }}
-          isMoney
-          href="/placements"
-        />
-        <KPICard
-          label="Stalled"
-          value={stats.stalledOpportunities}
-          icon={AlertTriangle}
-          trend={{ value: 1, direction: 'down' }}
-          isAlert
+          label="Interviews Booked"
+          value="12"
+          icon={Calendar}
+          trend={{ value: 3, direction: 'up' }}
           href="/pipeline"
         />
       </div>
 
-      {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Actions — spans 2 cols */}
-        <div className="lg:col-span-2 card">
-          <div className="card-header">
-            <div>
-              <h2 className="text-base font-semibold text-text-primary">Today&apos;s Actions</h2>
-              <p className="text-xs text-text-secondary mt-0.5">{mockDailyActions.length} tasks pending</p>
-            </div>
-            <div className="flex gap-1">
-              {(['all', 'high', 'medium'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setActionsFilter(f)}
-                  className={`btn-xs rounded-md text-xs font-medium px-2.5 py-1 transition-all ${
-                    actionsFilter === f
-                      ? 'bg-accent-soft text-accent'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)]'
-                  }`}
-                >
-                  {f === 'all' ? 'All' : f === 'high' ? 'High' : 'Medium'}
-                </button>
-              ))}
-            </div>
+        {/* Chart */}
+        <div className="card lg:col-span-2 flex flex-col min-h-[400px]">
+          <div className="card-header border-b border-border">
+            <h2 className="text-base font-semibold text-text-primary">Sourcing Volume Trend</h2>
           </div>
-          <div className="divide-y divide-border">
-            {filteredActions.map((action) => {
-              const Icon = actionIcons[action.type];
-              const priority = priorityConfig[action.priority];
-              return (
-                <div
-                  key={action.id}
-                  className="px-5 py-3.5 flex items-start gap-4 hover:bg-[var(--surface-elevated)] transition-colors group"
-                >
-                  <div className={`mt-0.5 p-1.5 rounded-md ${priority.bg}`}>
-                    <Icon className={`w-4 h-4 ${priority.color}`} strokeWidth={1.75} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary">{action.title}</p>
-                    <p className="text-xs text-text-secondary mt-0.5 truncate">{action.description}</p>
-                  </div>
-                  <span className={`badge ${priority.bg} ${priority.color} text-[10px]`}>
-                    {priority.label}
-                  </span>
-                  <Link
-                    href={`/${action.entityType}s/${action.entityId}`}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-accent-soft"
-                  >
-                    <ChevronRight className="w-4 h-4 text-accent" strokeWidth={1.75} />
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* AI Insights Panel */}
-        <div className="card">
-          <div className="card-header">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-accent" strokeWidth={1.75} />
-              <h2 className="text-base font-semibold text-text-primary">AI Insights</h2>
-            </div>
-          </div>
-          <div className="divide-y divide-border">
-            {mockAIInsights.map((insight) => {
-              const Icon = insightIcons[insight.type];
-              return (
-                <div key={insight.id} className="px-5 py-4 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <Icon
-                      className={`w-4 h-4 mt-0.5 flex-shrink-0 ${insightColors[insight.type]}`}
-                      strokeWidth={1.75}
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-text-primary">{insight.title}</p>
-                      <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                        {insight.description}
-                      </p>
-                    </div>
-                  </div>
-                  {insight.actionLabel && (
-                    <Link
-                      href={insight.actionUrl || '#'}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover transition-colors ml-6"
-                    >
-                      {insight.actionLabel}
-                      <ChevronRight className="w-3 h-3" strokeWidth={2} />
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Trend */}
-        <div className="lg:col-span-2 card">
-          <div className="card-header">
-            <h2 className="text-base font-semibold text-text-primary">Revenue Trend</h2>
-            <span className="text-xs text-text-secondary">Last 6 months</span>
-          </div>
-          <div className="card-body">
-            <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={revenueTrend}>
-                <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4F7BF7" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#4F7BF7" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
-                  axisLine={{ stroke: 'var(--border)' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `$${v / 1000}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                  }}
-                  formatter={(value: unknown) => [`$${Number(value).toLocaleString()}`, 'Revenue']}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#4F7BF7"
-                  strokeWidth={2}
-                  fill="url(#revenueGradient)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Pipeline Distribution */}
-        <div className="card">
-          <div className="card-header">
-            <h2 className="text-base font-semibold text-text-primary">Pipeline Distribution</h2>
-          </div>
-          <div className="card-body flex flex-col items-center">
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={pipelineData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={80}
-                  paddingAngle={3}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {pipelineData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-1.5 mt-2 w-full">
-              {pipelineData.map((item) => (
-                <div key={item.name} className="flex items-center gap-1.5">
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: item.color }}
+          <div className="card-body flex-1 p-6">
+            <div className="h-full min-h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={sourcingTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="var(--text-tertiary)" 
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
                   />
-                  <span className="text-[11px] text-text-secondary truncate">{item.name}</span>
-                  <span className="text-[11px] font-mono font-medium text-text-primary ml-auto">
-                    {item.value}
-                  </span>
-                </div>
-              ))}
+                  <YAxis 
+                    stroke="var(--text-tertiary)" 
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `${value}`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--surface-elevated)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      color: 'var(--text-primary)',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    }}
+                    itemStyle={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: 500 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="leads"
+                    stroke="var(--accent)"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorLeads)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Recent Activity */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="text-base font-semibold text-text-primary">Recent Placements</h2>
-          <Link
-            href="/placements"
-            className="text-xs text-accent hover:text-accent-hover font-medium transition-colors"
-          >
-            View all
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Candidate</th>
-                <th>Position</th>
-                <th>Client</th>
-                <th>Date</th>
-                <th className="text-right">Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockPlacements.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-medium">
-                    <Link href={`/candidates/${p.candidateId}`} className="text-text-primary hover:text-accent transition-colors">
-                      {p.candidateName}
-                    </Link>
-                  </td>
-                  <td>
-                    <Link href={`/jobs/${p.jobId}`} className="text-text-secondary hover:text-accent transition-colors">
-                      {p.jobTitle}
-                    </Link>
-                  </td>
-                  <td>
-                    <Link href={`/clients/${p.clientId}`} className="text-text-secondary hover:text-accent transition-colors">
-                      {p.clientName}
-                    </Link>
-                  </td>
-                  <td className="text-text-secondary font-mono text-xs">
-                    {new Date(p.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </td>
-                  <td className="text-right font-mono font-medium text-success">
-                    ${p.revenue.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Top Active Sequences */}
+        <div className="card flex flex-col">
+          <div className="card-header border-b border-border">
+            <div className="flex items-center gap-2">
+              <Workflow className="w-4 h-4 text-accent" strokeWidth={1.75} />
+              <h2 className="text-base font-semibold text-text-primary">Top Sequences</h2>
+            </div>
+            <Link href="/sequences" className="text-xs text-accent hover:text-accent-hover font-medium">View all</Link>
+          </div>
+          <div className="divide-y divide-border">
+            <div className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
+               <div className="flex justify-between items-start">
+                 <div>
+                   <h3 className="text-sm font-semibold text-text-primary">Senior Frontend Developer</h3>
+                   <p className="text-xs text-text-secondary mt-0.5">3 steps • Active</p>
+                 </div>
+                 <div className="text-right">
+                   <p className="text-sm font-semibold text-accent">19% Reply</p>
+                   <p className="text-xs text-text-tertiary">42 Enrolled</p>
+                 </div>
+               </div>
+            </div>
+            <div className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
+               <div className="flex justify-between items-start">
+                 <div>
+                   <h3 className="text-sm font-semibold text-text-primary">Executive VP Engineering</h3>
+                   <p className="text-xs text-text-secondary mt-0.5">4 steps • Active</p>
+                 </div>
+                 <div className="text-right">
+                   <p className="text-sm font-semibold text-accent">60% Reply</p>
+                   <p className="text-xs text-text-tertiary">5 Enrolled</p>
+                 </div>
+               </div>
+            </div>
+            <div className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
+               <div className="flex justify-between items-start">
+                 <div>
+                   <h3 className="text-sm font-semibold text-text-primary">Product Manager Warmup</h3>
+                   <p className="text-xs text-text-secondary mt-0.5">2 steps • Paused</p>
+                 </div>
+                 <div className="text-right">
+                   <p className="text-sm font-semibold text-text-secondary">0% Reply</p>
+                   <p className="text-xs text-text-tertiary">15 Enrolled</p>
+                 </div>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ========================================
-// KPI Card Component
-// ========================================
 function KPICard({
   label,
   value,
@@ -435,56 +252,47 @@ function KPICard({
 }: {
   label: string;
   value: string | number;
-  icon: React.ElementType;
+  icon: any;
   trend?: { value: number; direction: 'up' | 'down' };
   isMoney?: boolean;
   isAlert?: boolean;
   href?: string;
 }) {
-  const inner = (
-    <>
-      <div className="flex items-center justify-between mb-3">
-        <div
-          className={`p-2 rounded-md transition-colors ${
-            isAlert ? 'bg-warning-soft group-hover:bg-warning/20' : 'bg-accent-soft group-hover:bg-accent/20'
-          }`}
-        >
-          <Icon
-            className={`w-4 h-4 transition-colors ${isAlert ? 'text-warning group-hover:text-warning-hover' : 'text-accent group-hover:text-accent-hover'}`}
-            strokeWidth={1.75}
-          />
+  const CardWrapper = href ? Link : 'div';
+  
+  return (
+    <CardWrapper 
+      href={href || ''} 
+      className={`card p-5 group ${href ? 'hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all cursor-pointer' : ''}`}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors">{label}</p>
+          <h3 className={`text-2xl font-bold mt-1 ${isAlert ? 'text-warning' : 'text-text-primary'}`}>
+            {value}
+          </h3>
         </div>
-        {trend && (
-          <div
-            className={`flex items-center gap-0.5 text-xs font-medium ${
-              trend.direction === 'up' ? 'kpi-trend-up' : 'kpi-trend-down'
+        <div className={`p-2 rounded-lg ${isAlert ? 'bg-warning-soft text-warning' : 'bg-accent-soft text-accent'}`}>
+          <Icon className="w-5 h-5" strokeWidth={1.75} />
+        </div>
+      </div>
+      {trend && (
+        <div className="mt-4 flex items-center gap-1.5 text-sm">
+          <span
+            className={`flex items-center font-medium ${
+              trend.direction === 'up' ? 'text-success' : 'text-danger'
             }`}
           >
             {trend.direction === 'up' ? (
-              <ArrowUpRight className="w-3 h-3" />
+              <ArrowUpRight className="w-4 h-4 mr-0.5" strokeWidth={2} />
             ) : (
-              <ArrowDownRight className="w-3 h-3" />
+              <ArrowDownRight className="w-4 h-4 mr-0.5" strokeWidth={2} />
             )}
-            {trend.value}%
-          </div>
-        )}
-      </div>
-      <div className="kpi-value transition-colors group-hover:text-accent">{value}</div>
-      <div className="kpi-label">{label}</div>
-    </>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="kpi-card group hover:shadow-md transition-all cursor-pointer block">
-        {inner}
-      </Link>
-    );
-  }
-
-  return (
-    <div className="kpi-card group">
-      {inner}
-    </div>
+            {isMoney ? '$' : ''}{trend.value}{isMoney ? 'k' : '%'}
+          </span>
+          <span className="text-text-tertiary">vs last month</span>
+        </div>
+      )}
+    </CardWrapper>
   );
 }
