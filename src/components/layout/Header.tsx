@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useAppStore } from '@/store/app-store';
 import {
   Search,
+  Home,
   Sun,
   Moon,
   Bell,
@@ -20,6 +22,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { mockCandidates, mockJobs, mockClients } from '@/lib/mock-data';
 
 export function Header() {
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { globalSearch, setGlobalSearch, setSidebarMobileOpen, showCredentialPrompt } = useAppStore();
   const [mounted, setMounted] = useState(false);
@@ -61,7 +64,8 @@ export function Header() {
   }, [globalSearch]);
 
   return (
-    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20 relative">
+    <header className="h-14 border-b border-border bg-[var(--surface-overlay)] backdrop-blur-md sticky top-0 z-20">
+      <div className="max-w-7xl mx-auto w-full h-full flex items-center justify-between px-4 lg:px-6 relative">
       {/* Mobile full-width search overlay */}
       {showMobileSearch && (
         <div className="absolute inset-0 bg-surface z-30 flex items-center px-4 gap-2 border-b border-border animate-fade-in sm:hidden">
@@ -86,7 +90,7 @@ export function Header() {
         </div>
       )}
 
-      {/* Left: hamburger + search */}
+      {/* Left: hamburger + search + home */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <button
           onClick={() => setSidebarMobileOpen(true)}
@@ -95,6 +99,12 @@ export function Header() {
         >
           <Menu className="w-5 h-5" strokeWidth={1.75} />
         </button>
+
+        {mounted && pathname !== '/' && (
+          <Link href="/" className="p-2 -ml-1 rounded-md text-text-secondary hover:text-accent hover:bg-accent-soft transition-all hidden sm:flex items-center justify-center">
+            <Home className="w-4 h-4" strokeWidth={1.75} />
+          </Link>
+        )}
 
         <div className="relative flex-1 max-w-md hidden sm:block" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
@@ -257,6 +267,7 @@ export function Header() {
           )}
         </div>
       )}
+      </div>
     </header>
   );
 }

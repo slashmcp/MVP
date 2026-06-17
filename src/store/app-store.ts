@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AppState {
   sidebarCollapsed: boolean;
@@ -50,8 +51,10 @@ export interface CredentialPromptState {
 
 let toastCounter = 0;
 
-export const useAppStore = create<AppState>((set) => ({
-  sidebarCollapsed: false,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      sidebarCollapsed: false,
   sidebarMobileOpen: false,
   toggleSidebar: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
@@ -93,4 +96,15 @@ export const useAppStore = create<AppState>((set) => ({
   credentialPrompt: null,
   showCredentialPrompt: (state) => set({ credentialPrompt: state }),
   dismissCredentialPrompt: () => set({ credentialPrompt: null }),
-}));
+    }),
+    {
+      name: 'recruitment-command-center-storage',
+      partialize: (state) => ({
+        sidebarCollapsed: state.sidebarCollapsed,
+        hiddenClientIds: state.hiddenClientIds,
+        hiddenCandidateIds: state.hiddenCandidateIds,
+        hiddenJobIds: state.hiddenJobIds,
+      }),
+    }
+  )
+);
