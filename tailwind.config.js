@@ -74,6 +74,7 @@ module.exports = {
         'slide-in-right': 'slideInRight 0.3s ease-out',
         'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
         'shimmer': 'shimmer 1.5s ease-in-out infinite',
+        'progress-bar': 'progressBar 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
       },
       keyframes: {
         fadeIn: {
@@ -95,6 +96,10 @@ module.exports = {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        progressBar: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
         },
       },
       transitionDuration: {
