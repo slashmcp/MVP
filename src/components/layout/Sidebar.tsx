@@ -65,7 +65,7 @@ export function Sidebar() {
         <div className="h-14 flex items-center justify-between px-4 border-b border-border">
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" onClick={() => setSidebarMobileOpen(false)}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <Image src="/logo.png" alt="Ion Recruitment Logo" width={32} height={32} className="object-contain opacity-90" />
+              <Image src="/logo.png" alt="Ion Recruitment Logo" width={32} height={32} className="object-contain opacity-90 dark:invert-0 invert" />
             </div>
             {(!sidebarCollapsed || sidebarMobileOpen) && (
               <span className="text-sm font-semibold text-text-primary whitespace-nowrap overflow-hidden lg:block uppercase tracking-wider">

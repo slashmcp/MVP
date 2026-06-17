@@ -18,6 +18,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { mockCandidates, mockJobs, mockClients } from '@/lib/mock-data';
 
@@ -223,8 +224,8 @@ export function Header() {
           </button>
         )}
 
-        <Link href="/" className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center ml-1 text-accent text-xs font-semibold cursor-pointer hover:bg-accent/20 transition-colors">
-          RC
+        <Link href="/" className="w-8 h-8 rounded-full bg-accent/5 border border-accent/20 flex items-center justify-center ml-1 cursor-pointer hover:bg-accent/10 transition-colors overflow-hidden">
+          <Image src="/logo.png" alt="Ion Recruitment" width={20} height={20} className="object-contain dark:invert-0 invert opacity-90" />
         </Link>
       </div>
 

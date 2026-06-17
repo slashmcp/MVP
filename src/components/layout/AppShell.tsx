@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               alt="Ion Recruitment" 
               width={180} 
               height={180} 
-              className="relative z-10 object-contain drop-shadow-2xl opacity-90" 
+              className="relative z-10 object-contain drop-shadow-2xl opacity-90 dark:invert-0 invert" 
               priority
             />
             <h1 className="relative z-10 mt-8 text-2xl tracking-[0.4em] uppercase font-light text-text-primary">

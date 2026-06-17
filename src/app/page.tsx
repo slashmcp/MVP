@@ -68,15 +68,7 @@ const sourcingTrend = [
   { month: 'Jun', leads: 3200 },
 ];
 
-// Pipeline distribution
-const pipelineData = [
-  { name: 'New', value: 2, color: '#4F7BF7' },
-  { name: 'Contacted', value: 2, color: '#9CA3AF' },
-  { name: 'Engaged', value: 2, color: '#6395FF' },
-  { name: 'Interview', value: 1, color: '#E5A50A' },
-  { name: 'Submitted', value: 1, color: '#F59E0B' },
-  { name: 'Placed', value: 1, color: '#22C55E' },
-];
+const pipelineData: { name: string; value: number; color: string }[] = [];
 
 const priorityConfig = {
   high: { color: 'text-danger', bg: 'bg-danger-soft', label: 'High' },
@@ -288,41 +280,10 @@ export default function DashboardPage() {
               <Link href="/sequences" className="text-xs text-accent hover:text-accent-hover font-medium">View all</Link>
             </div>
             <div className="divide-y divide-border">
-              <div className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
-                 <div className="flex justify-between items-start">
-                   <div>
-                     <h3 className="text-sm font-semibold text-text-primary">Senior Frontend Developer</h3>
-                     <p className="text-xs text-text-secondary mt-0.5">3 steps • Active</p>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-sm font-semibold text-accent">19% Reply</p>
-                     <p className="text-xs text-text-tertiary">42 Enrolled</p>
-                   </div>
-                 </div>
-              </div>
-              <div className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
-                 <div className="flex justify-between items-start">
-                   <div>
-                     <h3 className="text-sm font-semibold text-text-primary">Executive VP Engineering</h3>
-                     <p className="text-xs text-text-secondary mt-0.5">4 steps • Active</p>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-sm font-semibold text-accent">60% Reply</p>
-                     <p className="text-xs text-text-tertiary">5 Enrolled</p>
-                   </div>
-                 </div>
-              </div>
-              <div className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
-                 <div className="flex justify-between items-start">
-                   <div>
-                     <h3 className="text-sm font-semibold text-text-primary">Product Manager Warmup</h3>
-                     <p className="text-xs text-text-secondary mt-0.5">2 steps • Paused</p>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-sm font-semibold text-text-secondary">0% Reply</p>
-                     <p className="text-xs text-text-tertiary">15 Enrolled</p>
-                   </div>
-                 </div>
+              <div className="p-8 text-center flex flex-col items-center justify-center text-text-tertiary">
+                <Workflow className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm font-medium text-text-secondary">No active sequences</p>
+                <p className="text-xs mt-1">Start an outreach campaign to see live results here.</p>
               </div>
             </div>
           </div>
@@ -333,36 +294,46 @@ export default function DashboardPage() {
               <h2 className="text-base font-semibold text-text-primary">Candidate Pipeline</h2>
             </div>
             <div className="card-body p-4 h-[240px] flex items-center justify-center relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pipelineData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {pipelineData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'var(--surface-elevated)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '8px',
-                    }}
-                    itemStyle={{ color: 'var(--text-primary)', fontSize: '13px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-2xl font-bold text-text-primary">{pipelineData.reduce((a, b) => a + b.value, 0)}</span>
-                <span className="text-xs text-text-secondary">Total Active</span>
-              </div>
+              {pipelineData.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pipelineData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {pipelineData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'var(--surface-elevated)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                        }}
+                        itemStyle={{ color: 'var(--text-primary)', fontSize: '13px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold text-text-primary">{pipelineData.reduce((a, b) => a + b.value, 0)}</span>
+                    <span className="text-xs text-text-secondary">Total Active</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-text-tertiary h-full">
+                  <Target className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-sm font-medium text-text-secondary">Empty Pipeline</p>
+                  <p className="text-xs mt-1 text-center px-4">Find candidates to build your pipeline.</p>
+                </div>
+              )}
             </div>
           </div>
 
