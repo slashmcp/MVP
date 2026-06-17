@@ -3,33 +3,106 @@ import { Candidate, Job, Client, Placement, DashboardStats, DailyAction, AIInsig
 // ========================================
 // Mock Candidates
 // ========================================
-export let mockCandidates: Candidate[] = [];
+export let mockCandidates: Candidate[] = [
+  {
+    id: 'c_101',
+    name: 'Emily Rostova',
+    email: 'emily.rostova@gmail.com',
+    phone: '+1 (415) 555-0198',
+    location: 'San Francisco, CA',
+    role: 'Senior React Engineer',
+    company: 'Fintech Solutions Inc.',
+    status: 'New',
+    source: 'Apollo Scraper',
+    rating: 5,
+    skills: ['React', 'TypeScript', 'Next.js', 'GraphQL'],
+    experience: '8 years',
+    seniority: 'Senior',
+    lastContact: '2024-03-20',
+    notes: 'Highly experienced frontend lead. Found via Apollo.io match.',
+  },
+  {
+    id: 'c_102',
+    name: 'Marcus Thorne',
+    email: 'm.thorne.dev@outlook.com',
+    phone: '+1 (512) 555-0234',
+    location: 'Austin, TX',
+    role: 'Frontend Developer',
+    company: 'HealthTech Partners',
+    status: 'Contacted',
+    source: 'Apollo Scraper',
+    rating: 4,
+    skills: ['React', 'JavaScript', 'Tailwind', 'Redux'],
+    experience: '5 years',
+    seniority: 'Mid-Level',
+    lastContact: '2024-03-19',
+  },
+  {
+    id: 'c_103',
+    name: 'Sarah Jenkins',
+    email: 'sjenkins.pm@gmail.com',
+    phone: '+1 (206) 555-0811',
+    location: 'Seattle, WA',
+    role: 'Senior Product Manager',
+    company: 'CloudScale Systems',
+    status: 'New',
+    source: 'Apollo Scraper',
+    rating: 5,
+    skills: ['Agile', 'Jira', 'Roadmapping', 'B2B SaaS'],
+    experience: '9 years',
+    seniority: 'Senior',
+    lastContact: '2024-03-20',
+    notes: 'Exceptional background in scaling B2B SaaS platforms.',
+  },
+  {
+    id: 'c_104',
+    name: 'David Kim',
+    email: 'dkim.product@yahoo.com',
+    phone: '+1 (650) 555-0992',
+    location: 'Palo Alto, CA',
+    role: 'Product Manager',
+    company: 'EduTech Innovations',
+    status: 'Engaged',
+    source: 'Apollo Scraper',
+    rating: 4,
+    skills: ['Product Strategy', 'User Research', 'Data Analytics'],
+    experience: '4 years',
+    seniority: 'Mid-Level',
+    lastContact: '2024-03-18',
+  }
+];
 
 // ========================================
 // Mock Jobs
 // ========================================
 export let mockJobs: Job[] = [
   {
-    id: 'role-1',
-    title: 'Role 1 (Placeholder)',
-    client: 'Client Company',
-    requirements: 'Enter requirements here...',
-    location: 'Remote',
-    salaryMin: 100000,
-    salaryMax: 150000,
+    id: 'j_01',
+    title: 'Senior React Engineer',
+    client: 'Stripe',
+    clientId: 'cl_01',
+    location: 'Remote (US)',
+    type: 'Full-time',
+    salary: '$160k - $200k',
     status: 'Open',
-    createdAt: new Date().toISOString(),
+    priority: 'High',
+    postedDate: '2024-03-15',
+    applicants: 2,
+    requirements: ['React', 'TypeScript', '8+ years experience', 'System Design'],
   },
   {
-    id: 'role-2',
-    title: 'Role 2 (Placeholder)',
-    client: 'Client Company',
-    requirements: 'Enter requirements here...',
-    location: 'Remote',
-    salaryMin: 100000,
-    salaryMax: 150000,
+    id: 'j_02',
+    title: 'Senior Product Manager',
+    client: 'Notion',
+    clientId: 'cl_02',
+    location: 'San Francisco, CA / Hybrid',
+    type: 'Full-time',
+    salary: '$150k - $180k',
     status: 'Open',
-    createdAt: new Date().toISOString(),
+    priority: 'Medium',
+    postedDate: '2024-03-10',
+    applicants: 2,
+    requirements: ['B2B SaaS', 'Agile', '5+ years PM experience', 'Data-driven'],
   }
 ];
 
@@ -38,12 +111,6 @@ export let mockJobs: Job[] = [
 // ========================================
 export let mockClients: Client[] = [
   {
-    id: 'cl1',
-    companyName: 'Client Company',
-    contactPerson: 'Client Contact',
-    email: 'contact@client.com',
-    openRoles: 2,
-    status: 'Active',
     notes: 'New client added via scraper integration.',
     createdAt: new Date().toISOString(),
   }

@@ -224,8 +224,8 @@ export function Header() {
           </button>
         )}
 
-        <Link href="/" className="w-8 h-8 rounded-full bg-accent/5 border border-accent/20 flex items-center justify-center ml-1 cursor-pointer hover:bg-accent/10 transition-colors overflow-hidden">
-          <Image src="/logo.png" alt="Ion Recruitment" width={20} height={20} className="object-contain dark:invert-0 invert opacity-90" />
+        <Link href="/" className="w-10 h-10 rounded-full bg-accent/5 border border-accent/20 flex items-center justify-center ml-1 cursor-pointer hover:bg-accent/10 transition-colors overflow-hidden">
+          <Image src="/logo.png" alt="Ion Recruitment" width={36} height={36} className="object-cover scale-150 dark:invert-0 invert opacity-100" />
         </Link>
       </div>
 
