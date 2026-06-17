@@ -27,7 +27,7 @@ export const candidateSchema = z.object({
   aiFitScore: z.number().optional(),
   source: z.string().optional(),
   sequenceId: z.string().optional(),
-  sequenceStatus: z.enum(['Unenrolled', 'Active', 'Completed', 'Replied']).default('Unenrolled'),
+  sequenceStatus: z.enum(['Unenrolled', 'Active', 'Completed', 'Replied']).optional(),
   createdAt: z.string().optional(),
 });
 
