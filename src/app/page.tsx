@@ -26,6 +26,8 @@ import {
   mockDailyActions,
   mockAIInsights,
   mockCandidates,
+  mockJobs,
+  mockClients,
   mockPlacements,
   statusColors,
 } from '@/lib/mock-data';
