@@ -122,49 +122,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-1 ml-2">
-        <div className="relative" ref={notifRef}>
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className={`relative p-2 rounded-md transition-all duration-150 ${showNotifications ? 'bg-[var(--surface-elevated)] text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)]'}`}
-          >
-            <Bell className="w-[18px] h-[18px]" strokeWidth={1.75} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full" />
-          </button>
-
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl overflow-hidden animate-slide-up z-50">
-              <div className="px-4 py-3 border-b border-border bg-[var(--surface-elevated)] flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-text-primary">Onboarding Checklist</h3>
-                <span className="badge badge-accent text-[10px]">4 tasks</span>
-              </div>
-              <div className="max-h-[400px] overflow-y-auto">
-                {onboardingTasks.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => {
-                      setShowNotifications(false);
-                      showCredentialPrompt({ service: task.id as any, feature: 'System Integration' });
-                    }}
-                    className="w-full text-left p-4 border-b border-border last:border-b-0 hover:bg-[var(--surface-elevated)] transition-colors flex items-start gap-3 group"
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${task.bg} ${task.color}`}>
-                      <task.icon className="w-4 h-4" strokeWidth={1.75} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-text-secondary mt-0.5">
-                        {task.desc}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-accent transition-colors mt-2" strokeWidth={1.75} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Notifications and onboarding tasks removed for MVP */}
 
         {mounted && (
           <button
