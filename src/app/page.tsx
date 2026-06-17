@@ -6,6 +6,7 @@ import {
   Search,
   Users,
   Building2,
+  Briefcase,
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -13,15 +14,20 @@ import { useAppStore } from '@/store/app-store';
 import {
   mockCandidates,
   mockClients,
+  mockJobs,
   statusColors,
 } from '@/lib/mock-data';
 
 export default function DashboardPage() {
-  const { hiddenCandidateIds, hiddenClientIds } = useAppStore();
+  const { hiddenCandidateIds, hiddenClientIds, hiddenJobIds } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   
   const activeCandidates = mockCandidates
     .filter(c => !hiddenCandidateIds.includes(c.id))
+    .slice(0, 5);
+
+  const activeJobs = mockJobs
+    .filter(j => !hiddenJobIds?.includes(j.id) && j.status === 'Open')
     .slice(0, 5);
 
   const activeClients = mockClients
@@ -69,9 +75,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         
-        {/* Left Column: Recent Candidates */}
+        {/* Column 1: Recent Candidates */}
         <div className="card flex flex-col min-h-[400px]">
           <div className="card-header border-b border-border flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -105,7 +111,42 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Active Clients */}
+        {/* Column 2: Open Roles (Jobs) */}
+        <div className="card flex flex-col min-h-[400px]">
+          <div className="card-header border-b border-border flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-accent" />
+              <h2 className="text-base font-semibold text-text-primary">Open Roles</h2>
+            </div>
+            <Link href="/jobs" className="text-sm font-medium text-accent hover:text-accent-hover flex items-center">
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+          <div className="card-body p-0 divide-y divide-border flex-1">
+            {activeJobs.length > 0 ? (
+              activeJobs.map(job => (
+                <Link key={job.id} href={`/jobs/${job.id}`} className="block p-4 hover:bg-[var(--surface-elevated)] transition-colors group">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold text-text-primary group-hover:text-accent transition-colors">{job.title}</h3>
+                    <p className="text-xs text-text-secondary">{job.client} &middot; {job.location}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`badge ${statusColors[job.status] || 'badge-blue'}`}>{job.status}</span>
+                      {job.priority === 'High' && <span className="badge badge-red">High Priority</span>}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="p-8 text-center flex flex-col items-center justify-center text-text-tertiary h-full">
+                <Briefcase className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm font-medium text-text-secondary">No open roles</p>
+                <p className="text-xs mt-1">Add jobs to track your hiring goals.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Column 3: Active Clients */}
         <div className="card flex flex-col min-h-[400px]">
           <div className="card-header border-b border-border flex justify-between items-center">
             <div className="flex items-center gap-2">
