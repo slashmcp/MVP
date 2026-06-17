@@ -1,4 +1,9 @@
-import { Candidate, Job, Client, Placement, DashboardStats, DailyAction, AIInsight } from './schemas';
+import { Candidate, Job, Client, Placement, DashboardStats, DailyAction, AIInsight, OutreachLog } from './schemas';
+
+// ========================================
+// Mock Outreach Logs
+// ========================================
+export let mockOutreachLogs: OutreachLog[] = [];
 
 // ========================================
 // Mock Candidates

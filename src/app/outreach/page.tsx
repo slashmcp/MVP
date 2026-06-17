@@ -41,48 +41,7 @@ Best regards,
 [Your Name]
 Recruitment Consultant`;
 
-const mockCommHistory = [
-  {
-    id: '1',
-    to: 'Sarah Chen',
-    entityId: 'c1',
-    entityType: 'candidate' as const,
-    subject: 'Exciting Senior Full-Stack Opportunity',
-    date: '2026-06-14',
-    status: 'Sent' as const,
-    type: 'Outreach' as const,
-  },
-  {
-    id: '2',
-    to: 'Marcus Johnson',
-    entityId: 'c2',
-    entityType: 'candidate' as const,
-    subject: 'Interview Prep — DataFlow Analytics ML Engineer',
-    date: '2026-06-15',
-    status: 'Opened' as const,
-    type: 'Interview Invite' as const,
-  },
-  {
-    id: '3',
-    to: 'Amanda Foster (TechVentures)',
-    entityId: 'cl1',
-    entityType: 'client' as const,
-    subject: 'Weekly Pipeline Update — Engineering Roles',
-    date: '2026-06-13',
-    status: 'Replied' as const,
-    type: 'Client Update' as const,
-  },
-  {
-    id: '4',
-    to: 'James Park',
-    entityId: 'c4',
-    entityType: 'candidate' as const,
-    subject: 'Following Up — Product Designer Role',
-    date: '2026-06-10',
-    status: 'Sent' as const,
-    type: 'Follow-up' as const,
-  },
-];
+const mockCommHistory: any[] = [];
 
 const statusBadge: Record<string, string> = {
   Draft: 'badge-neutral',
@@ -93,7 +52,7 @@ const statusBadge: Record<string, string> = {
 
 export default function OutreachPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('outreach');
-  const [selectedCandidate, setSelectedCandidate] = useState('c1');
+  const [selectedCandidate, setSelectedCandidate] = useState('c_101');
   const [emailBody, setEmailBody] = useState(mockEmailDraft);
   const [subject, setSubject] = useState('Exciting Senior Full-Stack Opportunity at TechVentures');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -228,33 +187,41 @@ export default function OutreachPage() {
             <h2 className="text-base font-semibold text-text-primary">Recent Communications</h2>
           </div>
           <div className="divide-y divide-border">
-            {mockCommHistory.map((comm) => (
-              <div
-                key={comm.id}
-                className="px-5 py-3.5 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Link
-                    href={`/${comm.entityType}s/${comm.entityId}`}
-                    className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
-                  >
-                    {comm.to}
-                  </Link>
-                  <span className={`badge text-[10px] ${statusBadge[comm.status]}`}>
-                    {comm.status}
-                  </span>
+            {mockCommHistory.length > 0 ? (
+              mockCommHistory.map((comm) => (
+                <div
+                  key={comm.id}
+                  className="px-5 py-3.5 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <Link
+                      href={`/${comm.entityType}s/${comm.entityId}`}
+                      className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
+                    >
+                      {comm.to}
+                    </Link>
+                    <span className={`badge text-[10px] ${statusBadge[comm.status]}`}>
+                      {comm.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-secondary truncate">{comm.subject}</p>
+                  <div className="flex items-center gap-2 mt-2 text-[10px] text-text-tertiary">
+                    <Clock className="w-3 h-3" strokeWidth={1.75} />
+                    {new Date(comm.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                    <span className="badge badge-neutral text-[9px] px-1.5 py-0">{comm.type}</span>
+                  </div>
                 </div>
-                <p className="text-xs text-text-secondary truncate">{comm.subject}</p>
-                <div className="flex items-center gap-2 mt-2 text-[10px] text-text-tertiary">
-                  <Clock className="w-3 h-3" strokeWidth={1.75} />
-                  {new Date(comm.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                  <span className="badge badge-neutral text-[9px] px-1.5 py-0">{comm.type}</span>
-                </div>
+              ))
+            ) : (
+              <div className="px-5 py-8 text-center flex flex-col items-center justify-center text-text-tertiary h-full">
+                <Mail className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm font-medium text-text-secondary">No recent communications</p>
+                <p className="text-xs mt-1">Sent emails will appear here.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
