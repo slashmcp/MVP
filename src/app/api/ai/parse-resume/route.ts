@@ -40,6 +40,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No text could be extracted from the PDF' }, { status: 400 });
     }
 
+    let resumeUrl = '';
+
+    // If Vercel Blob token is configured, use it. Otherwise fallback to local.
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { put } = require('@vercel/blob');
+      const safeFilename = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, '_') : 'resume.pdf';
+      const blob = await put(`resumes/${Date.now()}-${safeFilename}`, file, {
+        access: 'public',
+      });
+      resumeUrl = blob.url;
+    } else {
+      // Local fallback for development if Blob isn't set up yet
+      const fs = require('fs');
+      const path = require('path');
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      const safeFilename = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, '_') : 'resume.pdf';
+      const filename = `${Date.now()}-${safeFilename}`;
+      const filePath = path.join(uploadsDir, filename);
+      
+      fs.writeFileSync(filePath, buffer);
+      resumeUrl = `/uploads/${filename}`;
+    }
+
     const openai = getOpenAIClient();
     
     // If OpenAI is not configured, return mock data
@@ -47,7 +75,7 @@ export async function POST(request: Request) {
       console.log('OpenAI not configured, returning mock parsed data.');
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 2000));
-      return NextResponse.json(MOCK_RESPONSE);
+      return NextResponse.json({ ...MOCK_RESPONSE, resumeUrl });
     }
 
     // Call OpenAI to extract structured data
@@ -84,6 +112,9 @@ Return EXACTLY a JSON object matching this schema. Do not include markdown forma
 
     const resultText = completion.choices[0].message.content || '{}';
     const parsedData = JSON.parse(resultText);
+
+    // Add the URL to the response
+    parsedData.resumeUrl = resumeUrl;
 
     return NextResponse.json(parsedData);
 

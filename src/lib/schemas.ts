@@ -10,6 +10,7 @@ export const candidateSchema = z.object({
   phone: z.string().optional(),
   resume: z.string().optional(),
   linkedinUrl: z.string().url().optional(),
+  websiteUrl: z.string().url().optional(),
   skills: z.array(z.string()).default([]),
   status: z.enum([
     'New',

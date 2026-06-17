@@ -10,6 +10,8 @@ export const mockCandidates: Candidate[] = [
     email: 'sarah.chen@email.com',
     phone: '+1 (555) 234-5678',
     linkedinUrl: 'https://linkedin.com/in/sarachen',
+    websiteUrl: 'https://sarahchen.dev',
+    resume: 'https://example.com/sarah-chen-resume.pdf',
     skills: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'AWS'],
     status: 'Engaged',
     notes: 'Strong full-stack background. 6 years experience. Currently at Series B startup.',

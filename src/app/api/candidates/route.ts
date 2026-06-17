@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         body.phone || '',
         body.resume || '',
         body.linkedinUrl || '',
+        body.websiteUrl || '',
         (body.skills || []).join(', '),
         body.status || 'New',
         body.notes || '',

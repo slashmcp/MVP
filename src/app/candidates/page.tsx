@@ -16,10 +16,15 @@ import {
   Loader2,
   TableProperties,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { mockCandidates, statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
 import { useAppStore } from '@/store/app-store';
+
+type CandidateWithMatch = Candidate & {
+  aiMatch?: { score: number; reason: string };
+};
 
 export default function CandidatesPage() {
   const [search, setSearch] = useState('');
@@ -27,20 +32,67 @@ export default function CandidatesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
-  const { showCredentialPrompt, hiddenCandidateIds, hideCandidate } = useAppStore();
+  const [isAiSearch, setIsAiSearch] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
+
+  const { showCredentialPrompt, hiddenCandidateIds, hideCandidate, addToast } = useAppStore();
+
+  const performAiSearch = async () => {
+    if (!search.trim()) {
+      setAiResults(null);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      const availableCandidates = mockCandidates.filter(c => !hiddenCandidateIds.includes(c.id));
+      
+      const response = await fetch('/api/ai/semantic-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: search,
+          candidates: availableCandidates,
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const data = await response.json();
+      setAiResults(data.results || []);
+    } catch (error) {
+      console.error(error);
+      addToast({ type: 'error', message: 'Failed to perform semantic search' });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const filtered = useMemo(() => {
-    return mockCandidates.filter((c) => {
-      if (hiddenCandidateIds.includes(c.id)) return false;
-      const matchSearch =
+    let base = mockCandidates.filter((c) => !hiddenCandidateIds.includes(c.id)) as CandidateWithMatch[];
+
+    if (isAiSearch && aiResults) {
+      base = aiResults
+        .filter(r => r.score >= 30) // Only show somewhat reasonable matches
+        .map(r => {
+          const candidate = base.find(c => c.id === r.candidateId);
+          if (!candidate) return null;
+          return { ...candidate, aiMatch: r };
+        })
+        .filter(Boolean) as CandidateWithMatch[];
+    } else if (!isAiSearch) {
+      // Normal text search
+      const matchSearch = (c: Candidate) =>
         !search ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         c.skills.some((s) => s.toLowerCase().includes(search.toLowerCase())) ||
         c.email?.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === 'all' || c.status === statusFilter;
-      return matchSearch && matchStatus;
-    });
-  }, [search, statusFilter, hiddenCandidateIds]);
+      base = base.filter(matchSearch);
+    }
+
+    return base.filter((c) => statusFilter === 'all' || c.status === statusFilter);
+  }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -77,16 +129,51 @@ export default function CandidatesPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
-          <input
-            type="text"
-            placeholder="Search by name, skill, or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input pl-10"
-            id="candidate-search"
-          />
+        <div className="flex items-center gap-2 flex-1 min-w-[300px]">
+          <div className="relative flex-1 max-w-sm flex items-center">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
+            <input
+              type="text"
+              placeholder={isAiSearch ? "Ask AI: e.g. 'Senior React dev with AWS'" : "Search by name, skill, or email..."}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                if (isAiSearch && !e.target.value) setAiResults(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && isAiSearch) {
+                  performAiSearch();
+                }
+              }}
+              className={`input pl-10 ${isAiSearch ? 'pr-10 border-accent/30 focus:border-accent/50 focus:ring-accent/20 bg-accent/5' : ''}`}
+              id="candidate-search"
+            />
+            {isAiSearch && search && (
+               <button 
+                onClick={performAiSearch} 
+                disabled={isSearching} 
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-accent hover:bg-accent/10 transition-colors"
+                title="Search with AI"
+               >
+                 {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+               </button>
+            )}
+          </div>
+          <button
+            onClick={() => {
+               setIsAiSearch(!isAiSearch);
+               setAiResults(null);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all shrink-0 ${
+              isAiSearch 
+                ? 'bg-accent/10 border-accent/20 text-accent' 
+                : 'bg-surface border-border text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)]'
+            }`}
+            title="Toggle Semantic AI Search"
+          >
+            <Sparkles className="w-4 h-4" strokeWidth={1.75} />
+            AI Search
+          </button>
         </div>
         <div className="flex gap-1.5 flex-wrap">
           <button
@@ -135,14 +222,27 @@ export default function CandidatesPage() {
                   <td>
                     <Link
                       href={`/candidates/${candidate.id}`}
-                      className="group"
+                      className="group block"
                     >
-                      <div className="font-medium text-text-primary group-hover:text-accent transition-colors">
+                      <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
                         {candidate.name}
+                        {candidate.aiMatch && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                            candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
+                          }`}>
+                            {candidate.aiMatch.score}% Match
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-text-secondary mt-0.5">
                         {candidate.email}
                       </div>
+                      {candidate.aiMatch && (
+                        <div className="text-xs text-text-secondary mt-1.5 flex items-start gap-1.5 bg-accent/5 p-1.5 rounded border border-accent/10">
+                          <Sparkles className="w-3.5 h-3.5 text-accent mt-0.5 shrink-0" />
+                          <span className="italic leading-relaxed">{candidate.aiMatch.reason}</span>
+                        </div>
+                      )}
                     </Link>
                   </td>
                   <td>
@@ -245,6 +345,8 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
     email: '',
     phone: '',
     linkedinUrl: '',
+    websiteUrl: '',
+    resume: '',
     skills: '',
     notes: '',
   });
@@ -303,6 +405,8 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
         email: parsedData.email || '',
         phone: parsedData.phone || '',
         linkedinUrl: parsedData.linkedinUrl || '',
+        websiteUrl: '',
+        resume: parsedData.resumeUrl || '',
         skills: Array.isArray(parsedData.skills) ? parsedData.skills.join(', ') : '',
         notes: parsedData.notes || '',
       });
@@ -406,9 +510,19 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
                 <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="input" placeholder="+1 (555) 000-0000" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">LinkedIn URL</label>
+                <input type="url" name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="input" placeholder="https://linkedin.com/in/..." />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Personal Website</label>
+                <input type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="input" placeholder="https://..." />
+              </div>
+            </div>
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">LinkedIn URL</label>
-              <input type="url" name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="input" placeholder="https://linkedin.com/in/..." />
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Resume URL (Optional)</label>
+              <input type="url" name="resume" value={formData.resume} onChange={handleChange} className="input" placeholder="Link to PDF/Doc..." />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Skills (comma separated)</label>

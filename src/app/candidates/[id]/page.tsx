@@ -14,6 +14,8 @@ import {
   Target,
   Clock,
   MessageSquare,
+  Globe,
+  FileText,
 } from 'lucide-react';
 import { mockCandidates, mockJobs, statusColors } from '@/lib/mock-data';
 
@@ -91,15 +93,39 @@ export default function CandidateDetailPage({
                 {candidate.seniority && (
                   <span className="badge badge-neutral">{candidate.seniority}</span>
                 )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                {candidate.resume && (
+                  <a
+                    href={candidate.resume}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-[var(--surface-elevated)] border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
+                  >
+                    <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    View Resume
+                  </a>
+                )}
                 {candidate.linkedinUrl && (
                   <a
                     href={candidate.linkedinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-[var(--surface-elevated)] border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
                   >
-                    <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
+                    <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
                     LinkedIn
+                  </a>
+                )}
+                {candidate.websiteUrl && (
+                  <a
+                    href={candidate.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-[var(--surface-elevated)] border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
+                  >
+                    <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    Website
                   </a>
                 )}
               </div>
