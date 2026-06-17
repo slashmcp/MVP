@@ -9,18 +9,51 @@ import {
   Mail,
   ExternalLink,
   Trash2,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { mockClients, statusColors } from '@/lib/mock-data';
 
 export default function ClientsPage() {
+  const [localClients, setLocalClients] = useState(mockClients);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  const [showSourcing, setShowSourcing] = useState(false);
+  const [sourcingQuery, setSourcingQuery] = useState('');
+  const [isSourcing, setIsSourcing] = useState(false);
 
   const { showCredentialPrompt, hiddenClientIds, hideClient } = useAppStore();
 
+  const handleSourceClients = async () => {
+    if (!sourcingQuery) return;
+    setIsSourcing(true);
+    try {
+      const res = await fetch('/api/sourcing/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: sourcingQuery }),
+      });
+      const data = await res.json();
+      if (data.error === 'MISSING_API_KEY') {
+         showCredentialPrompt({ service: 'serper', feature: 'Live Client Sourcing' });
+         setIsSourcing(false);
+         return;
+      }
+      if (data.success) {
+        setLocalClients(prev => [...data.clients, ...prev]);
+        setShowSourcing(false);
+        setSourcingQuery('');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setIsSourcing(false);
+  };
+
   const filtered = useMemo(() => {
-    return mockClients.filter((c) => {
+    return localClients.filter((c) => {
       if (hiddenClientIds.includes(c.id)) return false;
       const matchSearch =
         !search ||
@@ -29,9 +62,9 @@ export default function ClientsPage() {
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter, hiddenClientIds]);
+  }, [search, statusFilter, hiddenClientIds, localClients]);
 
-  const availableClients = useMemo(() => mockClients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds]);
+  const availableClients = useMemo(() => localClients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds, localClients]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -42,15 +75,52 @@ export default function ClientsPage() {
             {availableClients.length} total &middot; {availableClients.filter((c) => c.status === 'Active').length} active
           </p>
         </div>
-        <button 
-          className="btn btn-primary" 
-          id="add-client-btn"
-          onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Client' })}
-        >
-          <Plus className="w-4 h-4" strokeWidth={1.75} />
-          Add Client
-        </button>
+        <div className="flex gap-2">
+          <button 
+            className="btn bg-accent-soft text-accent border border-accent/20 hover:bg-accent/10"
+            onClick={() => setShowSourcing(!showSourcing)}
+          >
+            <Sparkles className="w-4 h-4" strokeWidth={1.75} />
+            AI Source
+          </button>
+          <button 
+            className="btn btn-primary" 
+            id="add-client-btn"
+            onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Client' })}
+          >
+            <Plus className="w-4 h-4" strokeWidth={1.75} />
+            Add Client
+          </button>
+        </div>
       </div>
+
+      {showSourcing && (
+        <div className="card bg-[var(--surface-elevated)] p-4 border border-accent/20 flex gap-3 animate-slide-down">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+            <input 
+              type="text" 
+              className="input pl-10 w-full" 
+              placeholder="e.g. Software companies in Surrey hiring..."
+              value={sourcingQuery}
+              onChange={(e) => setSourcingQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSourceClients()}
+              autoFocus
+            />
+          </div>
+          <button 
+            className="btn btn-primary"
+            onClick={handleSourceClients}
+            disabled={isSourcing || !sourcingQuery}
+          >
+            {isSourcing ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Sourcing...</>
+            ) : (
+              'Find Clients'
+            )}
+          </button>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -94,7 +164,7 @@ export default function ClientsPage() {
                 {client.companyName.slice(0, 2).toUpperCase()}
               </div>
               <div className="flex items-center gap-2">
-                <span className={`badge ${statusColors[client.status]}`}>{client.status}</span>
+                <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -120,10 +190,10 @@ export default function ClientsPage() {
                 <Briefcase className="w-3.5 h-3.5" strokeWidth={1.75} />
                 {client.openRoles} open role{client.openRoles !== 1 ? 's' : ''}
               </span>
-              {client.email && (
+              {client.contactEmail && (
                 <span className="flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                  {client.email}
+                  {client.contactEmail}
                 </span>
               )}
             </div>
