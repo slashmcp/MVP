@@ -4,8 +4,8 @@ import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Recruitment Command Center',
-  description: 'AI-powered recruitment platform — centralize candidates, jobs, clients, outreach, and placements.',
+  title: 'Ion Recruitment',
+  description: 'AI-Powered Sourcing and Outreach Engine',
 };
 
 export default function RootLayout({

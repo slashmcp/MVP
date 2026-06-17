@@ -63,12 +63,13 @@ export function Sidebar() {
         {/* Logo */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-border">
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" onClick={() => setSidebarMobileOpen(false)}>
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-              <BarChart3 className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-transparent border border-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {/* Fallback geometric icon resembling the Ion logo */}
+              <Crosshair className="w-5 h-5 text-accent" strokeWidth={1} />
             </div>
             {(!sidebarCollapsed || sidebarMobileOpen) && (
-              <span className="text-sm font-semibold text-text-primary whitespace-nowrap overflow-hidden lg:block">
-                RecruitCenter
+              <span className="text-sm font-semibold text-text-primary whitespace-nowrap overflow-hidden lg:block uppercase tracking-wider">
+                Ion Recruitment
               </span>
             )}
           </Link>
