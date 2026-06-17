@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAppStore } from '@/store/app-store';
 import {
   mockDashboardStats,
   mockDailyActions,
@@ -87,7 +88,14 @@ const insightColors = {
 };
 
 export default function DashboardPage() {
-  const stats = mockDashboardStats;
+  const { hiddenCandidateIds, hiddenJobIds, hiddenClientIds } = useAppStore();
+  
+  const stats = {
+    ...mockDashboardStats,
+    activeCandidates: mockCandidates.filter(c => !hiddenCandidateIds.includes(c.id) && c.status !== 'Rejected' && c.status !== 'Placed').length,
+    activeJobs: mockJobs.filter(j => !hiddenJobIds.includes(j.id) && j.status === 'Open').length,
+    activeClients: mockClients.filter(c => !hiddenClientIds.includes(c.id) && c.status === 'Active').length,
+  };
   const [actionsFilter, setActionsFilter] = useState<'all' | 'high' | 'medium'>('all');
 
   const filteredActions =

@@ -31,13 +31,15 @@ export default function ClientsPage() {
     });
   }, [search, statusFilter, hiddenClientIds]);
 
+  const availableClients = useMemo(() => mockClients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Clients</h1>
           <p className="text-sm text-text-secondary mt-1">
-            {mockClients.length} total &middot; {mockClients.filter((c) => c.status === 'Active').length} active
+            {availableClients.length} total &middot; {availableClients.filter((c) => c.status === 'Active').length} active
           </p>
         </div>
         <button 

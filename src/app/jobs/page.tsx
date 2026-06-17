@@ -33,13 +33,15 @@ export default function JobsPage() {
     });
   }, [search, statusFilter, hiddenJobIds]);
 
+  const availableJobs = useMemo(() => mockJobs.filter((j) => !hiddenJobIds.includes(j.id)), [hiddenJobIds]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Jobs</h1>
           <p className="text-sm text-text-secondary mt-1">
-            {mockJobs.length} total &middot; {mockJobs.filter((j) => j.status === 'Open').length} open
+            {availableJobs.length} total &middot; {availableJobs.filter((j) => j.status === 'Open').length} open
           </p>
         </div>
         <button 
