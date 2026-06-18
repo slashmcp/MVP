@@ -1,17 +1,17 @@
 'use client';
 
-import { mockPlacements } from '@/lib/mock-data';
 import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 
 export default function PlacementsPage() {
-  const totalRevenue = mockPlacements.reduce((sum, p) => sum + p.revenue, 0);
+  const placements: any[] = [];
+  const totalRevenue = placements.reduce((sum, p) => sum + p.revenue, 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-semibold text-text-primary">Placements</h1>
         <p className="text-sm text-text-secondary mt-1">
-          {mockPlacements.length} total placements
+          {placements.length} total placements
         </p>
       </div>
 
@@ -23,7 +23,7 @@ export default function PlacementsPage() {
               <TrendingUp className="w-4 h-4 text-success" strokeWidth={1.75} />
             </div>
           </div>
-          <div className="kpi-value">{mockPlacements.length}</div>
+          <div className="kpi-value">{placements.length}</div>
           <div className="kpi-label">Total Placements</div>
         </div>
         <div className="kpi-card">
@@ -41,7 +41,7 @@ export default function PlacementsPage() {
               <DollarSign className="w-4 h-4 text-warning" strokeWidth={1.75} />
             </div>
           </div>
-          <div className="kpi-value">${(totalRevenue / mockPlacements.length / 1000).toFixed(1)}k</div>
+          <div className="kpi-value">${(totalRevenue / (placements.length || 1) / 1000).toFixed(1)}k</div>
           <div className="kpi-label">Avg Revenue / Placement</div>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function PlacementsPage() {
               </tr>
             </thead>
             <tbody>
-              {mockPlacements.map((p) => (
+              {placements.map((p) => (
                 <tr key={p.id}>
                   <td className="font-medium text-text-primary">{p.candidateName}</td>
                   <td className="text-text-secondary">{p.jobTitle}</td>

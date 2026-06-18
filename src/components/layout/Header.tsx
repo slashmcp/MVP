@@ -20,12 +20,12 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { mockCandidates, mockJobs, mockClients } from '@/lib/mock-data';
+// No mock data needed
 
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { globalSearch, setGlobalSearch, setSidebarMobileOpen, showCredentialPrompt } = useAppStore();
+  const { globalSearch, setGlobalSearch, setSidebarMobileOpen, showCredentialPrompt, dbCandidates, dbJobs, dbClients } = useAppStore();
   const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -47,24 +47,18 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const onboardingTasks = [
-    { id: 'google-sheets', title: 'Connect Google Sheets', desc: 'Required for database sync', icon: Database, color: 'text-green-500', bg: 'bg-green-500/10' },
-    { id: 'openai', title: 'Connect OpenAI', desc: 'Required for AI insights', icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { id: 'outlook', title: 'Connect Outlook', desc: 'Required for email outreach', icon: Mail, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { id: 'n8n', title: 'Connect n8n', desc: 'Required for automations', icon: Workflow, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { id: 'serper', title: 'Connect Google Search', desc: 'Required for live sourcing (Serper.dev)', icon: Search, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-    { id: 'apify', title: 'Connect Apify', desc: 'Required for LinkedIn scraping', icon: Database, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-  ];
-
   const searchResults = useMemo(() => {
     if (!globalSearch || globalSearch.length < 2) return null;
     const q = globalSearch.toLowerCase();
+    const cands = dbCandidates || [];
+    const jobs = dbJobs || [];
+    const clients = dbClients || [];
     return {
-      candidates: mockCandidates.filter(c => c.name.toLowerCase().includes(q) || c.skills.some(s => s.toLowerCase().includes(q))),
-      jobs: mockJobs.filter(j => j.title.toLowerCase().includes(q) || j.client.toLowerCase().includes(q)),
-      clients: mockClients.filter(c => c.companyName.toLowerCase().includes(q)),
+      candidates: cands.filter(c => c.name.toLowerCase().includes(q) || c.skills?.some((s: string) => s.toLowerCase().includes(q))),
+      jobs: jobs.filter(j => j.title.toLowerCase().includes(q) || j.client.toLowerCase().includes(q)),
+      clients: clients.filter(c => c.companyName.toLowerCase().includes(q)),
     };
-  }, [globalSearch]);
+  }, [globalSearch, dbCandidates, dbJobs, dbClients]);
 
   return (
     <header className="h-14 border-b border-border bg-[var(--surface-overlay)] backdrop-blur-md sticky top-0 z-20">

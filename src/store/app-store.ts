@@ -35,6 +35,16 @@ interface AppState {
   credentialPrompt: CredentialPromptState | null;
   showCredentialPrompt: (state: CredentialPromptState) => void;
   dismissCredentialPrompt: () => void;
+  bypassedServices: string[];
+  bypassService: (service: string) => void;
+
+  // Real Database State
+  isDbLoading: boolean;
+  dbCandidates: any[];
+  dbJobs: any[];
+  dbClients: any[];
+  dbSequences: any[];
+  fetchDatabase: () => Promise<void>;
 }
 
 export interface Toast {
@@ -45,7 +55,7 @@ export interface Toast {
 }
 
 export interface CredentialPromptState {
-  service: 'google-sheets' | 'openai' | 'outlook' | 'n8n' | 'serper' | 'apify';
+  service: 'google-sheets' | 'openai' | 'outlook' | 'n8n' | 'serper' | 'apify' | 'juicebox';
   feature: string;
 }
 
@@ -96,6 +106,32 @@ export const useAppStore = create<AppState>()(
   credentialPrompt: null,
   showCredentialPrompt: (state) => set({ credentialPrompt: state }),
   dismissCredentialPrompt: () => set({ credentialPrompt: null }),
+  bypassedServices: [],
+  bypassService: (service) => set((state) => ({ bypassedServices: [...state.bypassedServices, service] })),
+
+  isDbLoading: true,
+  dbCandidates: [],
+  dbJobs: [],
+  dbClients: [],
+  dbSequences: [],
+  fetchDatabase: async () => {
+    set({ isDbLoading: true });
+    // Dynamically import to avoid server-side issues with Zustand
+    const { getCandidates, getJobs, getClients, getSequences } = await import('@/lib/db-client');
+    const [cands, jobs, clients, sequences] = await Promise.all([
+      getCandidates(),
+      getJobs(),
+      getClients(),
+      getSequences()
+    ]);
+    set({
+      dbCandidates: cands,
+      dbJobs: jobs,
+      dbClients: clients,
+      dbSequences: sequences,
+      isDbLoading: false
+    });
+  }
     }),
     {
       name: 'recruitment-command-center-storage',

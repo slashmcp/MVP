@@ -75,10 +75,22 @@ const SERVICE_CONFIG = {
     link: 'https://console.apify.com/account/integrations',
     envVars: ['APIFY_API_TOKEN'],
   },
+  'juicebox': {
+    title: 'Juicebox API Connection Required',
+    description: 'To query candidate profiles using the AI-powered PeopleGPT engine, you need to configure your Juicebox REST API key.',
+    steps: [
+      'Create a developer account or request API access on juicebox.ai.',
+      'Retrieve your REST API Key from your account developer dashboard.',
+      'Copy the API Key.',
+      'Add the key to your .env.local file.',
+    ],
+    link: 'https://juicebox.ai',
+    envVars: ['JUICEBOX_API_KEY'],
+  },
 };
 
 export function CredentialPrompt() {
-  const { credentialPrompt, dismissCredentialPrompt } = useAppStore();
+  const { credentialPrompt, dismissCredentialPrompt, bypassService } = useAppStore();
 
   if (!credentialPrompt) return null;
 
@@ -154,7 +166,12 @@ export function CredentialPrompt() {
             <ExternalLink className="w-4 h-4 ml-1.5" strokeWidth={1.75} />
           </a>
           <button
-            onClick={dismissCredentialPrompt}
+            onClick={() => {
+              if (credentialPrompt) {
+                bypassService(credentialPrompt.service);
+              }
+              dismissCredentialPrompt();
+            }}
             className="btn btn-ghost text-sm"
           >
             Continue in Mock Mode

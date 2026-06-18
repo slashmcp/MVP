@@ -13,18 +13,18 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
-import { mockClients, statusColors } from '@/lib/mock-data';
+import { statusColors } from '@/lib/mock-data';
 
 export default function ClientsPage() {
-  const [localClients, setLocalClients] = useState(mockClients);
+  const { showCredentialPrompt, bypassedServices, hiddenClientIds, hideClient, dbClients } = useAppStore();
+  const clients = dbClients || [];
+  
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
   const [showSourcing, setShowSourcing] = useState(false);
   const [sourcingQuery, setSourcingQuery] = useState('');
   const [isSourcing, setIsSourcing] = useState(false);
-
-  const { showCredentialPrompt, hiddenClientIds, hideClient } = useAppStore();
 
   const handleSourceClients = async () => {
     if (!sourcingQuery) return;
@@ -33,7 +33,10 @@ export default function ClientsPage() {
       const res = await fetch('/api/sourcing/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: sourcingQuery }),
+        body: JSON.stringify({
+          query: sourcingQuery,
+          mock: bypassedServices.includes('serper')
+        }),
       });
       const data = await res.json();
       if (data.error === 'MISSING_API_KEY') {
@@ -42,7 +45,7 @@ export default function ClientsPage() {
          return;
       }
       if (data.success) {
-        setLocalClients(prev => [...data.clients, ...prev]);
+        // We'd update the DB here instead of local state now
         setShowSourcing(false);
         setSourcingQuery('');
       }
@@ -53,7 +56,7 @@ export default function ClientsPage() {
   };
 
   const filtered = useMemo(() => {
-    return localClients.filter((c) => {
+    return clients.filter((c) => {
       if (hiddenClientIds.includes(c.id)) return false;
       const matchSearch =
         !search ||
@@ -62,9 +65,9 @@ export default function ClientsPage() {
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter, hiddenClientIds, localClients]);
+  }, [search, statusFilter, hiddenClientIds, clients]);
 
-  const availableClients = useMemo(() => localClients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds, localClients]);
+  const availableClients = useMemo(() => clients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds, clients]);
 
   return (
     <div className="space-y-6 animate-fade-in">

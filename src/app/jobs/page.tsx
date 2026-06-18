@@ -11,17 +11,18 @@ import {
   X,
   Trash2,
 } from 'lucide-react';
-import { mockJobs, statusColors, jobPipelineStages } from '@/lib/mock-data';
+import { statusColors, jobPipelineStages } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
 
 export default function JobsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { showCredentialPrompt, hiddenJobIds, hideJob } = useAppStore();
+  const { showCredentialPrompt, hiddenJobIds, hideJob, dbJobs } = useAppStore();
+  const jobs = dbJobs || [];
 
   const filtered = useMemo(() => {
-    return mockJobs.filter((j) => {
+    return jobs.filter((j) => {
       if (hiddenJobIds.includes(j.id)) return false;
       const matchSearch =
         !search ||
@@ -31,9 +32,9 @@ export default function JobsPage() {
       const matchStatus = statusFilter === 'all' || j.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter, hiddenJobIds]);
+  }, [search, statusFilter, hiddenJobIds, jobs]);
 
-  const availableJobs = useMemo(() => mockJobs.filter((j) => !hiddenJobIds.includes(j.id)), [hiddenJobIds]);
+  const availableJobs = useMemo(() => jobs.filter((j) => !hiddenJobIds.includes(j.id)), [hiddenJobIds, jobs]);
 
   return (
     <div className="space-y-6 animate-fade-in">

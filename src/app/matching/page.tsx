@@ -10,64 +10,11 @@ import {
   ChevronRight,
   Sparkles,
   Mail,
+  Loader2
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
-import { mockCandidates, mockJobs, statusColors } from '@/lib/mock-data';
+import { statusColors } from '@/lib/mock-data';
 import type { MatchResult } from '@/lib/schemas';
-
-// Mock match results
-const mockMatchResults: MatchResult[] = [
-  {
-    candidateId: 'c_101',
-    candidateName: 'Rob Hedley',
-    jobId: 'j_01',
-    jobTitle: 'Senior Frontend Developer (React + UX/UI)',
-    fitScore: 94,
-    reasoning: 'Extensive React experience, SC cleared, and local to Surrey. Excellent fit for Safe Software frontend modernization.',
-    strengths: ['React expertise', 'Surrey local', 'SC Cleared', 'Senior level'],
-    gaps: ['UX/UI depth unclear'],
-  },
-  {
-    candidateId: 'c_bulk_17_1781737310929',
-    candidateName: 'Harikrishnan K S',
-    jobId: 'j_02',
-    jobTitle: 'AI/ML Software Engineer (C++)',
-    fitScore: 89,
-    reasoning: "Strong Machine Learning background. Matches Creativity Software's requirement for AI/ML expertise.",
-    strengths: ['Machine Learning', 'Data Science', 'Senior level'],
-    gaps: ['C++ depth unclear'],
-  },
-  {
-    candidateId: 'c_102',
-    candidateName: 'Reim Ryad',
-    jobId: 'j_01',
-    jobTitle: 'Senior Frontend Developer (React + UX/UI)',
-    fitScore: 82,
-    reasoning: 'Solid React developer. Needs to be vetted for senior-level system design skills and UX/UI crossover.',
-    strengths: ['React', 'JavaScript', 'Active candidate'],
-    gaps: ['May not be senior enough', 'No SC clearance mentioned'],
-  },
-  {
-    candidateId: 'c_bulk_11_1781737310929',
-    candidateName: 'Marco Volino',
-    jobId: 'j_02',
-    jobTitle: 'AI/ML Software Engineer (C++)',
-    fitScore: 88,
-    reasoning: 'University of Surrey Senior Lecturer. Deep academic background in ML and algorithms. Excellent for Creativity Software R&D.',
-    strengths: ['Algorithm Optimization', 'Deep academic ML background', 'Surrey local'],
-    gaps: ['Transition from academia to industry'],
-  },
-  {
-    candidateId: 'c_103',
-    candidateName: 'Igor Zaytsev',
-    jobId: 'j_01',
-    jobTitle: 'Senior Frontend Developer (React + UX/UI)',
-    fitScore: 78,
-    reasoning: 'Front-end React developer with solid fundamental skills. Good backup option for Safe Software.',
-    strengths: ['React', 'Web Development'],
-    gaps: ['No specific UX/UI design experience'],
-  },
-];
 
 type ViewMode = 'all' | 'by-job' | 'by-candidate';
 
@@ -75,10 +22,90 @@ export default function MatchingPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+  const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
+  const [isMatching, setIsMatching] = useState(false);
 
-  const { showCredentialPrompt } = useAppStore();
+  const { dbJobs, dbCandidates, showCredentialPrompt } = useAppStore();
+  const mockJobs = dbJobs || [];
+  const mockCandidates = dbCandidates || [];
 
-  const filteredResults = mockMatchResults.filter((r) => {
+  const handleRunMatching = async () => {
+    // If not configured, show prompt but we can still run it for mock results
+    // Wait, the prompt will halt execution unless we dismiss it, 
+    // but the backend handles unconfigured openai by returning a mock score.
+    // For MVP, we will run the matching for the selected items to save time.
+    setIsMatching(true);
+    setMatchResults([]);
+    
+    let candidatesToMatch = mockCandidates.filter(c => c.status !== 'Placed' && c.status !== 'Rejected');
+    let jobsToMatch = mockJobs.filter(j => j.status !== 'Filled');
+
+    // Limit matching batch based on view mode to save time/API calls
+    if (viewMode === 'by-job' && selectedJob) {
+      jobsToMatch = jobsToMatch.filter(j => j.id === selectedJob);
+    } else if (viewMode === 'by-candidate' && selectedCandidate) {
+      candidatesToMatch = candidatesToMatch.filter(c => c.id === selectedCandidate);
+    } else {
+      // In "All" view, just run a small batch (top 3 cands x top 2 jobs)
+      candidatesToMatch = candidatesToMatch.slice(0, 3);
+      jobsToMatch = jobsToMatch.slice(0, 2);
+    }
+
+    const newResults: MatchResult[] = [];
+
+    for (const job of jobsToMatch) {
+      for (const cand of candidatesToMatch) {
+        try {
+          const res = await fetch('/api/ai/match-candidates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              candidate: {
+                name: cand.name,
+                location: cand.location,
+                skills: cand.skills || [],
+                seniority: cand.seniority,
+                notes: cand.notes
+              },
+              job: {
+                title: job.title,
+                client: job.client,
+                location: job.location,
+                requirements: job.requirements
+              }
+            })
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            
+            // If the user doesn't have an API key, we should prompt them
+            if (data.source === 'mock' && newResults.length === 0) {
+              showCredentialPrompt({ service: 'openai', feature: 'Real AI Matching' });
+            }
+
+            newResults.push({
+              candidateId: cand.id,
+              candidateName: cand.name,
+              jobId: job.id,
+              jobTitle: job.title,
+              fitScore: data.fitScore,
+              reasoning: data.reasoning,
+              strengths: data.strengths || [],
+              gaps: data.gaps || [],
+            });
+          }
+        } catch (error) {
+          console.error("Match error", error);
+        }
+      }
+    }
+
+    setMatchResults(newResults);
+    setIsMatching(false);
+  };
+
+  const filteredResults = matchResults.filter((r) => {
     if (viewMode === 'by-job' && selectedJob) return r.jobId === selectedJob;
     if (viewMode === 'by-candidate' && selectedCandidate) return r.candidateId === selectedCandidate;
     return true;
@@ -96,10 +123,15 @@ export default function MatchingPage() {
         <button 
           className="btn btn-primary btn-sm" 
           id="run-matching-btn"
-          onClick={() => showCredentialPrompt({ service: 'openai', feature: 'Run AI Matching' })}
+          onClick={handleRunMatching}
+          disabled={isMatching}
         >
-          <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} />
-          Run Matching
+          {isMatching ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={1.75} />
+          ) : (
+            <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} />
+          )}
+          {isMatching ? 'Analyzing...' : 'Run Matching'}
         </button>
       </div>
 
@@ -113,7 +145,13 @@ export default function MatchingPage() {
           ] as const).map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setViewMode(key)}
+              onClick={() => {
+                setViewMode(key);
+                if (key === 'all') {
+                  setSelectedJob(null);
+                  setSelectedCandidate(null);
+                }
+              }}
               className={`btn-xs rounded-md px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
                 viewMode === key
                   ? 'bg-surface text-text-primary shadow-xs'
@@ -155,6 +193,12 @@ export default function MatchingPage() {
 
       {/* Match Cards */}
       <div className="space-y-4">
+        {matchResults.length === 0 && !isMatching && (
+          <div className="text-center py-12 text-text-secondary bg-surface border border-border border-dashed rounded-lg">
+            No matches generated yet. Click "Run Matching" to analyze profiles.
+          </div>
+        )}
+        
         {filteredResults
           .sort((a, b) => b.fitScore - a.fitScore)
           .map((match) => (
@@ -176,71 +220,61 @@ export default function MatchingPage() {
                 {/* Match details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Link
-                      href={`/candidates/${match.candidateId}`}
-                      className="text-sm font-semibold text-text-primary hover:text-accent transition-colors"
-                    >
+                    <Link href={`/candidates/${match.candidateId}`} className="text-lg font-semibold text-text-primary hover:text-accent transition-colors">
                       {match.candidateName}
                     </Link>
-                    <ArrowRight className="w-3.5 h-3.5 text-text-tertiary" strokeWidth={1.75} />
-                    <Link
-                      href={`/jobs/${match.jobId}`}
-                      className="text-sm font-semibold text-text-primary hover:text-accent transition-colors"
-                    >
+                    <ArrowRight className="w-4 h-4 text-text-tertiary mx-1" />
+                    <Link href={`/jobs/${match.jobId}`} className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
                       {match.jobTitle}
                     </Link>
                   </div>
-                  <p className="text-sm text-text-secondary mt-1 leading-relaxed">{match.reasoning}</p>
+                  
+                  <p className="text-sm text-text-secondary mb-4 leading-relaxed max-w-3xl">
+                    <Sparkles className="w-3.5 h-3.5 inline-block mr-1.5 text-accent opacity-70 align-text-bottom" />
+                    {match.reasoning}
+                  </p>
 
-                  <div className="flex gap-6 mt-3">
-                    <div>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-success">Strengths</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {match.strengths.map((s) => (
-                          <span key={s} className="badge badge-green text-[10px]">{s}</span>
-                        ))}
+                  <div className="flex flex-wrap gap-x-8 gap-y-4">
+                    {/* Strengths */}
+                    {match.strengths.length > 0 && (
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-success mb-2 block">Key Strengths</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {match.strengths.map((s: string) => (
+                            <span key={s} className="badge badge-green text-xs">{s}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-warning">Gaps</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {match.gaps.map((g) => (
-                          <span key={g} className="badge badge-amber text-[10px]">{g}</span>
-                        ))}
+                    )}
+                    
+                    {/* Gaps */}
+                    {match.gaps.length > 0 && (
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-error mb-2 block">Potential Gaps</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {match.gaps.map((g: string) => (
+                            <span key={g} className="badge badge-red text-xs">{g}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-
+                
                 {/* Actions */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  <Link
-                    href={`/outreach?candidate=${match.candidateId}`}
-                    className="btn btn-secondary btn-xs"
-                  >
-                    <Mail className="w-3 h-3" strokeWidth={1.75} />
-                    Outreach
-                  </Link>
-                  <Link
-                    href={`/candidates/${match.candidateId}`}
-                    className="btn btn-ghost btn-xs"
-                  >
-                    Profile
-                    <ChevronRight className="w-3 h-3" strokeWidth={1.75} />
+                <div className="flex flex-col gap-2 shrink-0 border-l border-border pl-5">
+                  <button className="btn btn-primary btn-sm w-full">
+                    <Mail className="w-3.5 h-3.5" />
+                    Reach Out
+                  </button>
+                  <Link href={`/candidates/${match.candidateId}`} className="btn btn-secondary btn-sm w-full">
+                    View Profile
                   </Link>
                 </div>
               </div>
             </div>
           ))}
       </div>
-
-      {filteredResults.length === 0 && (
-        <div className="empty-state">
-          <Target className="w-10 h-10 mb-3 text-text-tertiary" strokeWidth={1.25} />
-          <p className="text-sm font-medium">No matches found</p>
-          <p className="text-xs mt-1">Select a job or candidate to see AI-powered matches.</p>
-        </div>
-      )}
     </div>
   );
 }

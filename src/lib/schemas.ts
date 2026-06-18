@@ -167,3 +167,24 @@ export interface AIInsight {
   actionLabel?: string;
   actionUrl?: string;
 }
+
+// ========================================
+// Sequence Schema
+// ========================================
+export interface SequenceStep {
+  id: string;
+  type: 'Email' | 'LinkedIn' | 'Call' | string;
+  delay: string;
+  content?: string;
+}
+
+export interface Sequence {
+  id: string;
+  name: string;
+  status: string;
+  enrolled: number;
+  replied: number;
+  bounced: number;
+  steps: SequenceStep[];
+  createdAt?: string;
+}

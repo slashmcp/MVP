@@ -13,7 +13,8 @@ import {
   Phone,
   Globe,
 } from 'lucide-react';
-import { mockClients, mockJobs, statusColors } from '@/lib/mock-data';
+import { statusColors } from '@/lib/mock-data';
+import { useAppStore } from '@/store/app-store';
 
 export default function ClientDetailPage({
   params,
@@ -21,7 +22,12 @@ export default function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const client = mockClients.find((c) => c.id === id);
+  const { dbClients, dbJobs } = useAppStore();
+  
+  const clients = dbClients || [];
+  const jobs = dbJobs || [];
+  
+  const client = clients.find((c) => c.id === id);
 
   if (!client) {
     return (
@@ -35,7 +41,7 @@ export default function ClientDetailPage({
     );
   }
 
-  const clientJobs = mockJobs.filter((j) => j.client === client.companyName);
+  const clientJobs = jobs.filter((j) => j.client === client.companyName);
 
   return (
     <div className="space-y-6 animate-fade-in">

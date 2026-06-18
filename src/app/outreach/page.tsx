@@ -13,7 +13,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
-import { mockCandidates } from '@/lib/mock-data';
+// No mock data needed
 
 const templates = [
   { id: 'outreach', label: 'Initial Outreach', icon: Mail },
@@ -57,9 +57,10 @@ export default function OutreachPage() {
   const [subject, setSubject] = useState('Exciting Senior Full-Stack Opportunity at TechVentures');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const candidate = mockCandidates.find((c) => c.id === selectedCandidate);
+  const { showCredentialPrompt, dbCandidates } = useAppStore();
+  const cands = dbCandidates || [];
 
-  const { showCredentialPrompt } = useAppStore();
+  const candidate = cands.find((c) => c.id === selectedCandidate);
 
   const handleGenerate = () => {
     showCredentialPrompt({
@@ -117,7 +118,7 @@ export default function OutreachPage() {
                   className="input flex-1"
                   id="outreach-recipient"
                 >
-                  {mockCandidates.map((c) => (
+                  {cands.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} ({c.email})
                     </option>

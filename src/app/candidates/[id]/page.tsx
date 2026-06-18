@@ -17,7 +17,8 @@ import {
   Globe,
   FileText,
 } from 'lucide-react';
-import { mockCandidates, mockJobs, statusColors } from '@/lib/mock-data';
+import { statusColors } from '@/lib/mock-data';
+import { useAppStore } from '@/store/app-store';
 
 export default function CandidateDetailPage({
   params,
@@ -25,7 +26,12 @@ export default function CandidateDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const candidate = mockCandidates.find((c) => c.id === id);
+  const { dbCandidates, dbJobs } = useAppStore();
+  
+  const cands = dbCandidates || [];
+  const jobs = dbJobs || [];
+  
+  const candidate = cands.find((c) => c.id === id);
 
   if (!candidate) {
     return (
@@ -40,7 +46,7 @@ export default function CandidateDetailPage({
   }
 
   // Mock matched jobs
-  const matchedJobs = mockJobs.slice(0, 3).map((j, i) => ({
+  const matchedJobs = jobs.slice(0, 3).map((j, i) => ({
     ...j,
     fitScore: [92, 78, 65][i],
   }));
@@ -68,7 +74,7 @@ export default function CandidateDetailPage({
         <div className="px-6 py-5 flex items-start justify-between">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent text-lg font-semibold flex-shrink-0">
-              {candidate.name.split(' ').map((n) => n[0]).join('')}
+              {candidate.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div>
               <h1 className="text-xl font-semibold text-text-primary">{candidate.name}</h1>
@@ -155,7 +161,7 @@ export default function CandidateDetailPage({
             </div>
             <div className="card-body">
               <div className="flex flex-wrap gap-2">
-                {candidate.skills.map((skill) => (
+                {candidate.skills.map((skill: string) => (
                   <span key={skill} className="badge badge-blue text-xs">
                     {skill}
                   </span>

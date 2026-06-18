@@ -2,12 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import {
-  mockCandidates,
-  mockJobs,
   candidatePipelineStages,
   jobPipelineStages,
-  statusColors,
 } from '@/lib/mock-data';
+import { useAppStore } from '@/store/app-store';
 import { Users, Briefcase, Clock, Mail, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,6 +27,10 @@ const stageColors: Record<string, string> = {
 };
 
 export default function PipelinePage() {
+  const { dbCandidates, dbJobs } = useAppStore();
+  const mockCandidates = dbCandidates || [];
+  const mockJobs = dbJobs || [];
+  
   const [view, setView] = useState<ViewMode>('candidates');
 
   const stages = view === 'candidates' ? candidatePipelineStages : jobPipelineStages;
@@ -115,7 +117,7 @@ export default function PipelinePage() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-accent text-[10px] font-semibold">
-                              {candidate.name.split(' ').map((n) => n[0]).join('')}
+                              {candidate.name.split(' ').map((n: string) => n[0]).join('')}
                             </div>
                             <span className="text-sm font-medium text-text-primary">
                               {candidate.name}
@@ -123,7 +125,7 @@ export default function PipelinePage() {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1 mb-2">
-                          {candidate.skills.slice(0, 2).map((s) => (
+                          {candidate.skills.slice(0, 2).map((s: string) => (
                             <span key={s} className="text-[9px] badge badge-neutral px-1.5 py-0">
                               {s}
                             </span>

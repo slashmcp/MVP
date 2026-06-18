@@ -114,10 +114,12 @@ export async function matchCandidateToJob(candidate: {
   skills: string[];
   seniority: string;
   notes: string;
+  location: string;
 }, job: {
   title: string;
   requirements: string;
   client: string;
+  location: string;
 }): Promise<{
   fitScore: number;
   reasoning: string;
@@ -142,6 +144,11 @@ export async function matchCandidateToJob(candidate: {
       {
         role: 'system',
         content: `You are a recruitment matching AI. Compare the candidate profile to the job requirements.
+Pay STRICT attention to the following for tech roles, especially in the Surrey/London area:
+1. Location & Commute: Are they close enough (e.g., Surrey local)?
+2. Clearance: If the job requires "SC Cleared" or "SC Clearance", and the candidate does not have it, reduce the score significantly.
+3. Tech Stack Depth: Differentiate deep expertise from surface-level keyword matching.
+
 Return JSON with:
 - "fitScore": 0-100 integer
 - "reasoning": 1-2 sentence explanation
@@ -152,13 +159,15 @@ Return JSON with:
         role: 'user',
         content: `CANDIDATE:
 Name: ${candidate.name}
+Location: ${candidate.location || 'Unknown'}
 Skills: ${candidate.skills.join(', ')}
 Seniority: ${candidate.seniority}
-Notes: ${candidate.notes}
+Notes: ${candidate.notes || 'None'}
 
 JOB:
 Title: ${job.title}
 Client: ${job.client}
+Location: ${job.location || 'Unknown'}
 Requirements: ${job.requirements}`,
       },
     ],

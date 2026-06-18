@@ -18,7 +18,7 @@ import {
   Trash2,
   Sparkles,
 } from 'lucide-react';
-import { mockCandidates, statusColors, candidatePipelineStages } from '@/lib/mock-data';
+import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
 import { useAppStore } from '@/store/app-store';
 
@@ -36,7 +36,8 @@ export default function CandidatesPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
 
-  const { showCredentialPrompt, hiddenCandidateIds, hideCandidate, addToast } = useAppStore();
+  const { showCredentialPrompt, hiddenCandidateIds, hideCandidate, addToast, dbCandidates } = useAppStore();
+  const cands = dbCandidates || [];
 
   const performAiSearch = async () => {
     if (!search.trim()) {
@@ -46,7 +47,7 @@ export default function CandidatesPage() {
     
     setIsSearching(true);
     try {
-      const availableCandidates = mockCandidates.filter(c => !hiddenCandidateIds.includes(c.id));
+      const availableCandidates = cands.filter(c => !hiddenCandidateIds.includes(c.id));
       
       const response = await fetch('/api/ai/semantic-search', {
         method: 'POST',
@@ -70,7 +71,7 @@ export default function CandidatesPage() {
   };
 
   const filtered = useMemo(() => {
-    let base = mockCandidates.filter((c) => !hiddenCandidateIds.includes(c.id)) as CandidateWithMatch[];
+    let base = cands.filter((c) => !hiddenCandidateIds.includes(c.id)) as CandidateWithMatch[];
 
     if (isAiSearch && aiResults) {
       base = aiResults
@@ -86,15 +87,15 @@ export default function CandidatesPage() {
       const matchSearch = (c: Candidate) =>
         !search ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.skills.some((s) => s.toLowerCase().includes(search.toLowerCase())) ||
+        c.skills?.some((s: string) => s.toLowerCase().includes(search.toLowerCase())) ||
         c.email?.toLowerCase().includes(search.toLowerCase());
       base = base.filter(matchSearch);
     }
 
     return base.filter((c) => statusFilter === 'all' || c.status === statusFilter);
-  }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults]);
+  }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults, cands]);
 
-  const availableCandidates = useMemo(() => mockCandidates.filter((c) => !hiddenCandidateIds.includes(c.id)), [hiddenCandidateIds]);
+  const availableCandidates = useMemo(() => cands.filter((c) => !hiddenCandidateIds.includes(c.id)), [hiddenCandidateIds, cands]);
 
   return (
     <div className="space-y-6 animate-fade-in">

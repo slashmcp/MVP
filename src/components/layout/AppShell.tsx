@@ -9,18 +9,21 @@ import { CredentialPrompt } from '../ui/CredentialPrompt';
 import { useAppStore } from '@/store/app-store';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { sidebarCollapsed } = useAppStore();
+  const { sidebarCollapsed, fetchDatabase } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
+    // Fetch real DB data
+    fetchDatabase();
+
     // Hold splash screen for 1.8 seconds, then fade out
     const timer = setTimeout(() => {
       setIsFading(true);
       setTimeout(() => setShowSplash(false), 500); // 500ms fade duration
     }, 1800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [fetchDatabase]);
 
   return (
     <>
