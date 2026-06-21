@@ -1,24 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { mockJobs } from '@/lib/mock-data';
+import { getJobs } from '@/lib/db-client';
 
 export async function GET() {
-  if (isGoogleSheetsConfigured()) {
-    const data = await getSheetData(TABS.jobs);
-    if (data) {
-      const headers = data[0];
-      const rows = data.slice(1).map((row, i) => {
-        const obj: Record<string, unknown> = { id: `j${i + 1}` };
-        headers.forEach((h, j) => {
-          obj[h.toLowerCase().replace(/\s+/g, '')] = row[j] || '';
-        });
-        return obj;
-      });
-      return NextResponse.json({ data: rows, source: 'google-sheets' });
+  try {
+    const dbJobs = await getJobs();
+    if (dbJobs && dbJobs.length > 0) {
+      return NextResponse.json({ data: dbJobs, source: 'supabase' });
     }
+
+    if (isGoogleSheetsConfigured()) {
+      const data = await getSheetData(TABS.jobs);
+      if (data) {
+        const headers = data[0];
+        const rows = data.slice(1).map((row, i) => {
+          const obj: Record<string, unknown> = { id: `j${i + 1}` };
+          headers.forEach((h, j) => {
+            obj[h.toLowerCase().replace(/\s+/g, '')] = row[j] || '';
+          });
+          return obj;
+        });
+        return NextResponse.json({ data: rows, source: 'google-sheets' });
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
   }
 
-  return NextResponse.json({ data: mockJobs, source: 'mock' });
+  return NextResponse.json({ data: [], source: 'supabase' });
 }
 
 export async function POST(request: NextRequest) {

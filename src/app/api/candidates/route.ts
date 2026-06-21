@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { mockCandidates } from '@/lib/mock-data';
 import { getCandidates, createCandidate, updateCandidate } from '@/lib/db-client';
 
 export async function GET() {
@@ -35,8 +34,7 @@ export async function GET() {
     console.error('Error fetching candidates in API route:', error);
   }
 
-  // 3. Fallback to mock data
-  return NextResponse.json({ data: mockCandidates, source: 'mock' });
+  return NextResponse.json({ data: [], source: 'supabase' });
 }
 
 export async function POST(request: NextRequest) {

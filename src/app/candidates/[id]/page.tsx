@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
+import { EditCandidateModal } from '@/components/ui/EditCandidateModal';
 
 export default function CandidateDetailPage({
   params,
@@ -26,7 +27,8 @@ export default function CandidateDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { dbCandidates, dbJobs } = useAppStore();
+  const { dbCandidates, dbJobs, fetchDatabase } = useAppStore();
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const cands = dbCandidates || [];
   const jobs = dbJobs || [];
@@ -80,10 +82,10 @@ export default function CandidateDetailPage({
               <h1 className="text-xl font-semibold text-text-primary">{candidate.name}</h1>
               <div className="flex items-center gap-3 mt-1.5 text-sm text-text-secondary">
                 {candidate.email && (
-                  <span className="flex items-center gap-1">
+                  <a href={`mailto:${candidate.email}`} className="flex items-center gap-1 hover:text-accent transition-colors">
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.email}
-                  </span>
+                  </a>
                 )}
                 {candidate.phone && (
                   <span className="flex items-center gap-1">
@@ -138,17 +140,27 @@ export default function CandidateDetailPage({
             </div>
           </div>
           <div className="flex gap-2">
-            <Link href={`/outreach?candidate=${candidate.id}`} className="btn btn-secondary btn-sm">
+            <a href={`mailto:${candidate.email}`} className="btn btn-secondary btn-sm">
               <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
               Email
-            </Link>
-            <button className="btn btn-secondary btn-sm">
+            </a>
+            <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit
             </button>
           </div>
         </div>
       </div>
+
+      {showEditModal && (
+        <EditCandidateModal
+          candidate={candidate}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={(updated) => {
+            fetchDatabase(); // Refresh the global store
+          }}
+        />
+      )}
 
       {/* Content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

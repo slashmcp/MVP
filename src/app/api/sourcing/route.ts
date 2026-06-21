@@ -78,24 +78,74 @@ export async function POST(req: Request) {
 
       const data = await response.json();
 
-      const enrichedLeads = (data.organic || []).map((result: any, index: number) => {
+      const apolloKey = process.env.APOLLO_API_KEY;
+
+      const enrichedLeadsPromises = (data.organic || []).map(async (result: any, index: number) => {
         const titleParts = result.title.split('-').map((s: string) => s.trim());
         const name = titleParts[0] || 'Unknown Name';
         const role = titleParts[1] || 'Unknown Role';
         
+        let email = 'No email found (Requires Outreach)';
+        let phone = 'N/A';
+        let company = 'Unknown';
+        let location = 'Unknown Location';
+
+        // Attempt to enrich with Apollo.io API
+        if (apolloKey && result.link && result.link.includes('linkedin.com/in/')) {
+          try {
+            const apolloRes = await fetch('https://api.apollo.io/api/v1/people/match', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Cache-Control': 'no-cache',
+                'x-api-key': apolloKey
+              },
+              body: JSON.stringify({
+                linkedin_url: result.link
+              })
+            });
+
+            if (apolloRes.ok) {
+              const apolloData = await apolloRes.json();
+              if (apolloData.person) {
+                if (apolloData.person.email) email = apolloData.person.email;
+                if (apolloData.person.phone_numbers && apolloData.person.phone_numbers.length > 0) {
+                  phone = apolloData.person.phone_numbers[0].sanitized_number || apolloData.person.phone_numbers[0].raw_number || phone;
+                }
+                if (apolloData.person.organization && apolloData.person.organization.name) {
+                  company = apolloData.person.organization.name;
+                }
+                if (apolloData.person.city) {
+                  location = apolloData.person.state 
+                    ? `${apolloData.person.city}, ${apolloData.person.state}` 
+                    : apolloData.person.city;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Apollo error:', e);
+          }
+        }
+
         return {
           id: `serper_${index}_${Date.now()}`,
           name: name.replace(/ \| LinkedIn/g, ''),
-          email: 'No email found (Requires Outreach)',
+          email: email,
+          phone: phone,
+          company: company,
+          location: location,
           linkedinUrl: result.link,
           skills: [result.snippet ? result.snippet.substring(0, 50) + '...' : 'Not specified'],
           seniority: role.replace(/ \| LinkedIn/g, ''),
-          source: 'Google Search (LinkedIn)',
+          source: apolloKey ? 'Google Search + Apollo Enrichment' : 'Google Search (LinkedIn)',
           notes: result.snippet,
           aiFitScore: Math.floor(Math.random() * 40) + 55,
           status: 'New',
         };
       });
+
+      const enrichedLeads = await Promise.all(enrichedLeadsPromises);
 
       return NextResponse.json({
         success: true,

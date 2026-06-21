@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
+import { EditClientModal } from '@/components/ui/EditClientModal';
 
 export default function ClientDetailPage({
   params,
@@ -22,7 +23,8 @@ export default function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { dbClients, dbJobs } = useAppStore();
+  const { dbClients, dbJobs, fetchDatabase } = useAppStore();
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const clients = dbClients || [];
   const jobs = dbJobs || [];
@@ -66,10 +68,10 @@ export default function ClientDetailPage({
                   <span>{client.contactPerson}</span>
                 )}
                 {client.email && (
-                  <span className="flex items-center gap-1">
+                  <a href={`mailto:${client.email}`} className="flex items-center gap-1 hover:text-accent transition-colors">
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {client.email}
-                  </span>
+                  </a>
                 )}
               </div>
               <div className="flex items-center gap-2 mt-3">
@@ -81,12 +83,22 @@ export default function ClientDetailPage({
               </div>
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm">
+          <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
             <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
             Edit
           </button>
         </div>
       </div>
+
+      {showEditModal && (
+        <EditClientModal
+          client={client}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={(updated) => {
+            fetchDatabase(); // Refresh the global store
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -179,7 +191,11 @@ export default function ClientDetailPage({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Email</span>
-                <span className="text-text-primary text-xs">{client.email || '—'}</span>
+                {client.email ? (
+                  <a href={`mailto:${client.email}`} className="text-accent hover:underline text-xs">{client.email}</a>
+                ) : (
+                  <span className="text-text-primary text-xs">—</span>
+                )}
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Status</span>

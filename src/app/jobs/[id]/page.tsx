@@ -26,6 +26,7 @@ import {
 import { useState } from 'react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
+import { EditJobModal } from '@/components/ui/EditJobModal';
 
 export default function JobDetailPage({
   params,
@@ -55,6 +56,7 @@ export default function JobDetailPage({
   const [isSourcing, setIsSourcing] = useState(false);
   const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
   const [sourcingProvider, setSourcingProvider] = useState<'juicebox' | 'serper'>('juicebox');
+  const [showEditModal, setShowEditModal] = useState(false);
   
   // CRM tracking
   const [addedLeads, setAddedLeads] = useState<Set<string>>(new Set());
@@ -308,7 +310,7 @@ export default function JobDetailPage({
               </select>
             </div>
             
-            <button className="btn btn-secondary btn-sm">
+            <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit
             </button>
@@ -319,6 +321,16 @@ export default function JobDetailPage({
           </div>
         </div>
       </div>
+
+      {showEditModal && (
+        <EditJobModal
+          job={job}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={(updated) => {
+            fetchDatabase(); // Refresh the global store
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Requirements + AI Analysis */}
