@@ -27,6 +27,7 @@ import { useState } from 'react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
 import { EditJobModal } from '@/components/ui/EditJobModal';
+import { BulkImportModal } from '@/components/ui/BulkImportModal';
 
 export default function JobDetailPage({
   params,
@@ -55,8 +56,8 @@ export default function JobDetailPage({
   }
   const [isSourcing, setIsSourcing] = useState(false);
   const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
-  const [sourcingProvider, setSourcingProvider] = useState<'juicebox' | 'serper'>('juicebox');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   
   // CRM tracking
   const [addedLeads, setAddedLeads] = useState<Set<string>>(new Set());
@@ -297,26 +298,13 @@ export default function JobDetailPage({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary bg-[var(--surface-elevated)] border border-border px-2.5 py-1.5 rounded-lg font-medium shadow-sm">
-              <span>Engine:</span>
-              <select
-                value={sourcingProvider}
-                onChange={(e) => setSourcingProvider(e.target.value as 'juicebox' | 'serper')}
-                className="bg-transparent font-semibold text-accent focus:outline-none cursor-pointer"
-                disabled={isSourcing}
-              >
-                <option value="juicebox" className="bg-surface text-text-primary">PeopleGPT (Juicebox)</option>
-                <option value="serper" className="bg-surface text-text-primary">LinkedIn (Serper)</option>
-              </select>
-            </div>
-            
+            <button onClick={() => setShowImportModal(true)} className="btn btn-secondary btn-sm bg-[var(--surface-elevated)] border-border hover:bg-[var(--surface-hover)]">
+              <Upload className="w-3.5 h-3.5" strokeWidth={1.75} />
+              Import CSV
+            </button>
             <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit
-            </button>
-            <button className="btn btn-primary btn-sm bg-accent hover:bg-accent-hover border-transparent shadow-sm" onClick={handleSource} disabled={isSourcing}>
-              {isSourcing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />}
-              {isSourcing ? 'Sourcing...' : 'Find Candidates'}
             </button>
           </div>
         </div>
@@ -329,6 +317,13 @@ export default function JobDetailPage({
           onSuccess={(updated) => {
             fetchDatabase(); // Refresh the global store
           }}
+        />
+      )}
+
+      {showImportModal && (
+        <BulkImportModal
+          onClose={() => setShowImportModal(false)}
+          onSuccess={() => fetchDatabase()}
         />
       )}
 
