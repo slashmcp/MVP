@@ -98,7 +98,6 @@ export async function POST(req: Request) {
               headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache',
-                'Cache-Control': 'no-cache',
                 'x-api-key': apolloKey
               },
               body: JSON.stringify({
