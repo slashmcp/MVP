@@ -559,8 +559,9 @@ function BulkImportModal({ onClose }: { onClose: () => void }) {
   const [mappedData, setMappedData] = useState<any[] | null>(null);
   const [rawHeaders, setRawHeaders] = useState<string[]>([]);
   const [mappingResult, setMappingResult] = useState<Record<string, string>>({});
+  const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { addToast } = useAppStore();
+  const { addToast, fetchDatabase } = useAppStore();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -676,12 +677,74 @@ function BulkImportModal({ onClose }: { onClose: () => void }) {
     });
   };
 
-  const confirmImport = () => {
-    addToast({
-      type: 'success',
-      message: `Successfully imported ${mappedData?.length || 0} candidates from CSV!`
-    });
-    onClose();
+  const confirmImport = async () => {
+    if (!mappedData || mappedData.length === 0) return;
+    
+    setIsImporting(true);
+    setError(null);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      for (const candidate of mappedData) {
+        const payload = {
+          name: candidate.name || 'Unknown',
+          email: candidate.email || 'N/A',
+          phone: candidate.phone || 'N/A',
+          location: candidate.location || 'N/A',
+          role: candidate.role || candidate.seniority || 'Candidate',
+          company: candidate.company || 'Unknown',
+          status: candidate.status || 'New',
+          source: 'CSV Import',
+          rating: 3,
+          skills: candidate.skills || [],
+          experience: candidate.experience || 'Not specified',
+          seniority: candidate.seniority || 'Mid/Senior',
+          linkedinUrl: candidate.linkedinUrl || '',
+          websiteUrl: candidate.websiteUrl || '',
+          notes: candidate.notes || ''
+        };
+
+        const res = await fetch('/api/candidates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } else {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        addToast({
+          type: 'success',
+          message: `Successfully imported ${successCount} candidates!`
+        });
+        await fetchDatabase();
+      }
+      
+      if (errorCount > 0) {
+        addToast({
+          type: 'error',
+          message: `Failed to import ${errorCount} candidates.`
+        });
+      }
+
+      onClose();
+    } catch (e) {
+      console.error('Import failed', e);
+      setError('An error occurred during import.');
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   return (
@@ -804,9 +867,9 @@ function BulkImportModal({ onClose }: { onClose: () => void }) {
             Cancel
           </button>
           {mappedData && (
-            <button className="btn btn-primary" onClick={confirmImport}>
-              <TableProperties className="w-4 h-4" strokeWidth={1.75} />
-              Confirm Import
+            <button className="btn btn-primary" onClick={confirmImport} disabled={isImporting}>
+              {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TableProperties className="w-4 h-4" strokeWidth={1.75} />}
+              {isImporting ? 'Importing...' : 'Confirm Import'}
             </button>
           )}
         </div>
