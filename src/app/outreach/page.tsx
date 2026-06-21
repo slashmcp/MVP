@@ -56,11 +56,44 @@ export default function OutreachPage() {
   const [emailBody, setEmailBody] = useState(mockEmailDraft);
   const [subject, setSubject] = useState('Exciting Senior Full-Stack Opportunity at TechVentures');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  const { showCredentialPrompt, dbCandidates } = useAppStore();
+  const { showCredentialPrompt, dbCandidates, addToast } = useAppStore();
   const cands = dbCandidates || [];
 
   const candidate = cands.find((c) => c.id === selectedCandidate);
+
+  const handleSendEmail = async (isDraft: boolean = false) => {
+    if (!candidate) {
+      addToast({ type: 'error', message: 'Please select a recipient' });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const res = await fetch('/api/outreach/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: candidate.email,
+          subject,
+          bodyText: emailBody,
+          isDraft,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send email');
+
+      addToast({
+        type: 'success',
+        message: data.message || (isDraft ? 'Draft saved successfully' : 'Email sent successfully'),
+      });
+    } catch (e: any) {
+      addToast({ type: 'error', message: e.message || 'An error occurred' });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleGenerate = () => {
     showCredentialPrompt({
@@ -166,15 +199,20 @@ export default function OutreachPage() {
                 {isGenerating ? 'Generating...' : 'AI Generate'}
               </button>
               <div className="flex gap-2 w-full sm:w-auto">
-                <button className="btn btn-secondary btn-sm flex-1 sm:flex-none">
-                  <Save className="w-3.5 h-3.5" strokeWidth={1.75} />
+                <button 
+                  className="btn btn-secondary btn-sm flex-1 sm:flex-none"
+                  onClick={() => handleSendEmail(true)}
+                  disabled={isSending}
+                >
+                  {isSending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" strokeWidth={1.75} />}
                   Save Draft
                 </button>
                 <button 
                   className="btn btn-primary btn-sm flex-1 sm:flex-none"
-                  onClick={() => showCredentialPrompt({ service: 'outlook', feature: 'Send Email via Outlook' })}
+                  onClick={() => handleSendEmail(false)}
+                  disabled={isSending}
                 >
-                  <Send className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  {isSending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" strokeWidth={1.75} />}
                   Send Email
                 </button>
               </div>

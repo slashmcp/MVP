@@ -80,6 +80,26 @@ export async function appendSheetRow(tab: string, values: string[]): Promise<boo
   }
 }
 
+export async function appendSheetRows(tab: string, rows: string[][]): Promise<boolean> {
+  const client = await getSheetsClient();
+  if (!client || !SHEET_ID) return false;
+
+  try {
+    await client.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: `${tab}!A:Z`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: rows,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error appending rows to ${tab}:`, error);
+    return false;
+  }
+}
+
 export async function updateSheetRow(
   tab: string,
   rowIndex: number,
@@ -139,6 +159,22 @@ export async function deleteSheetRow(tab: string, rowIndex: number): Promise<boo
     return true;
   } catch (error) {
     console.error(`Error deleting ${tab} row ${rowIndex}:`, error);
+    return false;
+  }
+}
+
+export async function clearSheet(tab: string): Promise<boolean> {
+  const client = await getSheetsClient();
+  if (!client || !SHEET_ID) return false;
+
+  try {
+    await client.spreadsheets.values.clear({
+      spreadsheetId: SHEET_ID,
+      range: `${tab}!A2:Z`, // Keep headers
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error clearing ${tab}:`, error);
     return false;
   }
 }

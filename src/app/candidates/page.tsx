@@ -34,10 +34,30 @@ export default function CandidatesPage() {
 
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
 
-  const { showCredentialPrompt, hiddenCandidateIds, hideCandidate, addToast, dbCandidates } = useAppStore();
+  const { hiddenCandidateIds, hideCandidate, addToast, dbCandidates } = useAppStore();
   const cands = dbCandidates || [];
+
+  const handleSyncToSheets = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/sheets/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidates: cands }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to sync with Google Sheets');
+      
+      addToast({ type: 'success', message: data.message || 'Synced to Google Sheets successfully' });
+    } catch (e: any) {
+      addToast({ type: 'error', message: e.message || 'An error occurred while syncing' });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const performAiSearch = async () => {
     if (!search.trim()) {
@@ -109,6 +129,15 @@ export default function CandidatesPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={handleSyncToSheets}
+            disabled={isSyncing}
+            className="btn btn-secondary"
+            id="sync-sheets-btn"
+          >
+            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} /> : <FileText className="w-4 h-4" strokeWidth={1.75} />}
+            Sync to Sheets
+          </button>
+          <button
             onClick={() => setShowBulkImportModal(true)}
             className="btn btn-secondary"
             id="import-csv-btn"
@@ -117,7 +146,7 @@ export default function CandidatesPage() {
             Import CSV
           </button>
           <button
-            onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Candidate' })}
+            onClick={() => setShowAddModal(true)}
             className="btn btn-primary"
             id="add-candidate-btn"
           >
@@ -127,7 +156,7 @@ export default function CandidatesPage() {
         </div>
       </div>
 
-      {showAddModal && <AddCandidateModal onClose={() => setShowAddModal(false)} />}
+      {showAddModal && <AddCandidateModal onClose={() => setShowAddModal(false)} onSuccess={() => setShowAddModal(false)} />}
       {showBulkImportModal && <BulkImportModal onClose={() => setShowBulkImportModal(false)} />}
 
       {/* Filters */}
