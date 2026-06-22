@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Briefcase,
   GraduationCap,
+  Upload,
 } from 'lucide-react';
 import { useState } from 'react';
 import { statusColors } from '@/lib/mock-data';
@@ -54,7 +55,7 @@ export default function JobDetailPage({
       </div>
     );
   }
-  const [isSourcing, setIsSourcing] = useState(false);
+
   const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -82,41 +83,7 @@ export default function JobDetailPage({
     setExpandedCVs(next);
   };
 
-  const handleSource = async () => {
-    setIsSourcing(true);
-    try {
-      const res = await fetch('/api/sourcing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobId: job.id,
-          query: job.requirements,
-          provider: sourcingProvider,
-          mock: bypassedServices.includes(sourcingProvider)
-        }),
-      });
-      const data = await res.json();
-      if (data.error === 'MISSING_API_KEY') {
-        showCredentialPrompt({
-          service: data.provider || 'juicebox',
-          feature: data.provider === 'juicebox' ? 'AI Candidate Sourcing (PeopleGPT)' : 'Live Google Search Sourcing'
-        });
-        return;
-      }
-      
-      if (data.success) {
-        setSourcedLeads(data.leads);
-        setAddedLeads(new Set());
-        setEnrolledLeads({});
-        setActiveSequenceSelector(null);
-      }
-    } catch (error) {
-      console.error(error);
-      addToast({ type: 'error', message: 'Sourcing failed. Please check network connection.' });
-    } finally {
-      setIsSourcing(false);
-    }
-  };
+
 
   const handleAddLeadToCrm = async (lead: any) => {
     setIsAddingLead(lead.id);
@@ -323,7 +290,6 @@ export default function JobDetailPage({
       {showImportModal && (
         <BulkImportModal
           onClose={() => setShowImportModal(false)}
-          onSuccess={() => fetchDatabase()}
         />
       )}
 

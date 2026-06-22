@@ -11,6 +11,7 @@ import {
   Clock,
   ChevronDown,
   CheckCircle,
+  Loader2,
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 // No mock data needed
