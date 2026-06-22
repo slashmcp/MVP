@@ -16,16 +16,16 @@ const SERVICE_CONFIG = {
     link: 'https://developers.google.com/sheets/api/quickstart/nodejs',
     envVars: ['GOOGLE_SERVICE_ACCOUNT_KEY', 'GOOGLE_SHEET_ID'],
   },
-  'openai': {
-    title: 'OpenAI API Key Required',
-    description: 'To use AI features like resume summarization, candidate matching, and email generation, you need an OpenAI API key.',
+  'anthropic': {
+    title: 'Anthropic API Configuration Required',
+    description: 'To enable this feature, you need to configure your Anthropic API key in your environment variables.',
     steps: [
-      'Sign up or log in to the OpenAI Developer Platform.',
-      'Navigate to API Keys and create a new secret key.',
-      'Copy the key and add it to your .env.local file.',
+      'Create an account at console.anthropic.com',
+      'Navigate to API Keys and generate a new key',
+      'Add the key to your .env.local file',
     ],
-    link: 'https://platform.openai.com/api-keys',
-    envVars: ['OPENAI_API_KEY'],
+    link: 'https://console.anthropic.com/settings/keys',
+    envVars: ['ANTHROPIC_API_KEY'],
   },
   'outlook': {
     title: 'Microsoft Outlook Connection Required',

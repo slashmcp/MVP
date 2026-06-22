@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
       c.status || '',
       c.source || '',
       c.linkedinUrl || '',
-      c.githubUrl || '',
       c.websiteUrl || '',
       c.notes || '',
       c.createdAt ? new Date(c.createdAt).toISOString() : '',

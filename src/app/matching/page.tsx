@@ -81,7 +81,7 @@ export default function MatchingPage() {
             
             // If the user doesn't have an API key, we should prompt them
             if (data.source === 'mock' && newResults.length === 0) {
-              showCredentialPrompt({ service: 'openai', feature: 'Real AI Matching' });
+              showCredentialPrompt({ service: 'anthropic', feature: 'Real AI Matching' });
             }
 
             newResults.push({

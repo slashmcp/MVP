@@ -97,7 +97,7 @@ export default function OutreachPage() {
 
   const handleGenerate = () => {
     showCredentialPrompt({
-      service: 'openai',
+      service: 'anthropic',
       feature: 'AI Email Generation'
     });
     // Still mock it in the background for demo purposes

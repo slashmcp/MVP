@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { mapCsvHeaders, isOpenAIConfigured } from '@/lib/openai';
+import { mapCsvHeaders, isAnthropicConfigured } from '@/lib/anthropic';
 
 export async function POST(request: Request) {
   try {
@@ -10,8 +10,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing or invalid headers' }, { status: 400 });
     }
 
-    if (!isOpenAIConfigured()) {
-      // Return a basic fallback mapping if OpenAI is not configured
+    if (!isAnthropicConfigured()) {
+      // Return a basic fallback mapping if anthropic is not configured
       const fallbackMapping: Record<string, string> = {};
       headers.forEach(h => {
         const lower = h.toLowerCase();

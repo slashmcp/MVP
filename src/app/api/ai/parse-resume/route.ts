@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getOpenAIClient } from '@/lib/openai';
+import { getAnthropicClient } from '@/lib/anthropic';
 const pdfParse = require('pdf-parse');
 
-// Mock response for when OpenAI is not configured
+// Mock response for when anthropic is not configured
 const MOCK_RESPONSE = {
   name: 'Jane Doe',
   email: 'jane.doe@example.com',
@@ -68,17 +68,17 @@ export async function POST(request: Request) {
       resumeUrl = `/uploads/${filename}`;
     }
 
-    const openai = getOpenAIClient();
+    const anthropic = getAnthropicClient();
     
-    // If OpenAI is not configured, return mock data
-    if (!openai) {
-      console.log('OpenAI not configured, returning mock parsed data.');
+    // If anthropic is not configured, return mock data
+    if (!anthropic) {
+      console.log('anthropic not configured, returning mock parsed data.');
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       return NextResponse.json({ ...MOCK_RESPONSE, resumeUrl });
     }
 
-    // Call OpenAI to extract structured data
+    // Call anthropic to extract structured data
     const systemPrompt = `You are an expert technical recruiter and resume parser.
 Extract the following information from the provided raw resume text:
 - name: Full name of the candidate
@@ -100,18 +100,19 @@ Return EXACTLY a JSON object matching this schema. Do not include markdown forma
   "notes": "string"
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await anthropic.messages.create({
+      model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+      max_tokens: 1024,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `RESUME TEXT:\n\n${parsedText.substring(0, 8000)}` }, // Limit text to avoid token limits
+        { role: 'user', content: `RESUME TEXT:\n\n${parsedText.substring(0, 8000)}` },
       ],
-      response_format: { type: 'json_object' },
+      system: systemPrompt,
       temperature: 0.1,
     });
 
-    const resultText = completion.choices[0].message.content || '{}';
-    const parsedData = JSON.parse(resultText);
+    const resultText = completion.content[0].type === 'text' ? completion.content[0].text : '{}';
+    const cleanedText = resultText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
+    const parsedData = JSON.parse(cleanedText);
 
     // Add the URL to the response
     parsedData.resumeUrl = resumeUrl;
