@@ -157,7 +157,7 @@ export default function CandidatesPage() {
         </div>
       </div>
 
-      {showAddModal && <AddCandidateModal onClose={() => setShowAddModal(false)} onSuccess={() => setShowAddModal(false)} />}
+      {showAddModal && <AddCandidateModal onClose={() => setShowAddModal(false)} />}
       {showBulkImportModal && <BulkImportModal onClose={() => setShowBulkImportModal(false)} />}
 
       {/* Filters */}
@@ -359,10 +359,6 @@ export default function CandidatesPage() {
         )}
       </div>
 
-      {/* Add Candidate Modal */}
-      {showAddModal && (
-        <AddCandidateModal onClose={() => setShowAddModal(false)} />
-      )}
     </div>
   );
 }
