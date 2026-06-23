@@ -15,11 +15,8 @@ export default function PinPage() {
     // Set cookie
     document.cookie = `app-access-pin=${pin}; path=/; max-age=86400; SameSite=Lax`;
     
-    // Trigger router refresh to apply middleware again
-    router.refresh();
-    setTimeout(() => {
-      router.push('/');
-    }, 100);
+    // Force full reload to bypass Next.js App Router caching the redirect
+    window.location.href = '/';
   };
 
   return (
