@@ -367,6 +367,8 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [existingId, setExistingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -445,15 +447,26 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
 
       const { data: parsedData } = await response.json();
       
+      const { dbCandidates, addToast } = useAppStore.getState();
+      const existingCandidate = dbCandidates?.find(c => 
+        (c.email && parsedData.email && c.email.toLowerCase() === parsedData.email.toLowerCase()) || 
+        (c.name && parsedData.name && c.name.toLowerCase() === parsedData.name.toLowerCase())
+      );
+
+      if (existingCandidate) {
+        addToast({ type: 'success', message: `Matched existing candidate: ${existingCandidate.name}. Data will be appended.` });
+        setExistingId(existingCandidate.id);
+      }
+
       setFormData({
-        name: parsedData.name || '',
-        email: parsedData.email || '',
-        phone: parsedData.phone || '',
-        linkedinUrl: formData.linkedinUrl || '',
-        websiteUrl: formData.websiteUrl || '',
-        resume: resumeUrl || '',
-        skills: Array.isArray(parsedData.skills) ? parsedData.skills.join(', ') : (parsedData.skills || ''),
-        notes: formData.notes || '',
+        name: parsedData.name || existingCandidate?.name || '',
+        email: parsedData.email || existingCandidate?.email || '',
+        phone: parsedData.phone || existingCandidate?.phone || '',
+        linkedinUrl: formData.linkedinUrl || existingCandidate?.linkedinUrl || '',
+        websiteUrl: formData.websiteUrl || existingCandidate?.websiteUrl || '',
+        resume: resumeUrl || existingCandidate?.resume || '',
+        skills: Array.isArray(parsedData.skills) && parsedData.skills.length > 0 ? parsedData.skills.join(', ') : (existingCandidate ? existingCandidate.skills.join(', ') : ''),
+        notes: parsedData.notes || existingCandidate?.notes || formData.notes || '',
       });
       
     } catch (err) {
@@ -469,6 +482,32 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async () => {
+    const { addToast, fetchDatabase } = useAppStore.getState();
+    setIsSaving(true);
+    try {
+      const payload = existingId ? { ...formData, id: existingId } : formData;
+      const method = existingId ? 'PATCH' : 'POST';
+      
+      const res = await fetch('/api/candidates', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) throw new Error('Failed to save candidate');
+      
+      addToast({ type: 'success', message: existingId ? 'Candidate updated successfully!' : 'Candidate added successfully!' });
+      await fetchDatabase();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', message: 'An error occurred while saving the candidate.' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -581,16 +620,15 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
         </div>
         
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-[var(--surface-elevated)]">
-          <button onClick={onClose} className="btn btn-secondary">
+          <button onClick={onClose} className="btn btn-secondary" disabled={isParsing || isSaving}>
             Cancel
           </button>
-          <button className="btn btn-primary" disabled={isParsing}>
-            <Plus className="w-4 h-4" strokeWidth={1.75} />
-            Save Candidate
+          <button onClick={handleSubmit} className="btn btn-primary" disabled={isParsing || isSaving}>
+            {!existingId && <Plus className="w-4 h-4" strokeWidth={1.75} />}
+            {isSaving ? 'Saving...' : existingId ? 'Update Candidate' : 'Save Candidate'}
           </button>
         </div>
       </div>
     </div>
   );
 }
-
