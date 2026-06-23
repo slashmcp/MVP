@@ -103,11 +103,6 @@ export default function CandidateDetailPage({
                   <span className="badge badge-neutral">{candidate.seniority}</span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                {candidate.resume && (
-                  <a
-                    href={candidate.resume}
-                    target="_blank"
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 {candidate.linkedinUrl && (
                   <a

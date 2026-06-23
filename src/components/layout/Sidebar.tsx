@@ -19,6 +19,7 @@ import {
   Crosshair,
   X,
   Workflow,
+  Search,
 } from 'lucide-react';
 
 const navItems = [
@@ -31,6 +32,7 @@ const navItems = [
   { label: 'Sequences', href: '/sequences', icon: Workflow },
   { label: 'Pipeline', href: '/pipeline', icon: GitBranchPlus },
   { label: 'Matching', href: '/matching', icon: Crosshair },
+  { label: 'Market Scraper', href: '/sourcing/clients', icon: Search },
   { label: 'Daily Briefing', href: '/briefing', icon: Zap },
 ];
 
