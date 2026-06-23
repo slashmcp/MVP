@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+// @ts-ignore
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 
