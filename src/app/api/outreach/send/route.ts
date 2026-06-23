@@ -14,14 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isOutlookConfigured()) {
-      return NextResponse.json({
-        success: true,
-        source: 'mock',
-        message: isDraft
-          ? 'Draft saved (mock mode — configure Outlook for real emails)'
-          : 'Email sent (mock mode — configure Outlook for real emails)',
-        messageId: `mock-${Date.now()}`,
-      });
+      return NextResponse.json(
+        { error: 'Microsoft Azure Email is not fully configured in your environment variables.' },
+        { status: 500 }
+      );
     }
 
     const result = await sendEmail({
@@ -30,6 +26,13 @@ export async function POST(request: NextRequest) {
       body: bodyText,
       isDraft,
     });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || 'Failed to send email via Microsoft Graph' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       ...result,

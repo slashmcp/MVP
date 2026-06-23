@@ -140,10 +140,22 @@ export default function CandidateDetailPage({
             </div>
           </div>
           <div className="flex gap-2">
-            <a href={`mailto:${candidate.email}`} className="btn btn-secondary btn-sm">
+            <Link href={`/outreach?candidate=${candidate.id}`} className="btn btn-secondary btn-sm">
               <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
               Email
-            </a>
+            </Link>
+            {candidate.phone && candidate.phone !== 'N/A' && (
+              <>
+                <a href={`tel:${candidate.phone}`} className="btn btn-secondary btn-sm">
+                  <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  Call
+                </a>
+                <a href={`sms:${candidate.phone}`} className="btn btn-secondary btn-sm">
+                  <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  SMS
+                </a>
+              </>
+            )}
             <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit

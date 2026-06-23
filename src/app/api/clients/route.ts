@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { getClients } from '@/lib/db-client';
+import { getClients, createClient } from '@/lib/db-client';
 
 export async function GET() {
   try {
@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // 1. Create in Supabase (primary database)
+    const newClient = await createClient(body);
+    if (!newClient) {
+      return NextResponse.json({ error: 'Failed to write client to Supabase' }, { status: 500 });
+    }
+
+    // 2. Optional sync to Google Sheets
     if (isGoogleSheetsConfigured()) {
       const values = [
         body.companyName || '',
@@ -43,18 +50,16 @@ export async function POST(request: NextRequest) {
         body.status || 'Active',
         body.notes || '',
       ];
-      const success = await appendSheetRow(TABS.clients, values);
-      if (success) {
-        return NextResponse.json({ success: true, source: 'google-sheets' });
-      }
+      await appendSheetRow(TABS.clients, values);
     }
 
     return NextResponse.json({
       success: true,
-      source: 'mock',
-      data: { id: `cl${Date.now()}`, ...body, status: body.status || 'Active' },
+      source: 'supabase',
+      data: newClient,
     });
-  } catch {
+  } catch (error) {
+    console.error('Error in POST /api/clients:', error);
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

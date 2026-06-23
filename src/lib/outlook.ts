@@ -68,7 +68,7 @@ export async function sendEmail(params: {
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const client = await getGraphClient();
   if (!client) {
-    return { success: false, error: 'Outlook not configured' };
+    return { success: false, error: 'Azure Authentication Failed - Please verify your Client Secret and Tenant ID' };
   }
 
   try {
@@ -89,11 +89,11 @@ export async function sendEmail(params: {
 
     if (params.isDraft) {
       // Create as draft
-      const result = await client.api('/me/messages').post(message);
+      const result = await client.api(`/users/${process.env.AZURE_SENDER_EMAIL || 'admin@yourdomain.com'}/messages`).post(message);
       return { success: true, messageId: result.id };
     } else {
       // Send directly
-      await client.api('/me/sendMail').post({ message });
+      await client.api(`/users/${process.env.AZURE_SENDER_EMAIL || 'admin@yourdomain.com'}/sendMail`).post({ message, saveToSentItems: true });
       return { success: true };
     }
   } catch (error: unknown) {
@@ -109,7 +109,7 @@ export async function getSentEmails(limit: number = 10): Promise<unknown[]> {
 
   try {
     const result = await client
-      .api('/me/mailFolders/sentItems/messages')
+      .api(`/users/${process.env.AZURE_SENDER_EMAIL || 'admin@yourdomain.com'}/mailFolders/sentItems/messages`)
       .top(limit)
       .select('id,subject,toRecipients,sentDateTime,bodyPreview')
       .orderby('sentDateTime desc')

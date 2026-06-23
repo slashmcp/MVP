@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { getJobs } from '@/lib/db-client';
+import { getJobs, createJob } from '@/lib/db-client';
 
 export async function GET() {
   try {
@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // 1. Create in Supabase (primary database)
+    const newJob = await createJob(body);
+    if (!newJob) {
+      return NextResponse.json({ error: 'Failed to write job to Supabase' }, { status: 500 });
+    }
+
+    // 2. Optional sync to Google Sheets
     if (isGoogleSheetsConfigured()) {
       const values = [
         body.title || '',
@@ -44,18 +51,16 @@ export async function POST(request: NextRequest) {
         body.salaryMax?.toString() || '',
         body.status || 'Open',
       ];
-      const success = await appendSheetRow(TABS.jobs, values);
-      if (success) {
-        return NextResponse.json({ success: true, source: 'google-sheets' });
-      }
+      await appendSheetRow(TABS.jobs, values);
     }
 
     return NextResponse.json({
       success: true,
-      source: 'mock',
-      data: { id: `j${Date.now()}`, ...body, status: body.status || 'Open' },
+      source: 'supabase',
+      data: newJob,
     });
-  } catch {
+  } catch (error) {
+    console.error('Error in POST /api/jobs:', error);
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

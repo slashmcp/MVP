@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Mail,
   Send,
@@ -51,9 +52,12 @@ const statusBadge: Record<string, string> = {
   Replied: 'badge-green',
 };
 
-export default function OutreachPage() {
+export function OutreachPageContent() {
+  const searchParams = useSearchParams();
+  const initialCandidate = searchParams.get('candidate');
+  
   const [selectedTemplate, setSelectedTemplate] = useState('outreach');
-  const [selectedCandidate, setSelectedCandidate] = useState('c_101');
+  const [selectedCandidate, setSelectedCandidate] = useState(initialCandidate || '');
   const [emailBody, setEmailBody] = useState(mockEmailDraft);
   const [subject, setSubject] = useState('Exciting Senior Full-Stack Opportunity at TechVentures');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -61,6 +65,12 @@ export default function OutreachPage() {
 
   const { showCredentialPrompt, dbCandidates, addToast } = useAppStore();
   const cands = dbCandidates || [];
+
+  useEffect(() => {
+    if (cands.length > 0 && !selectedCandidate) {
+      setSelectedCandidate(cands[0].id);
+    }
+  }, [cands, selectedCandidate]);
 
   const candidate = cands.find((c) => c.id === selectedCandidate);
 
@@ -266,5 +276,13 @@ export default function OutreachPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OutreachPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-accent" /></div>}>
+      <OutreachPageContent />
+    </Suspense>
   );
 }

@@ -7,8 +7,8 @@ from anthropic import Anthropic
 from duckduckgo_search import DDGS
 
 # Load environment variables (to get ANTHROPIC_API_KEY)
-load_dotenv(dotenv_path='../.env.local')
-load_dotenv(dotenv_path='../.env')
+load_dotenv(dotenv_path='.env.local')
+load_dotenv(dotenv_path='.env')
 
 # Initialize Anthropic Client
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -45,7 +45,23 @@ def perform_search(query: str, max_results=10) -> list:
     results = []
     
     serper_key = os.environ.get("SERPER_API_KEY")
-    if serper_key:
+    serpapi_key = os.environ.get("SERPAPI_API_KEY")
+    
+    if serpapi_key:
+        print("   Using Google Search (SerpApi)...")
+        import urllib.request
+        import urllib.parse
+        encoded_query = urllib.parse.quote(query)
+        url = f"https://serpapi.com/search.json?q={encoded_query}&api_key={serpapi_key}&num={max_results}"
+        try:
+            req = urllib.request.Request(url)
+            res = urllib.request.urlopen(req)
+            data = json.loads(res.read().decode('utf-8'))
+            organic_results = data.get("organic_results", [])
+            results = [{"title": r.get("title", ""), "body": r.get("snippet", ""), "href": r.get("link", "")} for r in organic_results]
+        except Exception as e:
+            print(f"⚠️ SerpApi search failed: {e}")
+    elif serper_key:
         print("   Using Google Search (Serper API)...")
         import urllib.request
         req = urllib.request.Request('https://google.serper.dev/search', 

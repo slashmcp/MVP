@@ -237,3 +237,83 @@ export async function incrementSequenceEnrollment(sequenceId: string): Promise<b
   return true;
 }
 
+export async function createClient(clientData: Partial<Client>): Promise<Client | null> {
+  const { data, error } = await supabase.from('clients').insert([
+    {
+      company_name: clientData.companyName,
+      contact_person: clientData.contactPerson,
+      email: clientData.email,
+      phone: clientData.phone,
+      website: clientData.website,
+      location: clientData.location,
+      industry: clientData.industry,
+      status: clientData.status || 'Active',
+      open_roles: clientData.openRoles || 0,
+      active_candidates: clientData.activeCandidates || 0,
+      total_placements: clientData.totalPlacements || 0,
+      notes: clientData.notes,
+      last_contact: clientData.lastContact,
+    }
+  ]).select().single();
+
+  if (error) {
+    console.error('Error creating client in database:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    companyName: data.company_name,
+    contactPerson: data.contact_person,
+    email: data.email,
+    phone: data.phone,
+    website: data.website,
+    location: data.location,
+    industry: data.industry,
+    status: data.status,
+    openRoles: data.open_roles,
+    activeCandidates: data.active_candidates,
+    totalPlacements: data.total_placements,
+    notes: data.notes,
+    lastContact: data.last_contact,
+  };
+}
+
+export async function createJob(jobData: Partial<Job>): Promise<Job | null> {
+  const { data, error } = await supabase.from('jobs').insert([
+    {
+      title: jobData.title,
+      client: jobData.client,
+      client_id: jobData.clientId,
+      requirements: Array.isArray(jobData.requirements) ? jobData.requirements.join(', ') : jobData.requirements,
+      location: jobData.location,
+      type: jobData.type,
+      salary: jobData.salary,
+      status: jobData.status || 'Open',
+      priority: jobData.priority || 'Medium',
+      posted_date: jobData.postedDate || new Date().toISOString(),
+      applicants: jobData.applicants || 0,
+    }
+  ]).select().single();
+
+  if (error) {
+    console.error('Error creating job in database:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    title: data.title,
+    client: data.client,
+    clientId: data.client_id,
+    requirements: data.requirements,
+    location: data.location,
+    type: data.type,
+    salary: data.salary,
+    status: data.status,
+    priority: data.priority,
+    postedDate: data.posted_date,
+    applicants: data.applicants,
+  };
+}
+
