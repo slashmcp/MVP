@@ -39,7 +39,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body = await request.json();
+
+    // Ensure skills is an array
+    if (body.skills && typeof body.skills === 'string') {
+      body.skills = body.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+    } else if (!Array.isArray(body.skills)) {
+      body.skills = [];
+    }
 
     // 1. Create in Supabase (primary database)
     const newCand = await createCandidate(body);

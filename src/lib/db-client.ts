@@ -21,7 +21,7 @@ export async function getCandidates(): Promise<Candidate[]> {
     experience: c.experience,
     seniority: c.seniority,
     lastContact: c.last_contact,
-    skills: c.skills || [],
+    skills: typeof c.skills === 'string' ? c.skills.split(',').map((s: string) => s.trim()) : (c.skills || []),
     linkedinUrl: c.linkedin_url,
     websiteUrl: c.website_url,
   }));
