@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!client) throw new Error('Failed to initialize Anthropic client');
 
     const response = await client.messages.create({
-      model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
       max_tokens: 1024,
       temperature: 0.2,
       system: `You are an expert technical recruiter and AI matching engine.
