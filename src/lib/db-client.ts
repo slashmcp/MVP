@@ -243,16 +243,12 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
       company_name: clientData.companyName,
       contact_person: clientData.contactPerson,
       email: clientData.email,
-      phone: clientData.phone,
-      website: clientData.website,
       location: clientData.location,
       industry: clientData.industry,
       status: clientData.status || 'Active',
       open_roles: clientData.openRoles || 0,
-      active_candidates: clientData.activeCandidates || 0,
       total_placements: clientData.totalPlacements || 0,
       notes: clientData.notes,
-      last_contact: clientData.lastContact,
     }
   ]).select().single();
 
@@ -266,16 +262,12 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
     companyName: data.company_name,
     contactPerson: data.contact_person,
     email: data.email,
-    phone: data.phone,
-    website: data.website,
     location: data.location,
     industry: data.industry,
     status: data.status,
     openRoles: data.open_roles,
-    activeCandidates: data.active_candidates,
     totalPlacements: data.total_placements,
     notes: data.notes,
-    lastContact: data.last_contact,
   };
 }
 
