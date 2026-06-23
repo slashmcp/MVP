@@ -398,7 +398,6 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
       await processFile(e.dataTransfer.files[0]);
     }
   };
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       await processFile(e.target.files[0]);
@@ -406,8 +405,13 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
   };
 
   const processFile = async (file: File) => {
-    if (file.type !== 'application/pdf') {
-      setParseError('Please upload a valid PDF file.');
+    const validTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
+    ];
+    if (!validTypes.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.docx')) {
+      setParseError('Please upload a valid PDF or DOCX file.');
       return;
     }
 
@@ -418,7 +422,19 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
       const data = new FormData();
       data.append('file', file);
 
-      const response = await fetch('/api/ai/parse-resume', {
+      // 1. Upload the file to Supabase Storage
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: data,
+      });
+      let resumeUrl = '';
+      if (uploadRes.ok) {
+         const uploadData = await uploadRes.json();
+         resumeUrl = uploadData.url;
+      }
+
+      // 2. Parse the resume with Anthropic
+      const response = await fetch('/api/candidates/parse-resume', {
         method: 'POST',
         body: data,
       });
@@ -427,17 +443,17 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
         throw new Error('Failed to parse resume');
       }
 
-      const parsedData = await response.json();
+      const { data: parsedData } = await response.json();
       
       setFormData({
         name: parsedData.name || '',
         email: parsedData.email || '',
         phone: parsedData.phone || '',
-        linkedinUrl: parsedData.linkedinUrl || '',
-        websiteUrl: '',
-        resume: parsedData.resumeUrl || '',
-        skills: Array.isArray(parsedData.skills) ? parsedData.skills.join(', ') : '',
-        notes: parsedData.notes || '',
+        linkedinUrl: formData.linkedinUrl || '',
+        websiteUrl: formData.websiteUrl || '',
+        resume: resumeUrl || '',
+        skills: Array.isArray(parsedData.skills) ? parsedData.skills.join(', ') : (parsedData.skills || ''),
+        notes: formData.notes || '',
       });
       
     } catch (err) {
@@ -474,7 +490,7 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
         <div className="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
           {/* Drag & Drop Upload Zone */}
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1.5">Auto-fill with Resume (PDF)</label>
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">Auto-fill with Resume (PDF / DOCX)</label>
             <div 
               className={`border-2 border-dashed rounded-xl p-6 transition-colors text-center cursor-pointer ${
                 isDragging 

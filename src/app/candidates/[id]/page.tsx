@@ -136,6 +136,17 @@ export default function CandidateDetailPage({
                     Website
                   </a>
                 )}
+                {candidate.resume && (
+                  <a
+                    href={candidate.resume}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-[var(--surface-elevated)] border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
+                  >
+                    <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    Resume
+                  </a>
+                )}
               </div>
             </div>
           </div>
