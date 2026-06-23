@@ -15,7 +15,7 @@ export function getAnthropicClient(): Anthropic | null {
   return anthropicClient;
 }
 
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
 
 export function isAnthropicConfigured(): boolean {
   const key = process.env.ANTHROPIC_API_KEY;
