@@ -247,29 +247,70 @@ function MasterFunnel() {
     addToast({ type: 'success', message: `Imported ${count} new ${type} from CSV!` });
   };
 
+  const traverseFileTree = async (item: any): Promise<File[]> => {
+    return new Promise((resolve) => {
+      if (item.isFile) {
+        item.file((file: File) => resolve([file]));
+      } else if (item.isDirectory) {
+        const dirReader = item.createReader();
+        dirReader.readEntries(async (entries: any[]) => {
+          const filesPromises = entries.map(entry => traverseFileTree(entry));
+          const filesArrays = await Promise.all(filesPromises);
+          resolve(filesArrays.flat());
+        });
+      } else {
+        resolve([]);
+      }
+    });
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
-    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    if (!e.dataTransfer.items || e.dataTransfer.items.length === 0) return;
     
     setIsProcessing(true);
-    const files = Array.from(e.dataTransfer.files);
+    let allFiles: File[] = [];
+    
+    const items = Array.from(e.dataTransfer.items);
+    const itemPromises = items.map(item => {
+      if (item.webkitGetAsEntry) {
+        const entry = item.webkitGetAsEntry();
+        if (entry) return traverseFileTree(entry);
+      }
+      return Promise.resolve([]);
+    });
+    
+    const filesArrays = await Promise.all(itemPromises);
+    allFiles = filesArrays.flat().filter(f => !!f && !f.name.startsWith('.'));
+    
+    if (allFiles.length === 0) {
+      allFiles = Array.from(e.dataTransfer.files);
+    }
     
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setProgressText(`Processing ${file.name} (${i + 1}/${files.length})...`);
+      for (let i = 0; i < allFiles.length; i++) {
+        const file = allFiles[i];
+        setProgressText(`Processing ${file.name} (${i + 1}/${allFiles.length})...`);
         
-        if (file.name.endsWith('.pdf') || file.name.endsWith('.docx')) {
-          await processResume(file);
-        } else if (file.name.endsWith('.csv')) {
-          await processCSV(file);
+        const ext = file.name.toLowerCase();
+        if (ext.endsWith('.pdf') || ext.endsWith('.docx') || ext.endsWith('.txt')) {
+          await processResume(file).catch(err => {
+            console.error(`Error processing ${file.name}:`, err);
+            addToast({ type: 'error', message: `Skipped ${file.name} (Parsing failed)` });
+          });
+        } else if (ext.endsWith('.csv')) {
+          await processCSV(file).catch(err => {
+            console.error(`Error processing ${file.name}:`, err);
+            addToast({ type: 'error', message: `Skipped ${file.name} (CSV Parsing failed)` });
+          });
         } else {
-          addToast({ type: 'error', message: `Unsupported file type: ${file.name}` });
+          console.warn(`Unsupported file type: ${file.name}`);
         }
       }
       await fetchDatabase();
+      addToast({ type: 'success', message: 'Master Funnel processing complete!' });
     } catch (err) {
       console.error(err);
       addToast({ type: 'error', message: 'An error occurred during processing.' });
