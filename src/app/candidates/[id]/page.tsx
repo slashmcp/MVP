@@ -56,11 +56,7 @@ export default function CandidateDetailPage({
   }));
 
   // Mock communication timeline
-  const timeline = [
-    { date: '2026-06-14', type: 'email', message: 'Initial outreach sent — Full-Stack role at TechVentures' },
-    { date: '2026-06-12', type: 'note', message: 'Reviewed resume — strong React and Node.js experience' },
-    { date: '2026-06-10', type: 'email', message: 'LinkedIn connection request accepted' },
-  ];
+  const timeline: any[] = [];
 
   const handleEnrich = async (provider: string) => {
     setIsEnriching(true);
@@ -286,27 +282,34 @@ export default function CandidateDetailPage({
               <h2 className="text-base font-semibold text-text-primary">Activity Timeline</h2>
             </div>
             <div className="divide-y divide-border">
-              {timeline.map((event, i) => (
-                <div key={i} className="px-5 py-3.5 flex items-start gap-3">
-                  <div className="mt-1 p-1.5 rounded-md bg-[var(--surface-elevated)]">
-                    {event.type === 'email' ? (
-                      <Mail className="w-3.5 h-3.5 text-accent" strokeWidth={1.75} />
-                    ) : (
-                      <MessageSquare className="w-3.5 h-3.5 text-text-tertiary" strokeWidth={1.75} />
-                    )}
+              {timeline.length > 0 ? (
+                timeline.map((event, i) => (
+                  <div key={i} className="px-5 py-3.5 flex items-start gap-3">
+                    <div className="mt-1 p-1.5 rounded-md bg-[var(--surface-elevated)]">
+                      {event.type === 'email' ? (
+                        <Mail className="w-3.5 h-3.5 text-accent" strokeWidth={1.75} />
+                      ) : (
+                        <MessageSquare className="w-3.5 h-3.5 text-text-tertiary" strokeWidth={1.75} />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-text-primary">{event.message}</p>
+                      <p className="text-xs text-text-tertiary mt-1 font-mono">
+                        {new Date(event.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary">{event.message}</p>
-                    <p className="text-xs text-text-tertiary mt-1 font-mono">
-                      {new Date(event.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
+                ))
+              ) : (
+                <div className="px-5 py-8 text-center flex flex-col items-center justify-center text-text-tertiary">
+                  <MessageSquare className="w-6 h-6 mb-2 opacity-20" />
+                  <p className="text-sm">No activity logged yet.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
