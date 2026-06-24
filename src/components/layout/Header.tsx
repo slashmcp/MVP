@@ -62,7 +62,7 @@ export function Header() {
 
   return (
     <header className="h-14 border-b border-border bg-[var(--surface-overlay)] backdrop-blur-md sticky top-0 z-20">
-      <div className="max-w-7xl mx-auto w-full h-full flex items-center justify-between px-4 lg:px-6 relative">
+      <div className="w-full h-full flex items-center justify-between px-4 lg:px-8 relative">
       {/* Mobile full-width search overlay */}
       {showMobileSearch && (
         <div className="absolute inset-0 bg-surface z-30 flex items-center px-4 gap-2 border-b border-border animate-fade-in sm:hidden">

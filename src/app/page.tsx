@@ -330,21 +330,25 @@ function MasterFunnel() {
       }`}
     >
       <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-accent/5 blur-[100px] rounded-full pointer-events-none" />
-      <div className="p-8 relative z-10 flex flex-col items-center justify-center text-center min-h-[200px]">
+      <div className="p-6 relative z-10 flex flex-col md:flex-row items-center justify-between min-h-[100px] gap-6">
         {isProcessing ? (
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex w-full items-center justify-center gap-4">
+            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
             <p className="text-sm font-medium text-accent animate-pulse">{progressText}</p>
           </div>
         ) : (
           <>
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${isDragging ? 'bg-accent/20' : 'bg-accent/10'}`}>
-              <Upload className={`w-8 h-8 ${isDragging ? 'text-accent' : 'text-accent/70'}`} />
+            <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 flex-1">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${isDragging ? 'bg-accent/20' : 'bg-accent/10'}`}>
+                <Upload className={`w-6 h-6 ${isDragging ? 'text-accent' : 'text-accent/70'}`} />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-text-primary mb-1">Master Funnel</h2>
+                <p className="text-sm text-text-secondary">
+                  Drag and drop anything here to intelligently populate your CRM. Supports <span className="font-medium text-text-primary">PDF/DOCX Resumes</span> and <span className="font-medium text-text-primary">Apollo CSV Exports</span>.
+                </p>
+              </div>
             </div>
-            <h2 className="text-lg font-semibold text-text-primary mb-2">Master Funnel</h2>
-            <p className="text-sm text-text-secondary max-w-lg">
-              Drag and drop anything here to intelligently populate your CRM. Supports <span className="font-medium text-text-primary">PDF/DOCX Resumes</span> and <span className="font-medium text-text-primary">Apollo CSV Exports</span>.
-            </p>
           </>
         )}
       </div>

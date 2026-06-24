@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           `}
         >
           <Header />
-          <main className="p-4 lg:p-6 max-w-7xl mx-auto w-full">{children}</main>
+          <main className="p-4 lg:p-8 w-full">{children}</main>
         </div>
         <ToastContainer />
         <CredentialPrompt />
