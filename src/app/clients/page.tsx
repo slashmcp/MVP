@@ -19,7 +19,7 @@ import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
 
 export default function ClientsPage() {
-  const { showCredentialPrompt, bypassedServices, hiddenClientIds, hideClient, dbClients, fetchDatabase } = useAppStore();
+  const { showCredentialPrompt, bypassedServices, hiddenClientIds, hideClient, addToast, dbClients, fetchDatabase } = useAppStore();
   const clients = dbClients || [];
   
   const [search, setSearch] = useState('');
@@ -29,10 +29,6 @@ export default function ClientsPage() {
   const [showSourcing, setShowSourcing] = useState(false);
   const [sourcingQuery, setSourcingQuery] = useState('');
   const [isSourcing, setIsSourcing] = useState(false);
-
-  // Deduplication state
-  const [pendingClients, setPendingClients] = useState<{new: any[], duplicates: {existing: any, new: any}[]}>({new: [], duplicates: []});
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -52,47 +48,66 @@ export default function ClientsPage() {
       });
       const data = await res.json();
       if (data.error === 'MISSING_API_KEY') {
-         showCredentialPrompt({ service: 'serpapi', feature: 'Live Client Sourcing' });
-         setIsSourcing(false);
-         return;
+        showCredentialPrompt({ service: 'serpapi', feature: 'Live Client Sourcing' });
+        setIsSourcing(false);
+        return;
       }
       if (data.success && data.clients) {
-        const newClients: any[] = [];
-        const duplicateClients: {existing: any, new: any}[] = [];
+        let added = 0, merged = 0;
 
-        data.clients.forEach((sourcedClient: any) => {
-          const existing = clients.find(c => 
-            c.companyName.toLowerCase() === sourcedClient.companyName.toLowerCase() || 
-            (c.linkedinUrl && sourcedClient.linkedinUrl && c.linkedinUrl === sourcedClient.linkedinUrl)
+        await Promise.all(data.clients.map(async (sourced: any) => {
+          const existing = clients.find(c =>
+            c.companyName.toLowerCase() === sourced.companyName.toLowerCase() ||
+            (c.linkedinUrl && sourced.linkedinUrl && c.linkedinUrl === sourced.linkedinUrl)
           );
-          if (existing) {
-            duplicateClients.push({ existing, new: sourcedClient });
-          } else {
-            newClients.push(sourcedClient);
-          }
-        });
 
-        if (duplicateClients.length > 0) {
-          setPendingClients({ new: newClients, duplicates: duplicateClients });
-          setShowDuplicateModal(true);
-          setShowSourcing(false);
-          setSourcingQuery('');
-          setIsSourcing(false);
-          return;
-        } else {
-          await saveSourcedClients(newClients);
-          setShowSourcing(false);
-          setSourcingQuery('');
-        }
+          if (existing) {
+            // Merge: new data wins, fall back to existing only when new is empty/unknown
+            const isUnknown = (v: any) => !v || v === 'Unknown Location' || v === 'N/A' || v === 'Requires Outreach';
+            const payload = {
+              id: existing.id,
+              linkedinUrl: sourced.linkedinUrl || existing.linkedinUrl,
+              location: !isUnknown(sourced.location) ? sourced.location : existing.location,
+              industry: !isUnknown(sourced.industry) ? sourced.industry : existing.industry,
+              contactPerson: !isUnknown(sourced.contactPerson) ? sourced.contactPerson : existing.contactPerson,
+              email: !isUnknown(sourced.email) ? sourced.email : existing.email,
+              notes: sourced.notes
+                ? (existing.notes ? existing.notes + '\n\n[Re-sourced]: ' : '') + sourced.notes
+                : existing.notes,
+            };
+            await fetch('/api/clients', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            merged++;
+          } else {
+            await fetch('/api/clients', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(sourced),
+            });
+            added++;
+          }
+        }));
+
+        await fetchDatabase();
+        setShowSourcing(false);
+        setSourcingQuery('');
+        addToast({
+          type: 'success',
+          message: `Done! ${added} new client${added !== 1 ? 's' : ''} added, ${merged} existing record${merged !== 1 ? 's' : ''} enriched.`
+        });
       }
     } catch (e) {
       console.error(e);
+      addToast({ type: 'error', message: 'Sourcing failed. Please try again.' });
     }
     setIsSourcing(false);
   };
 
   const saveSourcedClients = async (clientsToSave: any[]) => {
-    await Promise.all(clientsToSave.map((client: any) => 
+    await Promise.all(clientsToSave.map((client: any) =>
       fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,36 +115,6 @@ export default function ClientsPage() {
       })
     ));
     await fetchDatabase();
-  };
-
-  const handleDuplicateDecision = async (updateExisting: boolean) => {
-    setShowDuplicateModal(false);
-    setIsSourcing(true);
-    
-    // 1. Save strictly new ones
-    await saveSourcedClients(pendingClients.new);
-    
-    // 2. Handle duplicates
-    if (updateExisting) {
-      await Promise.all(pendingClients.duplicates.map(async ({existing, new: sourced}) => {
-        const payload = {
-          id: existing.id,
-          linkedinUrl: sourced.linkedinUrl || existing.linkedinUrl,
-          location: existing.location === 'Unknown Location' ? sourced.location : existing.location,
-          industry: existing.industry || sourced.industry,
-          notes: (existing.notes ? existing.notes + '\n\n' : '') + `[Updated via AI Sourcing]: ${sourced.notes}`
-        };
-        await fetch('/api/clients', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      }));
-      await fetchDatabase();
-    }
-    
-    setPendingClients({new: [], duplicates: []});
-    setIsSourcing(false);
   };
 
   const filtered = useMemo(() => {
@@ -524,48 +509,6 @@ export default function ClientsPage() {
           >
             Deselect All
           </button>
-        </div>
-      )}
-
-      {showDuplicateModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[var(--surface)] border border-border shadow-xl rounded-xl w-full max-w-md overflow-hidden flex flex-col animate-slide-up">
-            <div className="p-5 border-b border-border flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-semibold text-text-primary">Duplicates Found</h2>
-            </div>
-            
-            <div className="p-5 overflow-y-auto max-h-[60vh]">
-              <p className="text-sm text-text-secondary mb-4">
-                We found <strong>{pendingClients.duplicates.length}</strong> clients that already exist in your CRM. What would you like to do with them?
-              </p>
-              <div className="space-y-3">
-                {pendingClients.duplicates.map((dup, i) => (
-                  <div key={i} className="text-sm border border-border rounded p-3 bg-[var(--surface-elevated)]">
-                    <span className="font-medium text-text-primary">{dup.existing.companyName}</span>
-                    <p className="text-xs text-text-tertiary mt-1">Existing location: {dup.existing.location}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="p-4 border-t border-border flex justify-end gap-3 bg-[var(--surface-elevated)]">
-              <button
-                className="btn btn-secondary"
-                onClick={() => handleDuplicateDecision(false)}
-              >
-                Skip Duplicates
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => handleDuplicateDecision(true)}
-              >
-                Update Existing
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
