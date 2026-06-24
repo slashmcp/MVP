@@ -11,11 +11,14 @@ export async function POST(request: NextRequest) {
 
     let enrichedData: Record<string, string> = {};
 
-    if (provider === 'apollo') {
-      const apolloKey = process.env.APOLLO_API_KEY;
-      if (!apolloKey) {
-        return NextResponse.json({ error: 'Apollo API key not configured' }, { status: 500 });
-      }
+    let activeProvider = provider;
+
+    if (activeProvider === 'apollo' && !process.env.APOLLO_API_KEY) {
+      activeProvider = 'serp';
+    }
+
+    if (activeProvider === 'apollo') {
+      const apolloKey = process.env.APOLLO_API_KEY!;
 
       // Hit Apollo /v1/organizations/enrich
       const res = await fetch('https://api.apollo.io/v1/organizations/enrich', {
@@ -42,13 +45,15 @@ export async function POST(request: NextRequest) {
           if (org.twitter_url) enrichedData.twitterUrl = org.twitter_url;
           if (org.facebook_url) enrichedData.facebookUrl = org.facebook_url;
         }
+      } else if (res.status === 401 || res.status === 403) {
+        // Fallback to SerpAPI if Apollo lacks access
+        activeProvider = 'serp';
       } else {
-         if (res.status === 403 || res.status === 401) {
-           return NextResponse.json({ error: 'Apollo API key does not have access to the Enrichment endpoint (requires paid plan)' }, { status: 403 });
-         }
-         return NextResponse.json({ error: `Apollo returned status ${res.status}` }, { status: 500 });
+        return NextResponse.json({ error: `Apollo returned status ${res.status}` }, { status: 500 });
       }
-    } else if (provider === 'serp') {
+    }
+    
+    if (activeProvider === 'serp') {
       const serpKey = process.env.SERPAPI_API_KEY;
       if (!serpKey) {
         return NextResponse.json({ error: 'SerpAPI key not configured' }, { status: 500 });
@@ -109,7 +114,7 @@ export async function POST(request: NextRequest) {
       } else {
         return NextResponse.json({ error: `SerpAPI returned status ${resLinkedin.status}` }, { status: 500 });
       }
-    } else {
+    } else if (activeProvider !== 'apollo' && activeProvider !== 'serp') {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
 
