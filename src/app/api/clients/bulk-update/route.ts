@@ -50,13 +50,18 @@ export async function POST(request: NextRequest) {
 
       if (!match) {
         // Insert new client using createClient helper
+        const websiteVal = record.website && record.website !== 'N/A'
+          ? (record.website.startsWith('http') ? record.website : `https://${record.website}`)
+          : undefined;
+
+        const isLinkedin = websiteVal && websiteVal.includes('linkedin.com');
+
         const newClient = {
           companyName: record.company,
           email: record.email && record.email !== 'N/A' ? record.email : undefined,
           phone: record.phone && record.phone !== 'N/A' ? record.phone : undefined,
-          websiteUrl: record.website && record.website !== 'N/A'
-            ? (record.website.startsWith('http') ? record.website : `https://${record.website}`)
-            : undefined,
+          websiteUrl: isLinkedin ? undefined : websiteVal,
+          linkedinUrl: isLinkedin ? websiteVal : undefined,
           status: 'Prospect' as const,
         };
         const created = await createClient(newClient);
@@ -73,7 +78,12 @@ export async function POST(request: NextRequest) {
       if (record.email && record.email !== 'N/A') updates.email = record.email;
       if (record.phone && record.phone !== 'N/A') updates.phone = record.phone;
       if (record.website && record.website !== 'N/A') {
-        updates.websiteUrl = record.website.startsWith('http') ? record.website : `https://${record.website}`;
+        const websiteVal = record.website.startsWith('http') ? record.website : `https://${record.website}`;
+        if (websiteVal.includes('linkedin.com')) {
+          updates.linkedinUrl = websiteVal;
+        } else {
+          updates.websiteUrl = websiteVal;
+        }
       }
 
       if (Object.keys(updates).length === 0) continue;
