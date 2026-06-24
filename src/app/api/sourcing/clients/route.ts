@@ -55,11 +55,20 @@ export async function POST(req: Request) {
       enrichedClients = (data.organic_results || []).map((result: any, index: number) => {
         const companyName = result.title.replace(/ \| LinkedIn/g, '').trim();
         
+        const snippet = result.snippet || '';
+        let extractedLocation = 'Unknown Location';
+        
+        // Try to extract location (e.g., "Software Development. Grimes, Iowa 809 followers.")
+        const followersMatch = snippet.match(/([^.]+)\s+\d+(?:,\d+)?\s+followers/i);
+        if (followersMatch && followersMatch[1]) {
+          extractedLocation = followersMatch[1].trim();
+        }
+        
         return {
           id: `client_serpapi_${index}_${Date.now()}`,
           companyName: companyName,
           industry: 'Software / Technology',
-          location: 'Unknown Location',
+          location: extractedLocation,
           websiteUrl: result.link,
           status: 'Prospect',
           contactPerson: 'Requires Outreach',
@@ -67,7 +76,7 @@ export async function POST(req: Request) {
           openRoles: Math.floor(Math.random() * 5) + 1,
           totalPlacements: 0,
           activeSince: new Date().toISOString().split('T')[0],
-          notes: `Found via AI Sourcing: ${result.snippet ? result.snippet.substring(0, 100) + '...' : ''}`,
+          notes: `Found via AI Sourcing: ${snippet.substring(0, 100)}...`,
         };
       });
     }

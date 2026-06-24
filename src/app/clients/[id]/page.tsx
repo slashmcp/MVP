@@ -12,6 +12,7 @@ import {
   Edit2,
   Phone,
   Globe,
+  MapPin,
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
@@ -199,6 +200,10 @@ export default function ClientDetailPage({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Contact</span>
                 <span className="text-text-primary">{client.contactPerson || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Location</span>
+                <span className="text-text-primary">{client.location || 'Unknown Location'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Email</span>

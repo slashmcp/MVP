@@ -10,7 +10,8 @@ import {
   ExternalLink,
   Trash2,
   Sparkles,
-  Loader2
+  Loader2,
+  MapPin
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
@@ -197,11 +198,17 @@ export default function ClientsPage() {
             {client.contactPerson && (
               <p className="text-sm text-text-secondary mt-1">{client.contactPerson}</p>
             )}
-            <div className="flex items-center gap-4 mt-4 text-xs text-text-secondary">
+            <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
               <span className="flex items-center gap-1">
                 <Briefcase className="w-3.5 h-3.5" strokeWidth={1.75} />
                 {client.openRoles} open role{client.openRoles !== 1 ? 's' : ''}
               </span>
+              {client.location && client.location !== 'Unknown Location' && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  {client.location}
+                </span>
+              )}
               {client.email && (
                 <span className="flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
