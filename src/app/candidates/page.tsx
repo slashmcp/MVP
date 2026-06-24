@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Papa from 'papaparse';
 import {
@@ -349,7 +349,7 @@ export default function CandidatesPage() {
             disabled={isDeduping}
             title="Scan and merge duplicate candidates"
           >
-            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">⚡</span>}
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">âš¡</span>}
             {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
           <button 
@@ -550,7 +550,7 @@ export default function CandidatesPage() {
                     <span className="flex items-center gap-1">
                       {col.label}
                       <span className="text-text-tertiary ml-0.5">
-                        {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                        {sortKey === col.key ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
                       </span>
                     </span>
                   </th>
@@ -618,7 +618,7 @@ export default function CandidatesPage() {
                     </span>
                   </td>
                   <td className="text-text-secondary text-sm">
-                    {candidate.seniority || '—'}
+                    {candidate.seniority || 'â€”'}
                   </td>
                   <td className="text-text-secondary font-mono text-xs">
                     {candidate.lastContactDate
@@ -626,7 +626,7 @@ export default function CandidatesPage() {
                           month: 'short',
                           day: 'numeric',
                         })
-                      : '—'}
+                      : 'â€”'}
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -881,6 +881,37 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
   const [existingId, setExistingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Global clipboard paste listener - fires when modal is mounted
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (isParsing) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      let fileToUpload: File | null = null;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const ext = item.type.split('/')[1] || 'png';
+            fileToUpload = new File([blob], `screenshot_${Date.now()}.${ext}`, { type: item.type });
+            break;
+          }
+        }
+      }
+      if (!fileToUpload) {
+        const text = e.clipboardData?.getData('text');
+        if (text && text.trim().length > 20) {
+          fileToUpload = new File([text], `pasted_${Date.now()}.txt`, { type: 'text/plain' });
+        }
+      }
+      if (fileToUpload) {
+        e.preventDefault();
+        await processFile(fileToUpload);
+      }
+    };
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [isParsing]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -921,10 +952,14 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
     const validTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
+      'application/msword',
+      'text/plain',
+      'image/png', 'image/jpeg', 'image/webp', 'image/gif',
     ];
-    if (!validTypes.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.docx')) {
-      setParseError('Please upload a valid PDF or DOCX file.');
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const isAllowed = validTypes.includes(file.type) || ['pdf','docx','doc','txt','png','jpg','jpeg','webp'].includes(ext);
+    if (!isAllowed) {
+      setParseError('Unsupported format. Use PDF, DOCX, TXT, or paste a screenshot.');
       return;
     }
 
@@ -1040,7 +1075,7 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
         <div className="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
           {/* Drag & Drop Upload Zone */}
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1.5">Auto-fill with Resume (PDF / DOCX)</label>
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">Auto-fill from Resume, Profile, or Screenshot</label>
             <div 
               className={`border-2 border-dashed rounded-xl p-6 transition-colors text-center cursor-pointer ${
                 isDragging 
@@ -1056,7 +1091,7 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
                 type="file" 
                 ref={fileInputRef} 
                 onChange={handleFileChange} 
-                accept="application/pdf" 
+                accept="application/pdf,.docx,.doc,text/plain,image/*" 
                 className="hidden" 
               />
               
@@ -1071,8 +1106,8 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
                   <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-1">
                     <UploadCloud className="w-5 h-5" strokeWidth={1.5} />
                   </div>
-                  <p className="text-sm font-medium text-text-primary">Click to upload or drag and drop</p>
-                  <p className="text-xs text-text-secondary">PDF files only (Max 5MB)</p>
+                  <p className="text-sm font-medium text-text-primary">Click, drag & drop, or Ctrl+V to paste</p>
+                  <p className="text-xs text-text-secondary">PDF Â· DOCX Â· TXT Â· or paste a screenshot / copied text</p>
                 </div>
               )}
             </div>
@@ -1143,3 +1178,4 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
