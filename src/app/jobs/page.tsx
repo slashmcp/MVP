@@ -404,7 +404,7 @@ export default function JobsPage() {
                         }
                       }
                     }}
-                    className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors md:opacity-0 md:group-hover:opacity-100"
                     title="Delete Job"
                   >
                     <Trash2 className="w-4 h-4" />
