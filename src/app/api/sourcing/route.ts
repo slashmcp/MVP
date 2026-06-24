@@ -10,8 +10,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job ID is required for sourcing.' }, { status: 400 });
     }
 
-    // Determine Sourcing Provider (Default to Juicebox if key is present or requested, fallback to Serper)
-    const activeProvider = provider || (process.env.JUICEBOX_API_KEY ? 'juicebox' : 'serper');
+    // Determine Sourcing Provider (Default to Juicebox if key is present or requested, fallback to SerpAPI)
+    const activeProvider = provider || (process.env.JUICEBOX_API_KEY ? 'juicebox' : 'serpapi');
 
     if (activeProvider === 'juicebox') {
       if (!process.env.JUICEBOX_API_KEY) {
@@ -51,29 +51,19 @@ export async function POST(req: Request) {
         provider: 'juicebox'
       });
     } else {
-      // Sourcing with Serper.dev (Google Search + LinkedIn)
-      if (!process.env.SERPER_API_KEY) {
-        return NextResponse.json({ error: 'MISSING_API_KEY', provider: 'serper' }, { status: 401 });
+      // Sourcing with SerpAPI (Google Search + LinkedIn)
+      if (!process.env.SERPAPI_API_KEY) {
+        return NextResponse.json({ error: 'MISSING_API_KEY', provider: 'serpapi' }, { status: 401 });
       }
 
       const searchQuery = query ? `site:linkedin.com/in/ ${query}` : `site:linkedin.com/in/ "Software Engineer"`;
 
-      const response = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': process.env.SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: searchQuery,
-          num: 10
-        })
-      });
+      const response = await fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(searchQuery)}&api_key=${process.env.SERPAPI_API_KEY}&num=10`);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Serper API Error:', errorData);
-        return NextResponse.json({ error: 'Failed to fetch from Serper API' }, { status: response.status });
+        console.error('SerpAPI Error:', errorData);
+        return NextResponse.json({ error: 'Failed to fetch from SerpAPI' }, { status: response.status });
       }
 
       const data = await response.json();

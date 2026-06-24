@@ -51,17 +51,17 @@ const SERVICE_CONFIG = {
     link: 'https://docs.n8n.io/integrations/core-nodes/n8n-nodes-base.webhook/',
     envVars: ['N8N_BASE_URL', 'N8N_WEBHOOK_SECRET'],
   },
-  'serper': {
-    title: 'Serper.dev (Google Search) Required',
-    description: 'To source new candidates via Google Search and LinkedIn profiles, you need to provide your free Serper API key.',
+  'serpapi': {
+    title: 'SerpAPI (Google Search) Required',
+    description: 'To source new candidates via Google Search and LinkedIn profiles, you need to provide your free SerpAPI key.',
     steps: [
-      'Go to serper.dev and create a free account.',
+      'Go to serpapi.com and create a free account.',
       'Navigate to the API Keys section.',
       'Copy your API key.',
       'Add the API key to your .env.local file.',
     ],
-    link: 'https://serper.dev/api-key',
-    envVars: ['SERPER_API_KEY'],
+    link: 'https://serpapi.com/manage-api-key',
+    envVars: ['SERPAPI_API_KEY'],
   },
   'apify': {
     title: 'Apify Connection Required',

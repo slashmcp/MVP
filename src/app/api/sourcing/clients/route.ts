@@ -10,13 +10,13 @@ export async function POST(req: Request) {
     }
 
     const isMockMode = body.mock === true;
-    if (!process.env.SERPER_API_KEY && !isMockMode) {
-      return NextResponse.json({ error: 'MISSING_API_KEY', provider: 'serper' }, { status: 401 });
+    if (!process.env.SERPAPI_API_KEY && !isMockMode) {
+      return NextResponse.json({ error: 'MISSING_API_KEY', provider: 'serpapi' }, { status: 401 });
     }
 
     let enrichedClients = [];
 
-    if (isMockMode || !process.env.SERPER_API_KEY) {
+    if (isMockMode || !process.env.SERPAPI_API_KEY) {
       // Return high-quality mock clients based on the query keywords
       const mockCompanies = [
         { name: 'TechVentures', industry: 'Software / SaaS', location: 'London, UK', roles: 3, notes: 'Fast growing startup in AI space.' },
@@ -40,23 +40,13 @@ export async function POST(req: Request) {
     } else {
       const searchQuery = `site:linkedin.com/company ${query}`;
 
-      // Call Serper.dev API
-      const response = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': process.env.SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: searchQuery,
-          num: 10
-        })
-      });
+      // Call SerpAPI
+      const response = await fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(searchQuery)}&api_key=${process.env.SERPAPI_API_KEY}&num=10`);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Serper API Error:', errorData);
-        return NextResponse.json({ error: 'Failed to fetch from Serper API' }, { status: response.status });
+        console.error('SerpAPI Error:', errorData);
+        return NextResponse.json({ error: 'Failed to fetch from SerpAPI' }, { status: response.status });
       }
 
       const data = await response.json();
@@ -66,7 +56,7 @@ export async function POST(req: Request) {
         const companyName = result.title.replace(/ \| LinkedIn/g, '').trim();
         
         return {
-          id: `client_serper_${index}_${Date.now()}`,
+          id: `client_serpapi_${index}_${Date.now()}`,
           companyName: companyName,
           industry: 'Software / Technology',
           location: 'Unknown Location',
