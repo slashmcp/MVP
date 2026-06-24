@@ -42,6 +42,10 @@ export default function CandidatesPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
 
+  const [showSourcing, setShowSourcing] = useState(false);
+  const [sourcingQuery, setSourcingQuery] = useState('');
+  const [isSourcing, setIsSourcing] = useState(false);
+
   // Sort State (list mode)
   type SortKey = 'name' | 'status' | 'seniority' | 'lastContact' | 'skills';
   const [sortKey, setSortKey] = useState<SortKey>('name');
@@ -75,6 +79,35 @@ export default function CandidatesPage() {
       addToast({ type: 'error', message: 'An error occurred during deduplication.' });
     }
     setIsDeduping(false);
+  };
+
+  const handleSourceCandidates = async () => {
+    if (!sourcingQuery) return;
+    setIsSourcing(true);
+    try {
+      const res = await fetch('/api/sourcing/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: sourcingQuery })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        await fetchDatabase();
+        setShowSourcing(false);
+        setSourcingQuery('');
+        addToast({
+          type: 'success',
+          message: `Sourced ${data.count} candidates. Automatically enriched ${data.enrichedCount} with emails/phones!`
+        });
+      } else {
+        addToast({ type: 'error', message: data.error || 'Failed to source candidates.' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'An error occurred during sourcing.' });
+    }
+    setIsSourcing(false);
   };
 
   const cands = dbCandidates || [];
@@ -301,6 +334,13 @@ export default function CandidatesPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <button 
+            className="btn bg-accent-soft text-accent border border-accent/20 hover:bg-accent/10"
+            onClick={() => setShowSourcing(!showSourcing)}
+          >
+            <Sparkles className="w-4 h-4" strokeWidth={1.75} />
+            AI Source
+          </button>
           <button
             className="btn btn-secondary"
             onClick={handleDedup}
@@ -339,6 +379,31 @@ export default function CandidatesPage() {
 
       {showAddModal && <AddCandidateModal onClose={() => setShowAddModal(false)} />}
       {showBulkImportModal && <BulkImportModal onClose={() => setShowBulkImportModal(false)} />}
+
+      {/* Sourcing Search Bar */}
+      {showSourcing && (
+        <div className="card bg-accent/5 border-accent/20 p-4 mb-6 animate-fade-in flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-accent" />
+            <input 
+              type="text" 
+              placeholder="e.g. 'Software Engineer in Glasgow'"
+              className="input w-full pl-9 border-accent/20 focus:border-accent focus:ring-accent/20 bg-background"
+              value={sourcingQuery}
+              onChange={(e) => setSourcingQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSourceCandidates()}
+            />
+          </div>
+          <button 
+            className="btn btn-primary whitespace-nowrap"
+            onClick={handleSourceCandidates}
+            disabled={isSourcing || !sourcingQuery}
+          >
+            {isSourcing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {isSourcing ? 'Sourcing & Enriching...' : 'Start AI Sourcing'}
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
