@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, Building2, ExternalLink, Loader2 } from 'lucide-react';
+import { Search, MapPin, Building2, ExternalLink, Loader2, UserPlus, CheckCircle2 } from 'lucide-react';
 
 export default function VacanciesPage() {
   const [query, setQuery] = useState('');
@@ -9,6 +9,8 @@ export default function VacanciesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [savingJobs, setSavingJobs] = useState<Record<string, boolean>>({});
+  const [savedJobs, setSavedJobs] = useState<Record<string, boolean>>({});
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +34,32 @@ export default function VacanciesPage() {
       alert('Failed to fetch vacancies. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveLead = async (job: any, index: number) => {
+    const key = `${index}-${job.title}`;
+    setSavingJobs(prev => ({ ...prev, [key]: true }));
+
+    try {
+      const res = await fetch('/api/leads/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: job.company_name,
+          location: job.location,
+          jobTitle: job.title,
+          description: job.description,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save lead');
+      setSavedJobs(prev => ({ ...prev, [key]: true }));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add to CRM. Please try again.');
+    } finally {
+      setSavingJobs(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -87,45 +115,70 @@ export default function VacanciesPage() {
           </h2>
 
           <div className="grid gap-4">
-            {jobs.map((job, index) => (
-              <div key={index} className="bg-[var(--surface-overlay)] border border-border rounded-xl p-6 hover:border-accent/30 transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-text-primary mb-1">{job.title}</h3>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary mb-4">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4" />
-                        <span className="font-medium">{job.company_name}</span>
+            {jobs.map((job, index) => {
+              const key = `${index}-${job.title}`;
+              const isSaving = savingJobs[key];
+              const isSaved = savedJobs[key];
+              
+              return (
+                <div key={index} className="bg-[var(--surface-overlay)] border border-border rounded-xl p-6 hover:border-accent/30 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-text-primary mb-1">{job.title}</h3>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4" />
+                          <span className="font-medium">{job.company_name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4" />
+                          <span>{job.location}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4" />
-                        <span>{job.location}</span>
-                      </div>
+                      <p className="text-sm text-text-secondary line-clamp-3 mb-4">
+                        {job.description}
+                      </p>
                     </div>
-                    <p className="text-sm text-text-secondary line-clamp-3 mb-4">
-                      {job.description}
-                    </p>
-                  </div>
-                </div>
-
-                {job.apply_options && job.apply_options.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
-                    {job.apply_options.map((option: any, idx: number) => (
-                      <a
-                        key={idx}
-                        href={option.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors bg-[var(--surface-elevated)] hover:bg-accent/10 hover:text-accent border border-border px-3 py-1.5 h-8 gap-1.5"
+                    <div className="flex-shrink-0">
+                      <button 
+                        onClick={() => handleSaveLead(job, index)}
+                        disabled={isSaving || isSaved}
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors px-4 py-2 border ${
+                          isSaved 
+                            ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                            : 'bg-[var(--surface-elevated)] hover:bg-accent/10 hover:text-accent border-border text-text-primary'
+                        } disabled:opacity-50 disabled:cursor-not-allowed gap-2`}
                       >
-                        {option.title}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    ))}
+                        {isSaving ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                        ) : isSaved ? (
+                          <><CheckCircle2 className="w-4 h-4" /> Added to CRM</>
+                        ) : (
+                          <><UserPlus className="w-4 h-4" /> Save as Lead</>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {job.apply_options && job.apply_options.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+                      {job.apply_options.map((option: any, idx: number) => (
+                        <a
+                          key={idx}
+                          href={option.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors bg-[var(--surface-elevated)] hover:bg-accent/10 hover:text-accent border border-border px-3 py-1.5 h-8 gap-1.5"
+                        >
+                          {option.title}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
