@@ -18,6 +18,26 @@ import {
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
 
+function locationTag(loc: string | undefined): string {
+  if (!loc || loc === 'Unknown Location') return '—';
+  const l = loc.toLowerCase();
+  if (/remote/i.test(l)) return 'REM';
+  if (/hybrid/i.test(l)) return 'HYB';
+  // US state abbreviations
+  const usState = loc.match(/,\s*([A-Z]{2})$/); // e.g. "Des Moines, IA"
+  if (usState) return usState[1];
+  // UK locations
+  if (/\buk\b|united kingdom|scotland|england|wales|glasgow|london|surrey|edinburgh|belfast/i.test(l)) return 'UK';
+  // Try last word as country/region abbreviation
+  const parts = loc.split(/[,\s]+/).filter(Boolean);
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1];
+    if (last.length <= 3) return last.toUpperCase();
+    return last.slice(0, 3).toUpperCase();
+  }
+  return loc.slice(0, 3).toUpperCase();
+}
+
 export default function ClientsPage() {
   const { showCredentialPrompt, bypassedServices, hiddenClientIds, hideClient, dbClients, fetchDatabase } = useAppStore();
   const clients = dbClients || [];
@@ -193,8 +213,8 @@ export default function ClientsPage() {
               className="card p-5 group hover:shadow-md transition-all duration-150"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-sm font-semibold flex-shrink-0">
-                  {client.companyName.slice(0, 2).toUpperCase()}
+                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-[10px] font-bold tracking-tight flex-shrink-0" title={client.location || 'Unknown'}>
+                  {locationTag(client.location)}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>

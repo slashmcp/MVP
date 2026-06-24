@@ -20,6 +20,23 @@ import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
 import { EditClientModal } from '@/components/ui/EditClientModal';
 
+function locationTag(loc: string | undefined): string {
+  if (!loc || loc === 'Unknown Location') return '—';
+  const l = loc.toLowerCase();
+  if (/remote/i.test(l)) return 'REM';
+  if (/hybrid/i.test(l)) return 'HYB';
+  const usState = loc.match(/,\s*([A-Z]{2})$/);
+  if (usState) return usState[1];
+  if (/\buk\b|united kingdom|scotland|england|wales|glasgow|london|surrey|edinburgh|belfast/i.test(l)) return 'UK';
+  const parts = loc.split(/[,\s]+/).filter(Boolean);
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1];
+    if (last.length <= 3) return last.toUpperCase();
+    return last.slice(0, 3).toUpperCase();
+  }
+  return loc.slice(0, 3).toUpperCase();
+}
+
 export default function ClientDetailPage({
   params,
 }: {
@@ -96,8 +113,8 @@ export default function ClientDetailPage({
       <div className="card">
         <div className="px-6 py-5 flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent text-lg font-semibold flex-shrink-0">
-              {client.companyName.slice(0, 2).toUpperCase()}
+            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent text-sm font-bold tracking-tight flex-shrink-0" title={client.location || 'Unknown'}>
+              {locationTag(client.location)}
             </div>
             <div>
               <h1 className="text-xl font-semibold text-text-primary">{client.companyName}</h1>
