@@ -8,7 +8,7 @@ import {
   Briefcase,
   Building2,
   Calendar,
-  Sparkles,
+  Search,
   Loader2,
   Edit2,
   Phone,
@@ -27,11 +27,11 @@ export default function ClientDetailPage({
   const { id } = use(params);
   const { dbClients, dbJobs, fetchDatabase } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [isEnriching, setIsEnriching] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const enrichJobs = async (clientData: any) => {
+  const searchJobs = async (clientData: any) => {
     if (!clientData) return;
-    setIsEnriching(true);
+    setIsSearching(true);
     try {
       const res = await fetch('/api/sourcing/enrich-jobs', {
         method: 'POST',
@@ -39,9 +39,13 @@ export default function ClientDetailPage({
         body: JSON.stringify({ client: clientData }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to enrich jobs');
+      if (!res.ok) throw new Error(data.error || 'Failed to search jobs');
       
-      // Add each job
+      if (data.jobs.length === 0) {
+        alert(data.message || 'No job listings found for this company.');
+        return;
+      }
+
       for (const job of data.jobs) {
         await fetch('/api/jobs', {
           method: 'POST',
@@ -53,9 +57,9 @@ export default function ClientDetailPage({
       await fetchDatabase();
     } catch (e: any) {
       console.error(e);
-      alert('Error enriching jobs: ' + e.message);
+      alert('Error searching jobs: ' + e.message);
     } finally {
-      setIsEnriching(false);
+      setIsSearching(false);
     }
   };
   
@@ -187,8 +191,16 @@ export default function ClientDetailPage({
 
           {/* Open Roles */}
           <div className="card">
-            <div className="card-header">
+            <div className="card-header flex items-center justify-between">
               <h2 className="text-base font-semibold text-text-primary">Open Roles</h2>
+              <button 
+                onClick={() => searchJobs(client)}
+                disabled={isSearching}
+                className="btn btn-secondary btn-sm flex items-center gap-1.5"
+              >
+                {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                {isSearching ? 'Searching...' : 'Search Open Roles'}
+              </button>
             </div>
             {clientJobs.length > 0 ? (
               <div className="divide-y divide-border">
@@ -216,16 +228,8 @@ export default function ClientDetailPage({
                 ))}
               </div>
             ) : (
-              <div className="empty-state py-10 flex flex-col items-center">
-                <p className="text-sm mb-4">No open roles linked yet.</p>
-                <button 
-                  onClick={() => enrichJobs(client)}
-                  disabled={isEnriching}
-                  className="btn btn-primary btn-sm flex items-center gap-1.5"
-                >
-                  {isEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {isEnriching ? 'Generating...' : `Enrich ${Number(client.openRoles) || 3} Roles with AI`}
-                </button>
+              <div className="empty-state py-10">
+                <p className="text-sm">No open roles found. Use Search to find real listings.</p>
               </div>
             )}
           </div>

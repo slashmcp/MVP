@@ -69,12 +69,31 @@ export async function POST(req: Request) {
         else if (scheduleType.toLowerCase().includes('part')) type = 'Part-time';
       }
 
+      // Detect remote/hybrid/on-site
+      let location = job.location || client.location || '';
+      const workFromHome = job.detected_extensions?.work_from_home;
+      const titleLower = (job.title || '').toLowerCase();
+      const descLower = description.toLowerCase();
+
+      let workMode = '';
+      if (workFromHome === true || /\bremote\b/i.test(location) || /\bremote\b/.test(titleLower)) {
+        workMode = 'Remote';
+      } else if (/\bhybrid\b/i.test(location) || /\bhybrid\b/.test(titleLower) || /\bhybrid\b/.test(descLower)) {
+        workMode = 'Hybrid';
+      }
+
+      // Append work mode to location if not already there
+      if (workMode && !location.toLowerCase().includes(workMode.toLowerCase())) {
+        location = location ? `${location} (${workMode})` : workMode;
+      }
+      if (!location) location = 'Location not specified';
+
       return {
         title: job.title || 'Untitled Role',
         client: client.companyName,
         clientId: client.id,
         requirements: requirements,
-        location: job.location || client.location || 'Remote',
+        location: location,
         type: type,
         salary: salaryStr || (salaryMin && salaryMax ? `$${(salaryMin/1000).toFixed(0)}k - $${(salaryMax/1000).toFixed(0)}k` : ''),
         salaryMin: salaryMin,
