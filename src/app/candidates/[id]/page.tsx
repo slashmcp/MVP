@@ -28,8 +28,10 @@ export default function CandidateDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { dbCandidates, dbJobs, fetchDatabase } = useAppStore();
+  const { dbCandidates, dbJobs, fetchDatabase, addToast } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEnrichDropdown, setShowEnrichDropdown] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
   
   const cands = dbCandidates || [];
   const jobs = dbJobs || [];
@@ -60,6 +62,37 @@ export default function CandidateDetailPage({
     { date: '2026-06-12', type: 'note', message: 'Reviewed resume — strong React and Node.js experience' },
     { date: '2026-06-10', type: 'email', message: 'LinkedIn connection request accepted' },
   ];
+
+  const handleEnrich = async (provider: string) => {
+    setShowEnrichDropdown(false);
+    setIsEnriching(true);
+    try {
+      const res = await fetch('/api/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          provider,
+          name: candidate.name,
+          company: candidate.company,
+          email: candidate.email,
+          linkedinUrl: candidate.linkedinUrl
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast({ type: 'success', message: data.message || `Successfully enriched via ${provider}` });
+        fetchDatabase(); // Refresh the data to show new details
+      } else {
+        addToast({ type: 'error', message: data.error || `Failed to enrich via ${provider}` });
+      }
+    } catch (err) {
+      const error = err as Error;
+      addToast({ type: 'error', message: error.message || 'An error occurred during enrichment' });
+    } finally {
+      setIsEnriching(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -174,6 +207,32 @@ export default function CandidateDetailPage({
                 </a>
               </>
             )}
+            <div className="relative">
+              <button 
+                onClick={() => setShowEnrichDropdown(!showEnrichDropdown)} 
+                className="btn btn-secondary btn-sm"
+                disabled={isEnriching}
+              >
+                {isEnriching ? (
+                  <span className="w-3.5 h-3.5 border-2 border-text-secondary border-t-accent rounded-full animate-spin"></span>
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} />
+                )}
+                {isEnriching ? 'Enriching...' : 'Enrich'}
+              </button>
+              {showEnrichDropdown && (
+                <div className="absolute right-0 mt-1 w-48 bg-[var(--surface-elevated)] border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                  <div className="p-1">
+                    <button onClick={() => handleEnrich('apollo')} className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-accent/10 rounded-md transition-colors flex items-center gap-2">
+                      <Target className="w-3.5 h-3.5" /> Apollo
+                    </button>
+                    <button onClick={() => handleEnrich('serp')} className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-accent/10 rounded-md transition-colors flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5" /> Web Search (SerpAPI)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit
