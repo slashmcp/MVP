@@ -13,6 +13,7 @@ import {
   Globe,
   MessageSquare,
   FileText,
+  Sparkles,
   Plus,
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
