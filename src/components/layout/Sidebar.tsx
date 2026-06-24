@@ -54,13 +54,8 @@ export function Sidebar() {
 
       <aside
         className={`
-          fixed left-0 top-0 h-screen flex flex-col border-r border-border bg-[var(--surface-overlay)] backdrop-blur-md z-50 transition-all duration-200
-          
-          /* Mobile: slide-in drawer */
+          fixed left-0 top-0 h-screen flex flex-col border-r border-border bg-[var(--surface-overlay)] backdrop-blur-md z-50 transition-all duration-200 w-64
           ${sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-          w-64
-          
-          /* Desktop: always visible, respect collapse */
           lg:translate-x-0
           ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-60'}
         `}
