@@ -217,17 +217,15 @@ export default function ClientDetailPage({
               </div>
             ) : (
               <div className="empty-state py-10 flex flex-col items-center">
-                <p className="text-sm mb-4">No open roles for this client.</p>
-                {client.openRoles > 0 && (
-                  <button 
-                    onClick={() => enrichJobs(client)}
-                    disabled={isEnriching}
-                    className="btn btn-primary btn-sm flex items-center gap-1.5"
-                  >
-                    {isEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    Enrich {client.openRoles} Roles with AI
-                  </button>
-                )}
+                <p className="text-sm mb-4">No open roles linked yet.</p>
+                <button 
+                  onClick={() => enrichJobs(client)}
+                  disabled={isEnriching}
+                  className="btn btn-primary btn-sm flex items-center gap-1.5"
+                >
+                  {isEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {isEnriching ? 'Generating...' : `Enrich ${Number(client.openRoles) || 3} Roles with AI`}
+                </button>
               </div>
             )}
           </div>
