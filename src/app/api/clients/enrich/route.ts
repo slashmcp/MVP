@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
           if (org.primary_phone) enrichedData.phone = org.primary_phone;
           if (org.website_url) enrichedData.websiteUrl = org.website_url;
           if (org.industry) enrichedData.industry = org.industry;
+          if (org.twitter_url) enrichedData.twitterUrl = org.twitter_url;
+          if (org.facebook_url) enrichedData.facebookUrl = org.facebook_url;
         }
       } else {
          if (res.status === 403 || res.status === 401) {
@@ -68,13 +70,41 @@ export async function POST(request: NextRequest) {
         }
 
         // Try to grab phone and website from knowledge graph or organic snippet
-        if (data.knowledge_graph) {
-           if (data.knowledge_graph.customer_service) {
-             enrichedData.phone = data.knowledge_graph.customer_service.replace(/[^\d+\(\)\s-]/g, '').trim();
+        const kg = data.knowledge_graph;
+        const localResult = data.local_results?.[0];
+
+        if (kg) {
+           if (kg.customer_service) {
+             enrichedData.phone = kg.customer_service.replace(/[^\d+\(\)\s-]/g, '').trim();
            }
-           if (data.knowledge_graph.website) {
-             enrichedData.websiteUrl = data.knowledge_graph.website;
+           if (kg.website) {
+             enrichedData.websiteUrl = kg.website;
            }
+           if (kg.profiles) {
+             const findProfile = (name: string) => kg.profiles.find((p: any) => p.name.toLowerCase() === name)?.link;
+             const fb = findProfile('facebook');
+             if (fb) enrichedData.facebookUrl = fb;
+             
+             const tw = findProfile('twitter') || findProfile('x');
+             if (tw) enrichedData.twitterUrl = tw;
+             
+             const ig = findProfile('instagram');
+             if (ig) enrichedData.instagramUrl = ig;
+             
+             const yt = findProfile('youtube');
+             if (yt) enrichedData.youtubeUrl = yt;
+           }
+        }
+
+        // Ratings, Reviews, and Maps
+        if (kg?.rating || localResult?.rating) {
+           enrichedData.googleRating = String(kg?.rating || localResult?.rating);
+        }
+        if (kg?.review_count || localResult?.reviews) {
+           enrichedData.reviewCount = String(kg?.review_count || localResult?.reviews);
+        }
+        if (localResult?.links?.directions) {
+           enrichedData.mapsUrl = localResult.links.directions;
         }
       } else {
         return NextResponse.json({ error: `SerpAPI returned status ${resLinkedin.status}` }, { status: 500 });
