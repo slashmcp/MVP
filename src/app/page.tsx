@@ -206,7 +206,10 @@ function MasterFunnel() {
 
     // Parse with AI
     const response = await fetch('/api/candidates/parse-resume', { method: 'POST', body: data });
-    if (!response.ok) throw new Error('Failed to parse resume');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to parse resume (Status: ${response.status})`);
+    }
     const { data: parsedData } = await response.json();
 
     // Intelligent Matching
@@ -333,9 +336,9 @@ function MasterFunnel() {
         
         const ext = file.name.toLowerCase();
         if (ext.endsWith('.pdf') || ext.endsWith('.docx') || ext.endsWith('.txt')) {
-          await processResume(file).catch(err => {
+          await processResume(file).catch((err: any) => {
             console.error(`Error processing ${file.name}:`, err);
-            addToast({ type: 'error', message: `Skipped ${file.name} (Parsing failed)` });
+            addToast({ type: 'error', message: `Skipped ${file.name} (${err.message})` });
           });
         } else if (ext.endsWith('.csv')) {
           await processCSV(file).catch(err => {
