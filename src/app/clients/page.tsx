@@ -13,7 +13,9 @@ import {
   Loader2,
   MapPin,
   LayoutGrid,
-  List
+  List,
+  Globe,
+  Phone
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
@@ -423,22 +425,42 @@ export default function ClientsPage() {
               {client.contactPerson && (
                 <p className="text-sm text-text-secondary mt-1">{client.contactPerson}</p>
               )}
-              <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
-                <span className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-3 mt-4 text-xs">
+                <span className="flex items-center gap-1 text-text-secondary">
                   <Briefcase className="w-3.5 h-3.5" strokeWidth={1.75} />
                   {client.openRoles} open role{client.openRoles !== 1 ? 's' : ''}
                 </span>
                 {client.location && client.location !== 'Unknown Location' && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-text-secondary">
                     <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {client.location}
                   </span>
                 )}
-                {client.email && (
-                  <span className="flex items-center gap-1">
+                {client.email && client.email !== 'N/A' && (
+                  <Link href={`/outreach?client=${client.id}`} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 transition-colors" title={`Email: ${client.email}`}>
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                    {client.email}
-                  </span>
+                    <span className="text-text-secondary">{client.email}</span>
+                  </Link>
+                )}
+                {client.phone && client.phone !== 'N/A' && (
+                  <a href={`tel:${client.phone}`} className="flex items-center gap-1 text-emerald-500 hover:text-emerald-400 transition-colors" title={`Call: ${client.phone}`}>
+                    <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    <span className="text-text-secondary">{client.phone}</span>
+                  </a>
+                )}
+                {client.linkedinUrl && (
+                  <a href={client.linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[#0A66C2] hover:text-[#0A66C2]/80 transition-colors" title="LinkedIn Profile">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    LinkedIn
+                  </a>
+                )}
+                {client.websiteUrl && (
+                  <a href={client.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-text-secondary hover:text-accent transition-colors" title="Website">
+                    <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    Website
+                  </a>
                 )}
               </div>
               {client.notes && (
@@ -521,27 +543,76 @@ export default function ClientsPage() {
                       <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
-                            try {
-                              const res = await fetch(`/api/clients?id=${client.id}`, { method: 'DELETE' });
-                              if (res.ok) {
-                                hideClient(client.id);
-                                await fetchDatabase();
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Email */}
+                        {client.email && client.email !== 'N/A' && (
+                          <Link
+                            href={`/outreach?client=${client.id}`}
+                            className="p-1.5 rounded-md text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+                            title={`Email: ${client.email}`}
+                          >
+                            <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          </Link>
+                        )}
+                        {/* Phone */}
+                        {client.phone && client.phone !== 'N/A' && (
+                          <a
+                            href={`tel:${client.phone}`}
+                            className="p-1.5 rounded-md text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
+                            title={`Call: ${client.phone}`}
+                          >
+                            <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          </a>
+                        )}
+                        {/* LinkedIn */}
+                        {client.linkedinUrl && (
+                          <a
+                            href={client.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-md text-[#0A66C2] hover:text-[#0A66C2]/80 hover:bg-[#0A66C2]/10 transition-all"
+                            title="LinkedIn Profile"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                          </a>
+                        )}
+                        {/* Website */}
+                        {client.websiteUrl && (
+                          <a
+                            href={client.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
+                            title="Website"
+                          >
+                            <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          </a>
+                        )}
+                        {/* Delete */}
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
+                              try {
+                                const res = await fetch(`/api/clients?id=${client.id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                  hideClient(client.id);
+                                  await fetchDatabase();
+                                }
+                                else alert('Failed to delete client');
+                              } catch (e) {
+                                console.error(e);
                               }
-                              else alert('Failed to delete client');
-                            } catch (e) {
-                              console.error(e);
                             }
-                          }
-                        }}
-                        className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 inline-block"
-                        title="Delete Client"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                          }}
+                          className="p-1.5 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 ml-1"
+                          title="Delete Client"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
