@@ -94,8 +94,17 @@ Return ONLY valid JSON. Do not include any markdown formatting like \`\`\`json.`
       messages: [{ role: 'user', content: userContent }],
     });
 
-    const resultText = (message.content[0] as any).text || '{}';
-    const candidateData = JSON.parse(resultText);
+    let rawJson = (message.content[0] as any).text;
+    
+    // Strip markdown code blocks if present
+    if (rawJson.startsWith('```json')) {
+      rawJson = rawJson.replace(/^```json\n/, '').replace(/\n```$/, '');
+    } else if (rawJson.startsWith('```')) {
+      rawJson = rawJson.replace(/^```\n/, '').replace(/\n```$/, '');
+    }
+    
+    // Parse the JSON securely
+    const candidateData = JSON.parse(rawJson);
 
     return NextResponse.json({ success: true, data: candidateData });
     
