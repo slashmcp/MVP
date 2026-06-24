@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { getJobs, createJob } from '@/lib/db-client';
+import { getJobs, createJob, deleteJob, deleteJobs } from '@/lib/db-client';
 
 export async function GET() {
   try {
@@ -64,3 +64,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const queryId = url.searchParams.get('id');
+
+    if (queryId) {
+      const ok = await deleteJob(queryId);
+      return NextResponse.json({ success: ok });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { ids } = body;
+    if (ids && Array.isArray(ids)) {
+      const ok = await deleteJobs(ids);
+      return NextResponse.json({ success: ok });
+    }
+
+    return NextResponse.json({ error: 'No job IDs provided' }, { status: 400 });
+  } catch (error) {
+    console.error('Job DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete job' }, { status: 500 });
+  }
+}
+

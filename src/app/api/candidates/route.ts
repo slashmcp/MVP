@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { getCandidates, createCandidate, updateCandidate } from '@/lib/db-client';
+import { getCandidates, createCandidate, updateCandidate, deleteCandidate, deleteCandidates } from '@/lib/db-client';
 
 export async function GET() {
   try {
@@ -106,3 +106,28 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const queryId = url.searchParams.get('id');
+
+    if (queryId) {
+      const ok = await deleteCandidate(queryId);
+      return NextResponse.json({ success: ok });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { ids } = body;
+    if (ids && Array.isArray(ids)) {
+      const ok = await deleteCandidates(ids);
+      return NextResponse.json({ success: ok });
+    }
+
+    return NextResponse.json({ error: 'No candidate IDs provided' }, { status: 400 });
+  } catch (error) {
+    console.error('Candidate DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete candidate' }, { status: 500 });
+  }
+}
+

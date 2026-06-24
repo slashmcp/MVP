@@ -319,3 +319,58 @@ export async function createJob(jobData: Partial<Job>): Promise<Job | null> {
   };
 }
 
+export async function deleteClient(id: string): Promise<boolean> {
+  const { error } = await supabase.from('clients').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting client:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteClients(ids: string[]): Promise<boolean> {
+  const { error } = await supabase.from('clients').delete().in('id', ids);
+  if (error) {
+    console.error('Error bulk deleting clients:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteCandidate(id: string): Promise<boolean> {
+  const { error } = await supabase.from('candidates').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting candidate:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteCandidates(ids: string[]): Promise<boolean> {
+  const { error } = await supabase.from('candidates').delete().in('id', ids);
+  if (error) {
+    console.error('Error bulk deleting candidates:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteJob(id: string): Promise<boolean> {
+  const { error } = await supabase.from('jobs').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting job:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteJobs(ids: string[]): Promise<boolean> {
+  const { error } = await supabase.from('jobs').delete().in('id', ids);
+  if (error) {
+    console.error('Error bulk deleting jobs:', error);
+    return false;
+  }
+  return true;
+}
+
+

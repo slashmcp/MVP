@@ -36,13 +36,16 @@ export default function CandidatesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
 
-  const { hiddenCandidateIds, hideCandidate, addToast, dbCandidates } = useAppStore();
+  const { hiddenCandidateIds, hideCandidate, addToast, dbCandidates, fetchDatabase } = useAppStore();
   const cands = dbCandidates || [];
 
   const handleSyncToSheets = async () => {
@@ -122,6 +125,126 @@ export default function CandidatesPage() {
 
   const availableCandidates = useMemo(() => cands.filter((c) => !hiddenCandidateIds.includes(c.id)), [hiddenCandidateIds, cands]);
 
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+  const handleCheckboxChange = (id: string, event: any) => {
+    const isShiftPressed = event.nativeEvent?.shiftKey || false;
+    
+    if (isShiftPressed && lastSelectedId && lastSelectedId !== id) {
+      const itemIds = filtered.map(item => item.id);
+      const startIdx = itemIds.indexOf(lastSelectedId);
+      const endIdx = itemIds.indexOf(id);
+      
+      if (startIdx !== -1 && endIdx !== -1) {
+        const min = Math.min(startIdx, endIdx);
+        const max = Math.max(startIdx, endIdx);
+        const rangeIds = itemIds.slice(min, max + 1);
+        
+        const isCurrentlySelected = selectedIds.includes(id);
+        if (!isCurrentlySelected) {
+          setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
+        } else {
+          setSelectedIds(prev => prev.filter(x => !rangeIds.includes(x)));
+        }
+        setLastSelectedId(id);
+        return;
+      }
+    }
+    
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+    setLastSelectedId(id);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map(item => item.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} candidate(s)?`)) return;
+    try {
+      const res = await fetch('/api/candidates', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      if (res.ok) {
+        selectedIds.forEach(id => hideCandidate(id));
+        setSelectedIds([]);
+        await fetchDatabase();
+        addToast({ type: 'success', message: 'Candidates deleted successfully' });
+      } else {
+        addToast({ type: 'error', message: 'Failed to delete candidates' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'Error deleting candidates' });
+    }
+  };
+
+  const [isBulkEnriching, setIsBulkEnriching] = useState(false);
+
+  const handleBulkEnrich = async () => {
+    setIsBulkEnriching(true);
+    let successCount = 0;
+    try {
+      for (const id of selectedIds) {
+        const candidate = cands.find(c => c.id === id);
+        if (!candidate) continue;
+        
+        const res = await fetch('/api/enrich', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            candidateId: candidate.id,
+            provider: 'apollo',
+            name: candidate.name,
+            company: candidate.company,
+            email: candidate.email,
+            linkedinUrl: candidate.linkedinUrl
+          })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.enrichedFields) {
+            successCount++;
+          }
+        } else if (res.status === 403 || res.status === 401) {
+           addToast({ type: 'error', message: 'Apollo API key missing or lacks access.' });
+           break;
+        } else if (res.status === 500) {
+           const data = await res.json().catch(() => ({}));
+           addToast({ type: 'error', message: data.error || 'Apollo API Error' });
+           break;
+        }
+      }
+      
+      if (successCount > 0) {
+        addToast({ type: 'success', message: `Successfully enriched ${successCount} candidate(s)` });
+        await fetchDatabase();
+        setSelectedIds([]);
+      } else {
+        addToast({ type: 'info', message: 'No new data found or API error.' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'An error occurred during bulk enrichment' });
+    }
+    setIsBulkEnriching(false);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -165,7 +288,24 @@ export default function CandidatesPage() {
       {showBulkImportModal && <BulkImportModal onClose={() => setShowBulkImportModal(false)} />}
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 mr-2">
+          <input
+            type="checkbox"
+            checked={filtered.length > 0 && selectedIds.length === filtered.length}
+            ref={(el) => {
+              if (el) {
+                el.indeterminate = selectedIds.length > 0 && selectedIds.length < filtered.length;
+              }
+            }}
+            onChange={handleSelectAll}
+            className="w-4 h-4 rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+            id="select-all-candidates"
+          />
+          <label htmlFor="select-all-candidates" className="text-xs text-text-secondary cursor-pointer select-none font-medium">
+            Select All
+          </label>
+        </div>
         <div className="flex items-center gap-2 flex-1 min-w-[300px]">
           <div className="relative flex-1 max-w-sm flex items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
@@ -262,6 +402,19 @@ export default function CandidatesPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate = selectedIds.length > 0 && selectedIds.length < filtered.length;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                    className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                  />
+                </th>
                 <th>Name</th>
                 <th>Skills</th>
                 <th>Status</th>
@@ -272,7 +425,15 @@ export default function CandidatesPage() {
             </thead>
             <tbody>
               {filtered.map((candidate) => (
-                <tr key={candidate.id}>
+                <tr key={candidate.id} className={selectedIds.includes(candidate.id) ? 'bg-accent/5' : ''}>
+                  <td className="w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(candidate.id)}
+                      onChange={(e) => handleCheckboxChange(candidate.id, e)}
+                      className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                    />
+                  </td>
                   <td>
                     <Link
                       href={`/candidates/${candidate.id}`}
@@ -353,10 +514,22 @@ export default function CandidatesPage() {
                         </a>
                       )}
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           if (confirm(`Are you sure you want to delete ${candidate.name}?`)) {
-                            hideCandidate(candidate.id);
+                            try {
+                              const res = await fetch(`/api/candidates?id=${candidate.id}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                hideCandidate(candidate.id);
+                                await fetchDatabase();
+                                addToast({ type: 'success', message: 'Candidate deleted successfully' });
+                              } else {
+                                addToast({ type: 'error', message: 'Failed to delete candidate' });
+                              }
+                            } catch (e) {
+                              console.error(e);
+                              addToast({ type: 'error', message: 'Error deleting candidate' });
+                            }
                           }
                         }}
                         className="p-1.5 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-all ml-1"
@@ -375,27 +548,36 @@ export default function CandidatesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((candidate) => (
-            <Link
+            <div
               key={candidate.id}
-              href={`/candidates/${candidate.id}`}
-              className="card p-5 group hover:shadow-md transition-all duration-150 block"
+              className={`card p-5 group hover:shadow-md transition-all duration-150 block relative border ${
+                selectedIds.includes(candidate.id) ? 'border-accent bg-accent/5' : 'border-border'
+              }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(candidate.id)}
+                    onChange={(e) => handleCheckboxChange(candidate.id, e)}
+                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                  />
                   <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent text-sm font-semibold flex-shrink-0">
                     {candidate.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
-                      {candidate.name}
-                      {candidate.aiMatch && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                          candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
-                        }`}>
-                          {candidate.aiMatch.score}% Match
-                        </span>
-                      )}
-                    </div>
+                    <Link href={`/candidates/${candidate.id}`}>
+                      <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
+                        {candidate.name}
+                        {candidate.aiMatch && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                            candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
+                          }`}>
+                            {candidate.aiMatch.score}% Match
+                          </span>
+                        )}
+                      </div>
+                    </Link>
                     {candidate.role && (
                       <p className="text-xs text-text-secondary mt-0.5">{candidate.role}</p>
                     )}
@@ -404,10 +586,22 @@ export default function CandidatesPage() {
                 <div className="flex items-center gap-2">
                   <span className={`badge ${statusColors[candidate.status] || 'badge-blue'}`}>{candidate.status}</span>
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       if (confirm(`Are you sure you want to delete ${candidate.name}?`)) {
-                        hideCandidate(candidate.id);
+                        try {
+                          const res = await fetch(`/api/candidates?id=${candidate.id}`, { method: 'DELETE' });
+                          if (res.ok) {
+                            hideCandidate(candidate.id);
+                            await fetchDatabase();
+                            addToast({ type: 'success', message: 'Candidate deleted successfully' });
+                          } else {
+                            addToast({ type: 'error', message: 'Failed to delete candidate' });
+                          }
+                        } catch (e) {
+                          console.error(e);
+                          addToast({ type: 'error', message: 'Error deleting candidate' });
+                        }
                       }
                     }}
                     className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
@@ -449,7 +643,7 @@ export default function CandidatesPage() {
                   </span>
                 )}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
@@ -460,6 +654,37 @@ export default function CandidatesPage() {
             <p className="text-xs mt-1">Try adjusting your search or filters.</p>
           </div>
         )}
+
+      {/* Floating Action Bar for Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[var(--surface-elevated)]/95 backdrop-blur border border-border/80 px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-6 z-50 animate-slide-up">
+          <span className="text-sm font-semibold text-text-primary">
+            {selectedIds.length} selected
+          </span>
+          <div className="h-4 w-px bg-border" />
+          <button
+            onClick={handleBulkEnrich}
+            disabled={isBulkEnriching}
+            className="btn btn-sm bg-accent hover:bg-accent-hover text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md disabled:opacity-70"
+          >
+            {isBulkEnriching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            {isBulkEnriching ? 'Enriching...' : 'Enrich via Apollo'}
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            className="btn btn-sm bg-red-500 hover:bg-red-600 text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete Selected
+          </button>
+          <button
+            onClick={() => setSelectedIds([])}
+            className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
+          >
+            Deselect All
+          </button>
+        </div>
+      )}
 
     </div>
   );

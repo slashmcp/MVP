@@ -42,6 +42,8 @@ Our Candidate schema is:
 - location (string)
 - notes (string, put any extra unmapped data here)
 
+CRITICAL INSTRUCTION: If a location is mentioned anywhere in the candidate's data (e.g., inside notes, descriptions, or summaries like "Based in Glasgow"), you MUST extract it and place it in the 'location' field. Do not leave 'location' blank if it can be inferred from the text.
+
 Return ONLY a strict JSON array of objects representing the candidates. Do not include markdown formatting or explanations.
 
 CSV Data:

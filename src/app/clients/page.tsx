@@ -30,6 +30,10 @@ export default function ClientsPage() {
   const [sourcingQuery, setSourcingQuery] = useState('');
   const [isSourcing, setIsSourcing] = useState(false);
 
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
   const handleSourceClients = async () => {
     if (!sourcingQuery) return;
     setIsSourcing(true);
@@ -82,8 +86,72 @@ export default function ClientsPage() {
 
   const availableClients = useMemo(() => clients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds, clients]);
 
+  // Bulk Selection Helpers
+  const handleCheckboxChange = (id: string, event: any) => {
+    const isShiftPressed = event.nativeEvent?.shiftKey || false;
+    
+    if (isShiftPressed && lastSelectedId && lastSelectedId !== id) {
+      const itemIds = filtered.map(item => item.id);
+      const startIdx = itemIds.indexOf(lastSelectedId);
+      const endIdx = itemIds.indexOf(id);
+      
+      if (startIdx !== -1 && endIdx !== -1) {
+        const min = Math.min(startIdx, endIdx);
+        const max = Math.max(startIdx, endIdx);
+        const rangeIds = itemIds.slice(min, max + 1);
+        
+        const isCurrentlySelected = selectedIds.includes(id);
+        if (!isCurrentlySelected) {
+          setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
+        } else {
+          setSelectedIds(prev => prev.filter(x => !rangeIds.includes(x)));
+        }
+        setLastSelectedId(id);
+        return;
+      }
+    }
+    
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+    setLastSelectedId(id);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map(item => item.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} client(s)?`)) return;
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      if (res.ok) {
+        selectedIds.forEach(id => hideClient(id));
+        setSelectedIds([]);
+        await fetchDatabase();
+      } else {
+        alert('Failed to delete clients.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error deleting clients.');
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-16">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Clients</h1>
@@ -138,7 +206,24 @@ export default function ClientsPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex items-center gap-2 mr-2">
+          <input
+            type="checkbox"
+            checked={filtered.length > 0 && selectedIds.length === filtered.length}
+            ref={(el) => {
+              if (el) {
+                el.indeterminate = selectedIds.length > 0 && selectedIds.length < filtered.length;
+              }
+            }}
+            onChange={handleSelectAll}
+            className="w-4 h-4 rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+            id="select-all-clients"
+          />
+          <label htmlFor="select-all-clients" className="text-xs text-text-secondary cursor-pointer select-none font-medium">
+            Select All
+          </label>
+        </div>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
           <input
@@ -150,7 +235,7 @@ export default function ClientsPage() {
             id="client-search"
           />
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 flex-wrap">
           {['all', 'Active', 'Prospect', 'Inactive'].map((s) => (
             <button
               key={s}
@@ -165,7 +250,7 @@ export default function ClientsPage() {
             </button>
           ))}
         </div>
-        <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto sm:ml-0">
+        <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto">
           <button
             onClick={() => setViewMode('grid')}
             className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
@@ -187,23 +272,41 @@ export default function ClientsPage() {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((client) => (
-            <Link
+            <div
               key={client.id}
-              href={`/clients/${client.id}`}
-              className="card p-5 group hover:shadow-md transition-all duration-150"
+              className={`card p-5 group hover:shadow-md transition-all duration-150 relative border ${
+                selectedIds.includes(client.id) ? 'border-accent bg-accent/5' : 'border-border'
+              }`}
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent text-[11px] font-medium flex-shrink-0">
-                  <MapPin className="w-3 h-3" strokeWidth={2} />
-                  {client.location && client.location !== 'Unknown Location' ? client.location : 'No location'}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(client.id)}
+                    onChange={(e) => handleCheckboxChange(client.id, e)}
+                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                  />
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent text-[11px] font-medium flex-shrink-0">
+                    <MapPin className="w-3 h-3" strokeWidth={2} />
+                    {client.location && client.location !== 'Unknown Location' ? client.location : 'No location'}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
-                        hideClient(client.id);
+                        try {
+                          const res = await fetch(`/api/clients?id=${client.id}`, { method: 'DELETE' });
+                          if (res.ok) {
+                            hideClient(client.id);
+                            await fetchDatabase();
+                          }
+                          else alert('Failed to delete client');
+                        } catch (e) {
+                          console.error(e);
+                        }
                       }
                     }}
                     className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
@@ -213,9 +316,11 @@ export default function ClientsPage() {
                   </button>
                 </div>
               </div>
-              <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
-                {client.companyName}
-              </h3>
+              <Link href={`/clients/${client.id}`}>
+                <h3 className="text-base font-semibold text-text-primary hover:text-accent transition-colors">
+                  {client.companyName}
+                </h3>
+              </Link>
               {client.contactPerson && (
                 <p className="text-sm text-text-secondary mt-1">{client.contactPerson}</p>
               )}
@@ -242,7 +347,7 @@ export default function ClientsPage() {
                   {client.notes}
                 </p>
               )}
-            </Link>
+            </div>
           ))}
         </div>
       ) : (
@@ -251,6 +356,19 @@ export default function ClientsPage() {
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-text-secondary bg-[var(--surface-elevated)] border-b border-border">
                 <tr>
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate = selectedIds.length > 0 && selectedIds.length < filtered.length;
+                        }
+                      }}
+                      onChange={handleSelectAll}
+                      className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                    />
+                  </th>
                   <th className="px-4 py-3 font-medium">Company</th>
                   <th className="px-4 py-3 font-medium">Contact</th>
                   <th className="px-4 py-3 font-medium">Location</th>
@@ -260,7 +378,20 @@ export default function ClientsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map(client => (
-                  <tr key={client.id} className="hover:bg-[var(--surface-elevated)]/50 transition-colors group">
+                  <tr
+                    key={client.id}
+                    className={`hover:bg-[var(--surface-elevated)]/50 transition-colors group ${
+                      selectedIds.includes(client.id) ? 'bg-accent/5' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(client.id)}
+                        onChange={(e) => handleCheckboxChange(client.id, e)}
+                        className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <Link href={`/clients/${client.id}`} className="font-medium text-text-primary hover:text-accent">
                         {client.companyName}
@@ -276,10 +407,19 @@ export default function ClientsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
-                            hideClient(client.id);
+                            try {
+                              const res = await fetch(`/api/clients?id=${client.id}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                hideClient(client.id);
+                                await fetchDatabase();
+                              }
+                              else alert('Failed to delete client');
+                            } catch (e) {
+                              console.error(e);
+                            }
                           }
                         }}
                         className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 inline-block"
@@ -303,6 +443,30 @@ export default function ClientsPage() {
           <p className="text-xs mt-1">Try adjusting your search or filters.</p>
         </div>
       )}
+
+      {/* Floating Action Bar for Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[var(--surface-elevated)]/95 backdrop-blur border border-border/80 px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-6 z-50 animate-slide-up">
+          <span className="text-sm font-semibold text-text-primary">
+            {selectedIds.length} selected
+          </span>
+          <div className="h-4 w-px bg-border" />
+          <button
+            onClick={handleBulkDelete}
+            className="btn btn-sm bg-red-500 hover:bg-red-600 text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete Selected
+          </button>
+          <button
+            onClick={() => setSelectedIds([])}
+            className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
+          >
+            Deselect All
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

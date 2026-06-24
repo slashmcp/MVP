@@ -21,8 +21,12 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const { showCredentialPrompt, hiddenJobIds, hideJob, dbJobs } = useAppStore();
+  const { showCredentialPrompt, hiddenJobIds, hideJob, dbJobs, fetchDatabase } = useAppStore();
   const jobs = dbJobs || [];
+
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return jobs.filter((j) => {
@@ -39,8 +43,72 @@ export default function JobsPage() {
 
   const availableJobs = useMemo(() => jobs.filter((j) => !hiddenJobIds.includes(j.id)), [hiddenJobIds, jobs]);
 
+  // Bulk Selection Helpers
+  const handleCheckboxChange = (id: string, event: any) => {
+    const isShiftPressed = event.nativeEvent?.shiftKey || false;
+    
+    if (isShiftPressed && lastSelectedId && lastSelectedId !== id) {
+      const itemIds = filtered.map(item => item.id);
+      const startIdx = itemIds.indexOf(lastSelectedId);
+      const endIdx = itemIds.indexOf(id);
+      
+      if (startIdx !== -1 && endIdx !== -1) {
+        const min = Math.min(startIdx, endIdx);
+        const max = Math.max(startIdx, endIdx);
+        const rangeIds = itemIds.slice(min, max + 1);
+        
+        const isCurrentlySelected = selectedIds.includes(id);
+        if (!isCurrentlySelected) {
+          setSelectedIds(prev => Array.from(new Set([...prev, ...rangeIds])));
+        } else {
+          setSelectedIds(prev => prev.filter(x => !rangeIds.includes(x)));
+        }
+        setLastSelectedId(id);
+        return;
+      }
+    }
+    
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+    setLastSelectedId(id);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map(item => item.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} job(s)?`)) return;
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      if (res.ok) {
+        selectedIds.forEach(id => hideJob(id));
+        setSelectedIds([]);
+        await fetchDatabase();
+      } else {
+        alert('Failed to delete jobs.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error deleting jobs.');
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-16">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Jobs</h1>
@@ -59,7 +127,24 @@ export default function JobsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 mr-2">
+          <input
+            type="checkbox"
+            checked={filtered.length > 0 && selectedIds.length === filtered.length}
+            ref={(el) => {
+              if (el) {
+                el.indeterminate = selectedIds.length > 0 && selectedIds.length < filtered.length;
+              }
+            }}
+            onChange={handleSelectAll}
+            className="w-4 h-4 rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+            id="select-all-jobs"
+          />
+          <label htmlFor="select-all-jobs" className="text-xs text-text-secondary cursor-pointer select-none font-medium">
+            Select All
+          </label>
+        </div>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
           <input
@@ -96,7 +181,7 @@ export default function JobsPage() {
             </button>
           ))}
         </div>
-        <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto sm:ml-0">
+        <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto">
           <button
             onClick={() => setViewMode('grid')}
             className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
@@ -118,19 +203,37 @@ export default function JobsPage() {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((job) => (
-            <Link
+            <div
               key={job.id}
-              href={`/jobs/${job.id}`}
-              className="card p-5 group hover:shadow-md transition-all duration-150"
+              className={`card p-5 group hover:shadow-md transition-all duration-150 relative border ${
+                selectedIds.includes(job.id) ? 'border-accent bg-accent/5' : 'border-border'
+              }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className={`badge ${statusColors[job.status]}`}>{job.status}</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(job.id)}
+                    onChange={(e) => handleCheckboxChange(job.id, e)}
+                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                  />
+                  <span className={`badge ${statusColors[job.status] || 'badge-blue'}`}>{job.status}</span>
+                </div>
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       if (confirm(`Are you sure you want to delete ${job.title}?`)) {
-                        hideJob(job.id);
+                        try {
+                          const res = await fetch(`/api/jobs?id=${job.id}`, { method: 'DELETE' });
+                          if (res.ok) {
+                            hideJob(job.id);
+                            await fetchDatabase();
+                          }
+                          else alert('Failed to delete job');
+                        } catch (e) {
+                          console.error(e);
+                        }
                       }
                     }}
                     className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
@@ -138,16 +241,18 @@ export default function JobsPage() {
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  <span className="text-xs text-text-tertiary font-mono">
+                    {job.postedDate
+                      ? new Date(job.postedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      : ''}
+                  </span>
                 </div>
-                <span className="text-xs text-text-tertiary font-mono">
-                  {job.createdAt
-                    ? new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                    : ''}
-                </span>
               </div>
-              <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
-                {job.title}
-              </h3>
+              <Link href={`/jobs/${job.id}`}>
+                <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
+                  {job.title}
+                </h3>
+              </Link>
               <p className="text-sm text-text-secondary mt-1">{job.client}</p>
               <div className="flex items-center gap-4 mt-4 text-xs text-text-secondary">
                 {job.location && (
@@ -168,7 +273,7 @@ export default function JobsPage() {
                   {job.requirements}
                 </p>
               )}
-            </Link>
+            </div>
           ))}
         </div>
       ) : (
@@ -177,6 +282,19 @@ export default function JobsPage() {
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-text-secondary bg-[var(--surface-elevated)] border-b border-border">
                 <tr>
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate = selectedIds.length > 0 && selectedIds.length < filtered.length;
+                        }
+                      }}
+                      onChange={handleSelectAll}
+                      className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                    />
+                  </th>
                   <th className="px-4 py-3 font-medium">Job Title</th>
                   <th className="px-4 py-3 font-medium">Client</th>
                   <th className="px-4 py-3 font-medium">Location</th>
@@ -187,7 +305,20 @@ export default function JobsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map(job => (
-                  <tr key={job.id} className="hover:bg-[var(--surface-elevated)]/50 transition-colors group">
+                  <tr
+                    key={job.id}
+                    className={`hover:bg-[var(--surface-elevated)]/50 transition-colors group ${
+                      selectedIds.includes(job.id) ? 'bg-accent/5' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(job.id)}
+                        onChange={(e) => handleCheckboxChange(job.id, e)}
+                        className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <Link href={`/jobs/${job.id}`} className="font-medium text-text-primary hover:text-accent">
                         {job.title}
@@ -196,17 +327,26 @@ export default function JobsPage() {
                     <td className="px-4 py-3 text-text-secondary">{job.client}</td>
                     <td className="px-4 py-3 text-text-secondary">{job.location || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`badge ${statusColors[job.status]}`}>{job.status}</span>
+                      <span className={`badge ${statusColors[job.status] || 'badge-blue'}`}>{job.status}</span>
                     </td>
                     <td className="px-4 py-3 text-text-secondary font-mono">
                       {job.salaryMin && job.salaryMax ? `${(job.salaryMin / 1000).toFixed(0)}k–${(job.salaryMax / 1000).toFixed(0)}k` : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           if (confirm(`Are you sure you want to delete ${job.title}?`)) {
-                            hideJob(job.id);
+                            try {
+                              const res = await fetch(`/api/jobs?id=${job.id}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                hideJob(job.id);
+                                await fetchDatabase();
+                              }
+                              else alert('Failed to delete job');
+                            } catch (e) {
+                              console.error(e);
+                            }
                           }
                         }}
                         className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 inline-block"
@@ -230,6 +370,31 @@ export default function JobsPage() {
           <p className="text-xs mt-1">Try adjusting your search or filters.</p>
         </div>
       )}
+
+      {/* Floating Action Bar for Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[var(--surface-elevated)]/95 backdrop-blur border border-border/80 px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-6 z-50 animate-slide-up">
+          <span className="text-sm font-semibold text-text-primary">
+            {selectedIds.length} selected
+          </span>
+          <div className="h-4 w-px bg-border" />
+          <button
+            onClick={handleBulkDelete}
+            className="btn btn-sm bg-red-500 hover:bg-red-600 text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete Selected
+          </button>
+          <button
+            onClick={() => setSelectedIds([])}
+            className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
+          >
+            Deselect All
+          </button>
+        </div>
+      )}
+    </div>
+  );
     </div>
   );
 }
