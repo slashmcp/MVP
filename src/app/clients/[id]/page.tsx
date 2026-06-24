@@ -257,6 +257,16 @@ export default function ClientDetailPage({
                 <span className="text-text-primary">{client.location || 'Unknown Location'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">LinkedIn</span>
+                {client.linkedinUrl ? (
+                  <Link href={client.linkedinUrl} target="_blank" className="text-accent hover:underline flex items-center gap-1">
+                    View Profile <ExternalLink className="w-3 h-3" />
+                  </Link>
+                ) : (
+                  <span className="text-text-primary">—</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Email</span>
                 {client.email ? (
                   <Link 

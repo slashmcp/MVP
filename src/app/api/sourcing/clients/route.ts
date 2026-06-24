@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         companyName: companyName,
         industry: extractedIndustry,
         location: extractedLocation,
-        websiteUrl: result.link,
+        linkedinUrl: result.link,
         status: 'Prospect',
         contactPerson: 'Requires Outreach',
         email: 'N/A',

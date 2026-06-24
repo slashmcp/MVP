@@ -78,6 +78,7 @@ export const clientSchema = z.object({
   location: z.string().optional(),
   contactPerson: z.string().optional(),
   email: z.string().email().optional(),
+  linkedinUrl: z.string().url().optional(),
   openRoles: z.number().default(0),
   totalPlacements: z.number().optional(),
   status: z.enum(['Active', 'Inactive', 'Prospect']).default('Active'),
