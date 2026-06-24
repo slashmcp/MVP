@@ -20,6 +20,7 @@ import {
   X,
   Workflow,
   Search,
+  Globe,
 } from 'lucide-react';
 
 const navItems = [
@@ -33,6 +34,7 @@ const navItems = [
   { label: 'Pipeline', href: '/pipeline', icon: GitBranchPlus },
   { label: 'Matching', href: '/matching', icon: Crosshair },
   { label: 'Market Scraper', href: '/sourcing/clients', icon: Search },
+  { label: 'Find Vacancies', href: '/vacancies', icon: Globe },
   { label: 'Daily Briefing', href: '/briefing', icon: Zap },
 ];
 
