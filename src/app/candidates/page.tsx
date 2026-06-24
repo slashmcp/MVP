@@ -36,9 +36,6 @@ export default function CandidatesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
