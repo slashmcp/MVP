@@ -16,6 +16,12 @@ import {
   Globe,
   MapPin,
   ExternalLink,
+  Camera,
+  Users,
+  MessageSquare,
+  PlayCircle,
+  Star,
+  Map,
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
@@ -151,6 +157,42 @@ export default function ClientDetailPage({
                     LinkedIn
                   </a>
                 )}
+                {client.instagramUrl && (
+                  <a href={ensureAbsoluteUrl(client.instagramUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-pink-600">
+                    <Camera className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Instagram
+                  </a>
+                )}
+                {client.facebookUrl && (
+                  <a href={ensureAbsoluteUrl(client.facebookUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-blue-600">
+                    <Users className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Facebook
+                  </a>
+                )}
+                {client.twitterUrl && (
+                  <a href={ensureAbsoluteUrl(client.twitterUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-sky-500">
+                    <MessageSquare className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Twitter/X
+                  </a>
+                )}
+                {client.youtubeUrl && (
+                  <a href={ensureAbsoluteUrl(client.youtubeUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-red-600">
+                    <PlayCircle className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    YouTube
+                  </a>
+                )}
+                {client.mapsUrl && (
+                  <a href={ensureAbsoluteUrl(client.mapsUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-emerald-600">
+                    <Map className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Maps
+                  </a>
+                )}
+                {client.googleRating && (
+                  <span className="badge badge-neutral text-amber-600">
+                    <Star className="w-3 h-3 mr-1 fill-current" strokeWidth={1.75} />
+                    {client.googleRating} {client.reviewCount ? `(${client.reviewCount} reviews)` : ''}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -270,7 +312,11 @@ export default function ClientDetailPage({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Location</span>
-                <span className="text-text-primary">{client.location || 'Unknown Location'}</span>
+                <span className="text-text-primary text-right">{client.location || 'Unknown Location'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Category</span>
+                <span className="text-text-primary text-right">{client.industry || '—'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">LinkedIn</span>

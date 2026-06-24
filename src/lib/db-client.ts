@@ -5,7 +5,14 @@ function updateContactDetailsInNotes(
   existingNotes: string | undefined | null,
   phone: string | undefined | null,
   websiteUrl: string | undefined | null,
-  linkedinUrl: string | undefined | null
+  linkedinUrl: string | undefined | null,
+  googleRating?: string | number | null,
+  reviewCount?: string | number | null,
+  instagramUrl?: string | null,
+  facebookUrl?: string | null,
+  twitterUrl?: string | null,
+  youtubeUrl?: string | null,
+  mapsUrl?: string | null
 ): string {
   let notes = existingNotes || '';
 
@@ -24,7 +31,14 @@ function updateContactDetailsInNotes(
       line.toLowerCase().startsWith('phone:') ||
       line.toLowerCase().startsWith('linkedin:') ||
       line.toLowerCase().startsWith('website:') ||
-      line.toLowerCase().startsWith('website/linkedin:')
+      line.toLowerCase().startsWith('website/linkedin:') ||
+      line.toLowerCase().startsWith('google rating:') ||
+      line.toLowerCase().startsWith('review count:') ||
+      line.toLowerCase().startsWith('instagram:') ||
+      line.toLowerCase().startsWith('facebook:') ||
+      line.toLowerCase().startsWith('twitter:') ||
+      line.toLowerCase().startsWith('youtube:') ||
+      line.toLowerCase().startsWith('maps:')
     ) {
       continue;
     }
@@ -42,6 +56,13 @@ function updateContactDetailsInNotes(
   if (phone && phone !== 'N/A') notesParts.push(`Phone: ${phone}`);
   if (websiteUrl && websiteUrl !== 'N/A') notesParts.push(`Website: ${websiteUrl}`);
   if (linkedinUrl && linkedinUrl !== 'N/A') notesParts.push(`LinkedIn: ${linkedinUrl}`);
+  if (googleRating) notesParts.push(`Google Rating: ${googleRating}`);
+  if (reviewCount) notesParts.push(`Review Count: ${reviewCount}`);
+  if (instagramUrl) notesParts.push(`Instagram: ${instagramUrl}`);
+  if (facebookUrl) notesParts.push(`Facebook: ${facebookUrl}`);
+  if (twitterUrl) notesParts.push(`Twitter: ${twitterUrl}`);
+  if (youtubeUrl) notesParts.push(`YouTube: ${youtubeUrl}`);
+  if (mapsUrl) notesParts.push(`Maps: ${mapsUrl}`);
 
   if (notesParts.length > 0) {
     const contactBlock = `Contact details:\n${notesParts.join('\n')}`;
@@ -55,6 +76,13 @@ function parseContactDetailsFromNotes(notes: string | undefined | null) {
   let phone = undefined;
   let linkedinUrl = undefined;
   let websiteUrl = undefined;
+  let googleRating = undefined;
+  let reviewCount = undefined;
+  let instagramUrl = undefined;
+  let facebookUrl = undefined;
+  let twitterUrl = undefined;
+  let youtubeUrl = undefined;
+  let mapsUrl = undefined;
 
   if (notes) {
     const phoneMatch = notes.match(/Phone:\s*([^\n\r]+)/i);
@@ -80,9 +108,30 @@ function parseContactDetailsFromNotes(notes: string | undefined | null) {
         if (!websiteUrl) websiteUrl = val;
       }
     }
+
+    const grMatch = notes.match(/Google Rating:\s*([^\n\r]+)/i);
+    if (grMatch) googleRating = grMatch[1].trim();
+
+    const rcMatch = notes.match(/Review Count:\s*([^\n\r]+)/i);
+    if (rcMatch) reviewCount = rcMatch[1].trim();
+
+    const igMatch = notes.match(/Instagram:\s*([^\n\r]+)/i);
+    if (igMatch) instagramUrl = igMatch[1].trim();
+
+    const fbMatch = notes.match(/Facebook:\s*([^\n\r]+)/i);
+    if (fbMatch) facebookUrl = fbMatch[1].trim();
+
+    const twMatch = notes.match(/Twitter:\s*([^\n\r]+)/i);
+    if (twMatch) twitterUrl = twMatch[1].trim();
+
+    const ytMatch = notes.match(/YouTube:\s*([^\n\r]+)/i);
+    if (ytMatch) youtubeUrl = ytMatch[1].trim();
+
+    const mapsMatch = notes.match(/Maps:\s*([^\n\r]+)/i);
+    if (mapsMatch) mapsUrl = mapsMatch[1].trim();
   }
 
-  return { phone, linkedinUrl, websiteUrl };
+  return { phone, linkedinUrl, websiteUrl, googleRating, reviewCount, instagramUrl, facebookUrl, twitterUrl, youtubeUrl, mapsUrl };
 }
 
 export async function getCandidates(): Promise<Candidate[]> {
@@ -342,7 +391,14 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
     clientData.notes,
     clientData.phone,
     clientData.websiteUrl,
-    clientData.linkedinUrl
+    clientData.linkedinUrl,
+    clientData.googleRating,
+    clientData.reviewCount,
+    clientData.instagramUrl,
+    clientData.facebookUrl,
+    clientData.twitterUrl,
+    clientData.youtubeUrl,
+    clientData.mapsUrl
   );
 
   const { data, error } = await supabase.from('clients').insert([
@@ -377,6 +433,13 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
     status: data.status,
     linkedinUrl: contacts.linkedinUrl,
     websiteUrl: contacts.websiteUrl,
+    googleRating: contacts.googleRating,
+    reviewCount: contacts.reviewCount,
+    instagramUrl: contacts.instagramUrl,
+    facebookUrl: contacts.facebookUrl,
+    twitterUrl: contacts.twitterUrl,
+    youtubeUrl: contacts.youtubeUrl,
+    mapsUrl: contacts.mapsUrl,
     openRoles: data.open_roles,
     totalPlacements: data.total_placements,
     notes: data.notes,
@@ -399,11 +462,26 @@ export async function updateClient(id: string, clientData: Partial<Client>): Pro
   const finalLinkedin = clientData.linkedinUrl !== undefined ? clientData.linkedinUrl : currentContacts.linkedinUrl;
   const finalNotes = clientData.notes !== undefined ? clientData.notes : currentNotes;
 
+  const finalGoogleRating = clientData.googleRating !== undefined ? clientData.googleRating : currentContacts.googleRating;
+  const finalReviewCount = clientData.reviewCount !== undefined ? clientData.reviewCount : currentContacts.reviewCount;
+  const finalInstagram = clientData.instagramUrl !== undefined ? clientData.instagramUrl : currentContacts.instagramUrl;
+  const finalFacebook = clientData.facebookUrl !== undefined ? clientData.facebookUrl : currentContacts.facebookUrl;
+  const finalTwitter = clientData.twitterUrl !== undefined ? clientData.twitterUrl : currentContacts.twitterUrl;
+  const finalYoutube = clientData.youtubeUrl !== undefined ? clientData.youtubeUrl : currentContacts.youtubeUrl;
+  const finalMaps = clientData.mapsUrl !== undefined ? clientData.mapsUrl : currentContacts.mapsUrl;
+
   const updatedNotes = updateContactDetailsInNotes(
     finalNotes,
     finalPhone,
     finalWebsite,
-    finalLinkedin
+    finalLinkedin,
+    finalGoogleRating,
+    finalReviewCount,
+    finalInstagram,
+    finalFacebook,
+    finalTwitter,
+    finalYoutube,
+    finalMaps
   );
 
   const updatePayload: any = {};
@@ -441,6 +519,13 @@ export async function updateClient(id: string, clientData: Partial<Client>): Pro
     status: data.status,
     linkedinUrl: contacts.linkedinUrl,
     websiteUrl: contacts.websiteUrl,
+    googleRating: contacts.googleRating,
+    reviewCount: contacts.reviewCount,
+    instagramUrl: contacts.instagramUrl,
+    facebookUrl: contacts.facebookUrl,
+    twitterUrl: contacts.twitterUrl,
+    youtubeUrl: contacts.youtubeUrl,
+    mapsUrl: contacts.mapsUrl,
     openRoles: data.open_roles,
     totalPlacements: data.total_placements,
     notes: data.notes,

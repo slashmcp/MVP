@@ -13,9 +13,17 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
     companyName: client.companyName || '',
     contactPerson: client.contactPerson || '',
     email: client.email || '',
+    industry: client.industry || '',
     phone: client.phone || '',
     websiteUrl: client.websiteUrl || '',
     linkedinUrl: client.linkedinUrl || '',
+    googleRating: client.googleRating || '',
+    reviewCount: client.reviewCount || '',
+    instagramUrl: client.instagramUrl || '',
+    facebookUrl: client.facebookUrl || '',
+    twitterUrl: client.twitterUrl || '',
+    youtubeUrl: client.youtubeUrl || '',
+    mapsUrl: client.mapsUrl || '',
     status: client.status || 'Active',
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -95,8 +103,49 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
             </div>
 
             <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Business Category</label>
+              <input type="text" name="industry" value={formData.industry} onChange={handleChange} className="input" placeholder="e.g. Technology, Retail" />
+            </div>
+
+            <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">LinkedIn Profile URL</label>
               <input type="text" name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="input" placeholder="e.g. https://linkedin.com/company/example" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Google Rating</label>
+                <input type="number" step="0.1" max="5" min="0" name="googleRating" value={formData.googleRating} onChange={handleChange} className="input" placeholder="e.g. 4.8" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Review Count</label>
+                <input type="number" min="0" name="reviewCount" value={formData.reviewCount} onChange={handleChange} className="input" placeholder="e.g. 150" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Google Maps URL</label>
+              <input type="text" name="mapsUrl" value={formData.mapsUrl} onChange={handleChange} className="input" placeholder="e.g. https://maps.google.com/..." />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Instagram URL</label>
+              <input type="text" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} className="input" placeholder="e.g. https://instagram.com/..." />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Facebook URL</label>
+              <input type="text" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} className="input" placeholder="e.g. https://facebook.com/..." />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Twitter / X URL</label>
+              <input type="text" name="twitterUrl" value={formData.twitterUrl} onChange={handleChange} className="input" placeholder="e.g. https://twitter.com/..." />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">YouTube URL</label>
+              <input type="text" name="youtubeUrl" value={formData.youtubeUrl} onChange={handleChange} className="input" placeholder="e.g. https://youtube.com/..." />
             </div>
 
             <div>
