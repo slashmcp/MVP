@@ -55,7 +55,7 @@ export interface Toast {
 }
 
 export interface CredentialPromptState {
-  service: 'google-sheets' | 'anthropic' | 'outlook' | 'n8n' | 'serper' | 'apify' | 'juicebox';
+  service: 'google-sheets' | 'anthropic' | 'outlook' | 'n8n' | 'serpapi' | 'apify' | 'juicebox';
   feature: string;
 }
 
