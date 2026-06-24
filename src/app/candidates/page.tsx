@@ -20,6 +20,7 @@ import {
   LayoutGrid,
   List,
   MapPin,
+  Globe,
 } from 'lucide-react';
 import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -646,6 +647,17 @@ export default function CandidatesPage() {
                           <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
                         </a>
                       )}
+                      {candidate.websiteUrl && (
+                        <a
+                          href={candidate.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
+                          title="Website"
+                        >
+                          <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        </a>
+                      )}
                       <button
                         onClick={async (e) => {
                           e.preventDefault();
@@ -774,6 +786,18 @@ export default function CandidatesPage() {
                     <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.location}
                   </span>
+                )}
+                {candidate.linkedinUrl && (
+                  <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent transition-colors" title="LinkedIn">
+                    <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    LinkedIn
+                  </a>
+                )}
+                {candidate.websiteUrl && (
+                  <a href={candidate.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent transition-colors" title="Website">
+                    <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    Website
+                  </a>
                 )}
               </div>
             </div>
