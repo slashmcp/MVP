@@ -11,7 +11,9 @@ import {
   Trash2,
   Sparkles,
   Loader2,
-  MapPin
+  MapPin,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
@@ -22,6 +24,7 @@ export default function ClientsPage() {
   
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   const [showSourcing, setShowSourcing] = useState(false);
   const [sourcingQuery, setSourcingQuery] = useState('');
@@ -162,68 +165,135 @@ export default function ClientsPage() {
             </button>
           ))}
         </div>
+        <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto sm:ml-0">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
+            title="Grid View"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
+            title="List View"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Client Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((client) => (
-          <Link
-            key={client.id}
-            href={`/clients/${client.id}`}
-            className="card p-5 group hover:shadow-md transition-all duration-150"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-sm font-semibold flex-shrink-0">
-                {client.companyName.slice(0, 2).toUpperCase()}
+      {/* Client List/Grid */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((client) => (
+            <Link
+              key={client.id}
+              href={`/clients/${client.id}`}
+              className="card p-5 group hover:shadow-md transition-all duration-150"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-sm font-semibold flex-shrink-0">
+                  {client.companyName.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
+                        hideClient(client.id);
+                      }
+                    }}
+                    className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete Client"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
-                      hideClient(client.id);
-                    }
-                  }}
-                  className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
-                  title="Delete Client"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
+                {client.companyName}
+              </h3>
+              {client.contactPerson && (
+                <p className="text-sm text-text-secondary mt-1">{client.contactPerson}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
+                <span className="flex items-center gap-1">
+                  <Briefcase className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  {client.openRoles} open role{client.openRoles !== 1 ? 's' : ''}
+                </span>
+                {client.location && client.location !== 'Unknown Location' && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {client.location}
+                  </span>
+                )}
+                {client.email && (
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {client.email}
+                  </span>
+                )}
               </div>
-            </div>
-            <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
-              {client.companyName}
-            </h3>
-            {client.contactPerson && (
-              <p className="text-sm text-text-secondary mt-1">{client.contactPerson}</p>
-            )}
-            <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
-              <span className="flex items-center gap-1">
-                <Briefcase className="w-3.5 h-3.5" strokeWidth={1.75} />
-                {client.openRoles} open role{client.openRoles !== 1 ? 's' : ''}
-              </span>
-              {client.location && client.location !== 'Unknown Location' && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
-                  {client.location}
-                </span>
+              {client.notes && (
+                <p className="text-xs text-text-tertiary mt-3 line-clamp-2 leading-relaxed">
+                  {client.notes}
+                </p>
               )}
-              {client.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                  {client.email}
-                </span>
-              )}
-            </div>
-            {client.notes && (
-              <p className="text-xs text-text-tertiary mt-3 line-clamp-2 leading-relaxed">
-                {client.notes}
-              </p>
-            )}
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-text-secondary bg-[var(--surface-elevated)] border-b border-border">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Company</th>
+                  <th className="px-4 py-3 font-medium">Contact</th>
+                  <th className="px-4 py-3 font-medium">Location</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map(client => (
+                  <tr key={client.id} className="hover:bg-[var(--surface-elevated)]/50 transition-colors group">
+                    <td className="px-4 py-3">
+                      <Link href={`/clients/${client.id}`} className="font-medium text-text-primary hover:text-accent">
+                        {client.companyName}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary">
+                      {client.contactPerson || '—'}
+                      {client.email && client.email !== 'N/A' && <div className="text-xs text-text-tertiary">{client.email}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary">{client.location && client.location !== 'Unknown Location' ? client.location : '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (confirm(`Are you sure you want to delete ${client.companyName}?`)) {
+                            hideClient(client.id);
+                          }
+                        }}
+                        className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 inline-block"
+                        title="Delete Client"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="empty-state">

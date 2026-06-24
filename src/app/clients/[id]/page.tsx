@@ -9,6 +9,7 @@ import {
   Building2,
   Calendar,
   Sparkles,
+  Loader2,
   Edit2,
   Phone,
   Globe,
@@ -26,6 +27,37 @@ export default function ClientDetailPage({
   const { id } = use(params);
   const { dbClients, dbJobs, fetchDatabase } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
+
+  const enrichJobs = async (clientData: any) => {
+    if (!clientData) return;
+    setIsEnriching(true);
+    try {
+      const res = await fetch('/api/sourcing/enrich-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: clientData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to enrich jobs');
+      
+      // Add each job
+      for (const job of data.jobs) {
+        await fetch('/api/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(job),
+        });
+      }
+      
+      await fetchDatabase();
+    } catch (e: any) {
+      console.error(e);
+      alert('Error enriching jobs: ' + e.message);
+    } finally {
+      setIsEnriching(false);
+    }
+  };
   
   const clients = dbClients || [];
   const jobs = dbJobs || [];
@@ -184,8 +216,18 @@ export default function ClientDetailPage({
                 ))}
               </div>
             ) : (
-              <div className="empty-state py-10">
-                <p className="text-sm">No open roles for this client.</p>
+              <div className="empty-state py-10 flex flex-col items-center">
+                <p className="text-sm mb-4">No open roles for this client.</p>
+                {client.openRoles > 0 && (
+                  <button 
+                    onClick={() => enrichJobs(client)}
+                    disabled={isEnriching}
+                    className="btn btn-primary btn-sm flex items-center gap-1.5"
+                  >
+                    {isEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    Enrich {client.openRoles} Roles with AI
+                  </button>
+                )}
               </div>
             )}
           </div>

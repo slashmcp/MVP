@@ -17,6 +17,9 @@ import {
   TableProperties,
   Trash2,
   Sparkles,
+  LayoutGrid,
+  List,
+  MapPin,
 } from 'lucide-react';
 import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -30,6 +33,7 @@ type CandidateWithMatch = Candidate & {
 export default function CandidatesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
@@ -233,9 +237,26 @@ export default function CandidatesPage() {
             </button>
           ))}
         </div>
+        <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto sm:ml-0">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-background shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
+            title="Grid View"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
+            title="List View"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Table / Grid */}
+      {viewMode === 'list' ? (
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="data-table">
@@ -350,14 +371,95 @@ export default function CandidatesPage() {
             </tbody>
           </table>
         </div>
+      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((candidate) => (
+            <Link
+              key={candidate.id}
+              href={`/candidates/${candidate.id}`}
+              className="card p-5 group hover:shadow-md transition-all duration-150 block"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent text-sm font-semibold flex-shrink-0">
+                    {candidate.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
+                      {candidate.name}
+                      {candidate.aiMatch && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                          candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
+                        }`}>
+                          {candidate.aiMatch.score}% Match
+                        </span>
+                      )}
+                    </div>
+                    {candidate.role && (
+                      <p className="text-xs text-text-secondary mt-0.5">{candidate.role}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`badge ${statusColors[candidate.status] || 'badge-blue'}`}>{candidate.status}</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (confirm(`Are you sure you want to delete ${candidate.name}?`)) {
+                        hideCandidate(candidate.id);
+                      }
+                    }}
+                    className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete Candidate"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              {candidate.aiMatch && (
+                <div className="text-xs text-text-secondary mb-3 mt-1.5 flex items-start gap-1.5 bg-accent/5 p-1.5 rounded border border-accent/10">
+                  <Sparkles className="w-3.5 h-3.5 text-accent mt-0.5 shrink-0" />
+                  <span className="italic leading-relaxed">{candidate.aiMatch.reason}</span>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-1 mt-4">
+                {candidate.skills.slice(0, 4).map((skill, i) => (
+                  <span key={i} className="badge badge-gray text-[10px] px-1.5 py-0">
+                    {skill}
+                  </span>
+                ))}
+                {candidate.skills.length > 4 && (
+                  <span className="text-xs text-text-tertiary ml-1">+{candidate.skills.length - 4}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
+                {candidate.email && (
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {candidate.email}
+                  </span>
+                )}
+                {candidate.location && candidate.location !== 'Unknown Location' && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {candidate.location}
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
         {filtered.length === 0 && (
-          <div className="empty-state">
+          <div className="card empty-state">
             <Search className="w-10 h-10 mb-3 text-text-tertiary" strokeWidth={1.25} />
             <p className="text-sm font-medium">No candidates found</p>
             <p className="text-xs mt-1">Try adjusting your search or filters.</p>
           </div>
         )}
-      </div>
 
     </div>
   );
