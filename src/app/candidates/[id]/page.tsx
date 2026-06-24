@@ -139,7 +139,7 @@ export default function CandidateDetailPage({
                     }}
                     className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent transition-colors py-1 px-2 rounded-md hover:bg-accent/10 border border-dashed border-border"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Globe className="w-4 h-4" />
                     Add Website
                   </button>
                 )}

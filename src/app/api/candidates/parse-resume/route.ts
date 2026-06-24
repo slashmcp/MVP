@@ -53,7 +53,7 @@ Your job is to extract the following information and return it strictly as a JSO
 - location: The candidate's current city/state or location
 - role: The primary job title they are applying for or their current title
 - company: Their current or most recent company
-- experience: A short summary of their experience (e.g., "5+ years in Frontend Development")
+- notes: A detailed summary of their experience and key strengths (e.g., "5+ years in Frontend Development. Strong React and Node.js experience.")
 - skills: An array of strings representing their key technical skills
 
 If you cannot find a piece of information, return an empty string "" for that field, or an empty array [] for skills.
