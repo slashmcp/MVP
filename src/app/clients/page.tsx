@@ -27,6 +27,7 @@ export default function ClientsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isEnriching, setIsEnriching] = useState(false);
   
   const [showSourcing, setShowSourcing] = useState(false);
   const [sourcingQuery, setSourcingQuery] = useState('');
@@ -239,6 +240,55 @@ export default function ClientsPage() {
     } catch (e) {
       console.error(e);
       alert('Error deleting clients.');
+    }
+  };
+
+  const handleBulkEnrich = async () => {
+    if (!process.env.NEXT_PUBLIC_SERPAPI_KEY && !bypassedServices.includes('serpapi')) {
+      showCredentialPrompt({ service: 'serpapi', feature: 'Bulk Client Enrichment' });
+      return;
+    }
+    
+    setIsEnriching(true);
+    let successCount = 0;
+    
+    try {
+      for (const id of selectedIds) {
+        const client = clients.find(c => c.id === id);
+        if (!client) continue;
+        
+        try {
+          const res = await fetch('/api/clients/enrich', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clientId: client.id,
+              provider: 'serp',
+              companyName: client.companyName,
+              location: client.location,
+              email: client.email,
+              linkedinUrl: client.linkedinUrl,
+              websiteUrl: client.websiteUrl,
+            })
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            if (data.enrichedFields?.length > 0) successCount++;
+          }
+        } catch (err) {
+          console.error(`Failed to enrich client ${id}:`, err);
+        }
+      }
+      
+      addToast({
+        type: 'success',
+        message: `Successfully enriched ${successCount} out of ${selectedIds.length} clients`
+      });
+      await fetchDatabase();
+    } finally {
+      setIsEnriching(false);
+      setSelectedIds([]);
     }
   };
 
@@ -637,6 +687,14 @@ export default function ClientsPage() {
             {selectedIds.length} selected
           </span>
           <div className="h-4 w-px bg-border" />
+          <button
+            onClick={handleBulkEnrich}
+            disabled={isEnriching}
+            className="btn btn-sm bg-accent hover:bg-accent/90 text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md disabled:opacity-50"
+          >
+            {isEnriching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            {isEnriching ? 'Enriching...' : 'Enrich Selected'}
+          </button>
           <button
             onClick={handleBulkDelete}
             className="btn btn-sm bg-red-500 hover:bg-red-600 text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md"
