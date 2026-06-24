@@ -42,7 +42,41 @@ export default function CandidatesPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
 
+  // Sort State (list mode)
+  type SortKey = 'name' | 'status' | 'seniority' | 'lastContact' | 'skills';
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [isDeduping, setIsDeduping] = useState(false);
+
   const { hiddenCandidateIds, hideCandidate, addToast, dbCandidates, fetchDatabase } = useAppStore();
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const handleDedup = async () => {
+    setIsDeduping(true);
+    try {
+      const res = await fetch('/api/candidates/deduplicate', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        await fetchDatabase();
+        addToast({ type: 'success', message: data.message });
+      } else {
+        addToast({ type: 'error', message: 'Deduplication failed.' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'An error occurred during deduplication.' });
+    }
+    setIsDeduping(false);
+  };
+
   const cands = dbCandidates || [];
 
   const handleSyncToSheets = async () => {
@@ -139,40 +173,6 @@ export default function CandidatesPage() {
   // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
-
-  // Sort State (list mode)
-  type SortKey = 'name' | 'status' | 'seniority' | 'lastContact' | 'skills';
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  const [isDeduping, setIsDeduping] = useState(false);
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
-  };
-
-  const handleDedup = async () => {
-    setIsDeduping(true);
-    try {
-      const res = await fetch('/api/candidates/deduplicate', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        await fetchDatabase();
-        addToast({ type: 'success', message: data.message });
-      } else {
-        addToast({ type: 'error', message: 'Deduplication failed.' });
-      }
-    } catch (e) {
-      console.error(e);
-      addToast({ type: 'error', message: 'An error occurred during deduplication.' });
-    }
-    setIsDeduping(false);
-  };
-
 
   const handleCheckboxChange = (id: string, event: any) => {
     const isShiftPressed = event.nativeEvent?.shiftKey || false;
@@ -300,8 +300,7 @@ export default function CandidatesPage() {
             {availableCandidates.length} total &middot; {availableCandidates.filter((c) => c.status !== 'Rejected' && c.status !== 'Placed').length} active
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             className="btn btn-secondary"
             onClick={handleDedup}
