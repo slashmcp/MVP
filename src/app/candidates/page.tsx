@@ -981,19 +981,49 @@ function AddCandidateModal({ onClose }: { onClose: () => void }) {
          resumeUrl = uploadData.url;
       }
 
-      // 2. Parse the resume with Anthropic
-      const response = await fetch('/api/candidates/parse-resume', {
+      // 2. Universal Intake AI
+      const response = await fetch('/api/intake', {
         method: 'POST',
         body: data,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to parse resume');
+        throw new Error('Failed to parse input');
       }
 
-      const { data: parsedData } = await response.json();
-      
-      const { dbCandidates, addToast } = useAppStore.getState();
+      const { category, data: parsedData } = await response.json();
+      const { dbCandidates, addToast, fetchDatabase } = useAppStore.getState();
+
+      if (category === 'client_list') {
+        // Automatically merge clients
+        addToast({ type: 'success', message: 'Client list detected! Updating database...' });
+        const updateRes = await fetch('/api/clients/bulk-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: parsedData.records || parsedData }),
+        });
+        const updateData = await updateRes.json();
+        if (updateData.success) {
+          await fetchDatabase();
+          const unmatchedMsg = updateData.unmatched?.length > 0 ? ` (${updateData.unmatched.length} unmatched)` : '';
+          addToast({ type: 'success', message: `Successfully updated ${updateData.updated} clients${unmatchedMsg}.` });
+        } else {
+          addToast({ type: 'error', message: 'Failed to update clients.' });
+        }
+        setIsParsing(false);
+        onClose();
+        return;
+      }
+
+      if (category === 'job_description') {
+        addToast({ type: 'success', message: 'Job Description detected! Pre-filling form (Coming Soon).' });
+        // Stretch goal: redirect or fill job form
+        setIsParsing(false);
+        onClose();
+        return;
+      }
+
+      // Default: candidate
       const existingCandidate = dbCandidates?.find(c => 
         (c.email && parsedData.email && c.email.toLowerCase() === parsedData.email.toLowerCase()) || 
         (c.name && parsedData.name && c.name.toLowerCase() === parsedData.name.toLowerCase())
