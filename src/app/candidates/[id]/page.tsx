@@ -14,6 +14,7 @@ import {
   MessageSquare,
   FileText,
   Sparkles,
+  Target,
   Plus,
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
