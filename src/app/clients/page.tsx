@@ -30,6 +30,10 @@ export default function ClientsPage() {
   const [sourcingQuery, setSourcingQuery] = useState('');
   const [isSourcing, setIsSourcing] = useState(false);
 
+  // Deduplication state
+  const [pendingClients, setPendingClients] = useState<{new: any[], duplicates: {existing: any, new: any}[]}>({new: [], duplicates: []});
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+
   // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
@@ -53,22 +57,78 @@ export default function ClientsPage() {
          return;
       }
       if (data.success && data.clients) {
-        // Save sourced clients to DB
-        await Promise.all(data.clients.map((client: any) => 
-          fetch('/api/clients', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(client)
-          })
-        ));
-        
-        await fetchDatabase();
-        setShowSourcing(false);
-        setSourcingQuery('');
+        const newClients: any[] = [];
+        const duplicateClients: {existing: any, new: any}[] = [];
+
+        data.clients.forEach((sourcedClient: any) => {
+          const existing = clients.find(c => 
+            c.companyName.toLowerCase() === sourcedClient.companyName.toLowerCase() || 
+            (c.linkedinUrl && sourcedClient.linkedinUrl && c.linkedinUrl === sourcedClient.linkedinUrl)
+          );
+          if (existing) {
+            duplicateClients.push({ existing, new: sourcedClient });
+          } else {
+            newClients.push(sourcedClient);
+          }
+        });
+
+        if (duplicateClients.length > 0) {
+          setPendingClients({ new: newClients, duplicates: duplicateClients });
+          setShowDuplicateModal(true);
+          setShowSourcing(false);
+          setSourcingQuery('');
+          setIsSourcing(false);
+          return;
+        } else {
+          await saveSourcedClients(newClients);
+          setShowSourcing(false);
+          setSourcingQuery('');
+        }
       }
     } catch (e) {
       console.error(e);
     }
+    setIsSourcing(false);
+  };
+
+  const saveSourcedClients = async (clientsToSave: any[]) => {
+    await Promise.all(clientsToSave.map((client: any) => 
+      fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(client)
+      })
+    ));
+    await fetchDatabase();
+  };
+
+  const handleDuplicateDecision = async (updateExisting: boolean) => {
+    setShowDuplicateModal(false);
+    setIsSourcing(true);
+    
+    // 1. Save strictly new ones
+    await saveSourcedClients(pendingClients.new);
+    
+    // 2. Handle duplicates
+    if (updateExisting) {
+      await Promise.all(pendingClients.duplicates.map(async ({existing, new: sourced}) => {
+        const payload = {
+          id: existing.id,
+          linkedinUrl: sourced.linkedinUrl || existing.linkedinUrl,
+          location: existing.location === 'Unknown Location' ? sourced.location : existing.location,
+          industry: existing.industry || sourced.industry,
+          notes: (existing.notes ? existing.notes + '\n\n' : '') + `[Updated via AI Sourcing]: ${sourced.notes}`
+        };
+        await fetch('/api/clients', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }));
+      await fetchDatabase();
+    }
+    
+    setPendingClients({new: [], duplicates: []});
     setIsSourcing(false);
   };
 
@@ -464,6 +524,48 @@ export default function ClientsPage() {
           >
             Deselect All
           </button>
+        </div>
+      )}
+
+      {showDuplicateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[var(--surface)] border border-border shadow-xl rounded-xl w-full max-w-md overflow-hidden flex flex-col animate-slide-up">
+            <div className="p-5 border-b border-border flex items-center gap-3">
+              <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-semibold text-text-primary">Duplicates Found</h2>
+            </div>
+            
+            <div className="p-5 overflow-y-auto max-h-[60vh]">
+              <p className="text-sm text-text-secondary mb-4">
+                We found <strong>{pendingClients.duplicates.length}</strong> clients that already exist in your CRM. What would you like to do with them?
+              </p>
+              <div className="space-y-3">
+                {pendingClients.duplicates.map((dup, i) => (
+                  <div key={i} className="text-sm border border-border rounded p-3 bg-[var(--surface-elevated)]">
+                    <span className="font-medium text-text-primary">{dup.existing.companyName}</span>
+                    <p className="text-xs text-text-tertiary mt-1">Existing location: {dup.existing.location}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-border flex justify-end gap-3 bg-[var(--surface-elevated)]">
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleDuplicateDecision(false)}
+              >
+                Skip Duplicates
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleDuplicateDecision(true)}
+              >
+                Update Existing
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

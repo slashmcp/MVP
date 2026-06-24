@@ -65,6 +65,7 @@ export async function getClients(): Promise<Client[]> {
     status: c.status,
     contactPerson: c.contact_person,
     email: c.email,
+    linkedinUrl: c.linkedin_url,
     openRoles: c.open_roles,
     totalPlacements: c.total_placements,
     activeSince: c.active_since,
@@ -256,6 +257,7 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
       location: clientData.location,
       industry: clientData.industry,
       status: clientData.status || 'Active',
+      linkedin_url: clientData.linkedinUrl,
       open_roles: clientData.openRoles || 0,
       total_placements: clientData.totalPlacements || 0,
       notes: clientData.notes,
@@ -275,6 +277,46 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
     location: data.location,
     industry: data.industry,
     status: data.status,
+    linkedinUrl: data.linkedin_url,
+    openRoles: data.open_roles,
+    totalPlacements: data.total_placements,
+    notes: data.notes,
+  };
+}
+
+export async function updateClient(id: string, clientData: Partial<Client>): Promise<Client | null> {
+  const updatePayload: any = {};
+  if (clientData.companyName !== undefined) updatePayload.company_name = clientData.companyName;
+  if (clientData.contactPerson !== undefined) updatePayload.contact_person = clientData.contactPerson;
+  if (clientData.email !== undefined) updatePayload.email = clientData.email;
+  if (clientData.location !== undefined) updatePayload.location = clientData.location;
+  if (clientData.industry !== undefined) updatePayload.industry = clientData.industry;
+  if (clientData.status !== undefined) updatePayload.status = clientData.status;
+  if (clientData.linkedinUrl !== undefined) updatePayload.linkedin_url = clientData.linkedinUrl;
+  if (clientData.openRoles !== undefined) updatePayload.open_roles = clientData.openRoles;
+  if (clientData.notes !== undefined) updatePayload.notes = clientData.notes;
+
+  const { data, error } = await supabase
+    .from('clients')
+    .update(updatePayload)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating client in database:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    companyName: data.company_name,
+    contactPerson: data.contact_person,
+    email: data.email,
+    location: data.location,
+    industry: data.industry,
+    status: data.status,
+    linkedinUrl: data.linkedin_url,
     openRoles: data.open_roles,
     totalPlacements: data.total_placements,
     notes: data.notes,

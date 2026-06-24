@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { getClients, createClient, deleteClient, deleteClients } from '@/lib/db-client';
+import { getClients, createClient, updateClient, deleteClient, deleteClients } from '@/lib/db-client';
 
 export async function GET() {
   try {
@@ -60,6 +60,24 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in POST /api/clients:', error);
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, ...rest } = body;
+    if (!id) {
+      return NextResponse.json({ error: 'Client ID is required' }, { status: 400 });
+    }
+    const updated = await updateClient(id, rest);
+    if (!updated) {
+      return NextResponse.json({ error: 'Failed to update client' }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error in PATCH /api/clients:', error);
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }
