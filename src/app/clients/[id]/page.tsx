@@ -9,6 +9,7 @@ import {
   Building2,
   Calendar,
   Search,
+  Sparkles,
   Loader2,
   Edit2,
   Phone,
