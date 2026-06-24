@@ -89,11 +89,18 @@ export const useAppStore = create<AppState>()(
     set((state) => ({
       toasts: [...state.toasts, { ...toast, id }],
     }));
-    setTimeout(() => {
-      set((state) => ({
-        toasts: state.toasts.filter((t) => t.id !== id),
-      }));
-    }, toast.duration || 4000);
+    
+    // Default: errors stay open forever (0), others disappear after 4s
+    const defaultDuration = toast.type === 'error' ? 0 : 4000;
+    const duration = toast.duration !== undefined ? toast.duration : defaultDuration;
+    
+    if (duration > 0) {
+      setTimeout(() => {
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        }));
+      }, duration);
+    }
   },
   removeToast: (id) =>
     set((state) => ({

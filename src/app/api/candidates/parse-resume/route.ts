@@ -99,8 +99,8 @@ Return ONLY valid JSON. Do not include any markdown formatting like \`\`\`json.`
 
     return NextResponse.json({ success: true, data: candidateData });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error parsing resume:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred while parsing the resume.' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'An unexpected error occurred while parsing the resume.' }, { status: 500 });
   }
 }
