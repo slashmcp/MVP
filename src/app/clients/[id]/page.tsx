@@ -68,7 +68,12 @@ export default function ClientDetailPage({
                   <span>{client.contactPerson}</span>
                 )}
                 {client.email && (
-                  <Link href={`/outreach?client=${client.id}&body=${encodeURIComponent(client.notes || '')}`} className="flex items-center gap-1 hover:text-accent transition-colors">
+                  <Link 
+                    href={`/outreach?client=${client.id}&body=${encodeURIComponent(
+                      `Hi ${client.contactPerson !== 'Requires Outreach' ? client.contactPerson : 'Team'},\n\nI hope this message finds you well. I was researching ${client.companyName} and wanted to reach out.\n\n${client.notes || 'We specialize in placing top-tier engineering talent and would love to help you scale.'}\n\nI'd love to schedule a brief 10-minute call this week to discuss how we can assist with your current open roles.\n\nBest regards,\nRecruitment Command Center`
+                    )}`} 
+                    className="flex items-center gap-1 hover:text-accent transition-colors"
+                  >
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {client.email}
                   </Link>
@@ -198,7 +203,12 @@ export default function ClientDetailPage({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Email</span>
                 {client.email ? (
-                  <Link href={`/outreach?client=${client.id}&body=${encodeURIComponent(client.notes || '')}`} className="text-accent hover:underline text-xs">
+                  <Link 
+                    href={`/outreach?client=${client.id}&body=${encodeURIComponent(
+                      `Hi ${client.contactPerson !== 'Requires Outreach' ? client.contactPerson : 'Team'},\n\nI hope this message finds you well. I was researching ${client.companyName} and wanted to reach out.\n\n${client.notes || 'We specialize in placing top-tier engineering talent and would love to help you scale.'}\n\nI'd love to schedule a brief 10-minute call this week to discuss how we can assist with your current open roles.\n\nBest regards,\nRecruitment Command Center`
+                    )}`} 
+                    className="text-accent hover:underline text-xs"
+                  >
                     {client.email}
                   </Link>
                 ) : (
