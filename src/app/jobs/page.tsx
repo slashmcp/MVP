@@ -464,15 +464,15 @@ export default function JobsPage() {
                     />
                   </th>
                   {([
-                    { key: 'title', label: 'Role' },
-                    { key: 'client', label: 'Client' },
-                    { key: 'location', label: 'Location' },
-                    { key: 'status', label: 'Status' },
-                    { key: 'applicants', label: 'Applicants' },
-                  ] as { key: SortKey; label: string }[]).map(col => (
+                    { key: 'title', label: 'Role', className: '' },
+                    { key: 'client', label: 'Client', className: 'hidden sm:table-cell' },
+                    { key: 'location', label: 'Location', className: 'hidden md:table-cell' },
+                    { key: 'status', label: 'Status', className: '' },
+                    { key: 'applicants', label: 'Applicants', className: 'hidden lg:table-cell' },
+                  ] as { key: SortKey; label: string; className: string }[]).map(col => (
                     <th
                       key={col.key}
-                      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-text-primary transition-colors"
+                      className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-text-primary transition-colors ${col.className}`}
                       onClick={() => handleSort(col.key)}
                     >
                       <span className="flex items-center gap-1">
@@ -507,12 +507,12 @@ export default function JobsPage() {
                         {job.title}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-text-secondary">{job.client}</td>
-                    <td className="px-4 py-3 text-text-secondary">{job.location || '—'}</td>
+                    <td className="px-4 py-3 text-text-secondary hidden sm:table-cell">{job.client}</td>
+                    <td className="px-4 py-3 text-text-secondary hidden md:table-cell">{job.location || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`badge ${statusColors[job.status] || 'badge-blue'}`}>{job.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-text-secondary font-mono">
+                    <td className="px-4 py-3 text-text-secondary font-mono hidden lg:table-cell">
                       {job.salaryMin && job.salaryMax ? `${(job.salaryMin / 1000).toFixed(0)}k–${(job.salaryMax / 1000).toFixed(0)}k` : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -547,11 +547,50 @@ export default function JobsPage() {
       )}
 
       {filtered.length === 0 && (
-        <div className="empty-state">
-          <Search className="w-10 h-10 mb-3 text-text-tertiary" strokeWidth={1.25} />
-          <p className="text-sm font-medium">No jobs found</p>
-          <p className="text-xs mt-1">Try adjusting your search or filters.</p>
-        </div>
+        availableJobs.length === 0 ? (
+          <div className="card p-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8 border border-border bg-surface shadow-md rounded-xl">
+            <div className="w-16 h-16 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-4">
+              <Plus className="w-8 h-8" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2">No Jobs Found</h3>
+            <p className="text-sm text-text-secondary mb-6 max-w-md leading-relaxed">
+              No job postings exist yet. Create a new vacancy or let AI source them directly from Google Jobs.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Job' })}
+                className="btn btn-primary"
+              >
+                <Plus className="w-4 h-4" /> Add Job
+              </button>
+              <button
+                onClick={() => setShowSourcing(true)}
+                className="btn btn-secondary flex items-center gap-1.5"
+              >
+                <Sparkles className="w-4 h-4 text-accent" /> Source Google Jobs
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="card p-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8 border border-border bg-surface shadow-md rounded-xl animate-fade-in">
+            <div className="w-12 h-12 rounded-full bg-[var(--surface-elevated)] flex items-center justify-center text-text-tertiary mb-3">
+              <Search className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-semibold text-text-primary mb-1">No Matching Jobs</h3>
+            <p className="text-sm text-text-secondary mb-5 leading-relaxed">
+              We couldn't find any jobs matching your search term or active status filters.
+            </p>
+            <button
+              onClick={() => {
+                setSearch('');
+                setStatusFilter('all');
+              }}
+              className="btn btn-secondary"
+            >
+              Clear Filters & Search
+            </button>
+          </div>
+        )
       )}
 
       {/* Floating Action Bar for Bulk Actions */}

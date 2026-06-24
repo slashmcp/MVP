@@ -22,6 +22,8 @@ import {
   MapPin,
   Globe,
   Phone,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -43,6 +45,15 @@ export default function CandidatesPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [aiResults, setAiResults] = useState<{candidateId: string; score: number; reason: string}[] | null>(null);
+
+  // Column Visibility States
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    skills: true,
+    status: true,
+    seniority: true,
+    lastContact: true,
+  });
 
   const [showSourcing, setShowSourcing] = useState(false);
   const [sourcingQuery, setSourcingQuery] = useState('');
@@ -513,6 +524,54 @@ export default function CandidatesPage() {
             <List className="w-4 h-4" />
           </button>
         </div>
+        {viewMode === 'list' && (
+          <div className="relative">
+            <button
+              onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm font-medium bg-surface text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)] transition-all"
+              title="Columns Visibility"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Columns</span>
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {showColumnDropdown && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowColumnDropdown(false)} />
+                <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-surface p-2.5 shadow-xl z-20 space-y-2 animate-fade-in">
+                  <p className="text-xs font-semibold text-text-secondary px-2 py-1">Toggle Columns</p>
+                  <hr className="border-border" />
+                  <div className="space-y-1.5">
+                    {([
+                      { key: 'skills', label: 'Skills' },
+                      { key: 'status', label: 'Status' },
+                      { key: 'seniority', label: 'Seniority' },
+                      { key: 'lastContact', label: 'Last Contact' },
+                    ] as { key: string; label: string }[]).map((col) => (
+                      <label
+                        key={col.key}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[var(--surface-elevated)] cursor-pointer select-none text-sm text-text-secondary hover:text-text-primary transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns[col.key]}
+                          onChange={() =>
+                            setVisibleColumns((prev) => ({
+                              ...prev,
+                              [col.key]: !prev[col.key],
+                            }))
+                          }
+                          className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
+                        />
+                        {col.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Table / Grid */}
@@ -536,25 +595,27 @@ export default function CandidatesPage() {
                   />
                 </th>
                 {([
-                  { key: 'name', label: 'Name' },
-                  { key: 'skills', label: 'Skills' },
-                  { key: 'status', label: 'Status' },
-                  { key: 'seniority', label: 'Seniority' },
-                  { key: 'lastContact', label: 'Last Contact' },
-                ] as { key: SortKey; label: string }[]).map(col => (
-                  <th
-                    key={col.key}
-                    className="cursor-pointer select-none hover:text-text-primary transition-colors"
-                    onClick={() => handleSort(col.key)}
-                  >
-                    <span className="flex items-center gap-1">
-                      {col.label}
-                      <span className="text-text-tertiary ml-0.5">
-                        {sortKey === col.key ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
+                  { key: 'name', label: 'Name', required: true, className: '' },
+                  { key: 'skills', label: 'Skills', required: false, className: 'hidden md:table-cell' },
+                  { key: 'status', label: 'Status', required: false, className: 'hidden sm:table-cell' },
+                  { key: 'seniority', label: 'Seniority', required: false, className: 'hidden lg:table-cell' },
+                  { key: 'lastContact', label: 'Last Contact', required: false, className: 'hidden xl:table-cell' },
+                ] as { key: string; label: string; required: boolean; className: string }[])
+                  .filter(col => col.required || visibleColumns[col.key])
+                  .map(col => (
+                    <th
+                      key={col.key}
+                      className={`cursor-pointer select-none hover:text-text-primary transition-colors ${col.className}`}
+                      onClick={() => handleSort(col.key as SortKey)}
+                    >
+                      <span className="flex items-center gap-1">
+                        {col.label}
+                        <span className="text-text-tertiary ml-0.5">
+                          {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
                       </span>
-                    </span>
-                  </th>
-                ))}
+                    </th>
+                  ))}
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
@@ -595,39 +656,47 @@ export default function CandidatesPage() {
                       )}
                     </Link>
                   </td>
-                  <td>
-                    <div className="flex flex-wrap gap-1 max-w-[280px]">
-                      {candidate.skills.slice(0, 3).map((skill) => (
-                        <span
-                          key={skill}
-                          className="badge badge-neutral text-[10px]"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                      {candidate.skills.length > 3 && (
-                        <span className="text-[10px] text-text-tertiary">
-                          +{candidate.skills.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${statusColors[candidate.status] || 'badge-neutral'}`}>
-                      {candidate.status}
-                    </span>
-                  </td>
-                  <td className="text-text-secondary text-sm">
-                    {candidate.seniority || 'â€”'}
-                  </td>
-                  <td className="text-text-secondary font-mono text-xs">
-                    {candidate.lastContactDate
-                      ? new Date(candidate.lastContactDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })
-                      : 'â€”'}
-                  </td>
+                  {visibleColumns.skills && (
+                    <td className="hidden md:table-cell">
+                      <div className="flex flex-wrap gap-1 max-w-[280px]">
+                        {candidate.skills.slice(0, 3).map((skill) => (
+                          <span
+                            key={skill}
+                            className="badge badge-neutral text-[10px]"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {candidate.skills.length > 3 && (
+                          <span className="text-[10px] text-text-tertiary">
+                            +{candidate.skills.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                  {visibleColumns.status && (
+                    <td className="hidden sm:table-cell">
+                      <span className={`badge ${statusColors[candidate.status] || 'badge-neutral'}`}>
+                        {candidate.status}
+                      </span>
+                    </td>
+                  )}
+                  {visibleColumns.seniority && (
+                    <td className="text-text-secondary text-sm hidden lg:table-cell">
+                      {candidate.seniority || '—'}
+                    </td>
+                  )}
+                  {visibleColumns.lastContact && (
+                    <td className="text-text-secondary font-mono text-xs hidden xl:table-cell">
+                      {candidate.lastContactDate
+                        ? new Date(candidate.lastContactDate).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+                  )}
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {/* Email */}
@@ -832,11 +901,52 @@ export default function CandidatesPage() {
         </div>
       )}
         {filtered.length === 0 && (
-          <div className="card empty-state">
-            <Search className="w-10 h-10 mb-3 text-text-tertiary" strokeWidth={1.25} />
-            <p className="text-sm font-medium">No candidates found</p>
-            <p className="text-xs mt-1">Try adjusting your search or filters.</p>
-          </div>
+          availableCandidates.length === 0 ? (
+            <div className="card p-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8 border border-border bg-surface shadow-md rounded-xl">
+              <div className="w-16 h-16 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-4">
+                <Plus className="w-8 h-8" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">No Candidates Found</h3>
+              <p className="text-sm text-text-secondary mb-6 max-w-md leading-relaxed">
+                Get started by adding your first candidate manually, importing a CSV file, or dropping resumes into the Master Funnel on the dashboard.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="btn btn-primary"
+                >
+                  <Plus className="w-4 h-4" /> Add Candidate
+                </button>
+                <button
+                  onClick={() => setShowBulkImportModal(true)}
+                  className="btn btn-secondary"
+                >
+                  <TableProperties className="w-4 h-4" /> Import CSV
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="card p-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8 border border-border bg-surface shadow-md rounded-xl animate-fade-in">
+              <div className="w-12 h-12 rounded-full bg-[var(--surface-elevated)] flex items-center justify-center text-text-tertiary mb-3">
+                <Search className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-semibold text-text-primary mb-1">No Matching Candidates</h3>
+              <p className="text-sm text-text-secondary mb-5 leading-relaxed">
+                We couldn't find any candidates matching your search term or status filters. Try clearing them to see all candidates.
+              </p>
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter('all');
+                  setAiResults(null);
+                  setIsAiSearch(false);
+                }}
+                className="btn btn-secondary"
+              >
+                Clear Filters & Search
+              </button>
+            </div>
+          )
         )}
 
       {/* Floating Action Bar for Bulk Actions */}

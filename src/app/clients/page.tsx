@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import Papa from 'papaparse';
 import {
   Search,
   Plus,
@@ -297,22 +298,41 @@ export default function ClientsPage() {
     setIsImporting(true);
     try {
       const text = await file.text();
-      const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
-      const companyIdx = headers.findIndex(h => h.includes('company'));
-      const phoneIdx = headers.findIndex(h => h.includes('phone'));
-      const emailIdx = headers.findIndex(h => h.includes('email'));
-      const websiteIdx = headers.findIndex(h => h.includes('website') || h.includes('url'));
+      
+      const parseResult = Papa.parse<string[]>(text, {
+        skipEmptyLines: true,
+      });
+      
+      const rows = parseResult.data;
+      if (rows.length === 0) {
+        addToast({ type: 'error', message: 'The file is empty.' });
+        return;
+      }
+      
+      const headers = rows[0].map(h => h.toLowerCase().trim());
+      const companyIdx = headers.findIndex(h => h.includes('company') || h.includes('client') || h.includes('firm') || h.includes('name'));
+      const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('tel') || h.includes('contact'));
+      const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'));
+      const websiteIdx = headers.findIndex(h => h.includes('website') || h.includes('url') || h.includes('site') || h.includes('link'));
 
-      const records = lines.slice(1).map(line => {
-        const cols = line.split(',').map(c => c.trim().replace(/"/g, ''));
+      if (companyIdx === -1) {
+        addToast({ type: 'error', message: 'Could not find a company name column. Please check headers.' });
+        return;
+      }
+
+      const records = rows.slice(1).map(cols => {
         return {
-          company: cols[companyIdx] || '',
-          phone: phoneIdx >= 0 ? cols[phoneIdx] : '',
-          email: emailIdx >= 0 ? cols[emailIdx] : '',
-          website: websiteIdx >= 0 ? cols[websiteIdx] : '',
+          company: cols[companyIdx]?.trim() || '',
+          phone: phoneIdx >= 0 ? cols[phoneIdx]?.trim() : '',
+          email: emailIdx >= 0 ? cols[emailIdx]?.trim() : '',
+          website: websiteIdx >= 0 ? cols[websiteIdx]?.trim() : '',
         };
       }).filter(r => r.company);
+
+      if (records.length === 0) {
+        addToast({ type: 'error', message: 'No valid company records found in the file.' });
+        return;
+      }
 
       const res = await fetch('/api/clients/bulk-update', {
         method: 'POST',
@@ -321,10 +341,15 @@ export default function ClientsPage() {
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         await fetchDatabase();
-        const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : '';
-        addToast({ type: 'success', message: `Updated ${data.updated} clients${unmatchedMsg}` });
+        if (data.updated === 0) {
+          const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : 'No matching clients found';
+          addToast({ type: 'info', message: `No clients were updated. ${unmatchedMsg}` });
+        } else {
+          const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : '';
+          addToast({ type: 'success', message: `Updated ${data.updated} clients${unmatchedMsg}` });
+        }
       } else {
         addToast({ type: 'error', message: data.error || 'Import failed' });
       }
@@ -601,21 +626,21 @@ export default function ClientsPage() {
                     />
                   </th>
                   {([
-                    { key: 'companyName', label: 'Company' },
-                    { key: 'contactPerson', label: 'Contact' },
-                    { key: 'location', label: 'Location' },
-                    { key: 'status', label: 'Status' },
-                    { key: 'openRoles', label: 'Open Roles' },
-                  ] as { key: SortKey; label: string }[]).map(col => (
+                    { key: 'companyName', label: 'Company', className: '' },
+                    { key: 'contactPerson', label: 'Contact', className: 'hidden sm:table-cell' },
+                    { key: 'location', label: 'Location', className: 'hidden md:table-cell' },
+                    { key: 'status', label: 'Status', className: '' },
+                    { key: 'openRoles', label: 'Open Roles', className: 'hidden lg:table-cell' },
+                  ] as { key: SortKey; label: string; className: string }[]).map(col => (
                     <th
                       key={col.key}
-                      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-text-primary transition-colors"
+                      className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-text-primary transition-colors ${col.className}`}
                       onClick={() => handleSort(col.key)}
                     >
                       <span className="flex items-center gap-1">
                         {col.label}
                         <span className="text-text-tertiary ml-0.5">
-                          {sortKey === col.key ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
+                          {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
                         </span>
                       </span>
                     </th>
@@ -644,14 +669,15 @@ export default function ClientsPage() {
                         {client.companyName}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-text-secondary">
-                      {client.contactPerson || 'â€”'}
+                    <td className="px-4 py-3 text-text-secondary hidden sm:table-cell">
+                      {client.contactPerson || '—'}
                       {client.email && client.email !== 'N/A' && <div className="text-xs text-text-tertiary">{client.email}</div>}
                     </td>
-                    <td className="px-4 py-3 text-text-secondary">{client.location && client.location !== 'Unknown Location' ? client.location : 'â€”'}</td>
+                    <td className="px-4 py-3 text-text-secondary hidden md:table-cell">{client.location && client.location !== 'Unknown Location' ? client.location : '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
                     </td>
+                    <td className="px-4 py-3 text-text-secondary font-mono hidden lg:table-cell">{client.openRoles}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {/* Email */}
@@ -733,11 +759,50 @@ export default function ClientsPage() {
       )}
 
       {filtered.length === 0 && (
-        <div className="empty-state">
-          <Search className="w-10 h-10 mb-3 text-text-tertiary" strokeWidth={1.25} />
-          <p className="text-sm font-medium">No clients found</p>
-          <p className="text-xs mt-1">Try adjusting your search or filters.</p>
-        </div>
+        availableClients.length === 0 ? (
+          <div className="card p-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8 border border-border bg-surface shadow-md rounded-xl">
+            <div className="w-16 h-16 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-4">
+              <Plus className="w-8 h-8" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2">No Clients Found</h3>
+            <p className="text-sm text-text-secondary mb-6 max-w-md leading-relaxed">
+              No clients are registered yet. Create a new client profile or import contact list from CSV/TXT.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Client' })}
+                className="btn btn-primary"
+              >
+                <Plus className="w-4 h-4" /> Add Client
+              </button>
+              <button
+                onClick={() => importFileRef.current?.click()}
+                className="btn btn-secondary flex items-center gap-1.5"
+              >
+                <UploadCloud className="w-4 h-4 text-text-secondary" /> Import Contacts
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="card p-10 flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8 border border-border bg-surface shadow-md rounded-xl animate-fade-in">
+            <div className="w-12 h-12 rounded-full bg-[var(--surface-elevated)] flex items-center justify-center text-text-tertiary mb-3">
+              <Search className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-semibold text-text-primary mb-1">No Matching Clients</h3>
+            <p className="text-sm text-text-secondary mb-5 leading-relaxed">
+              We couldn't find any clients matching your search term or active status filters.
+            </p>
+            <button
+              onClick={() => {
+                setSearch('');
+                setStatusFilter('all');
+              }}
+              className="btn btn-secondary"
+            >
+              Clear Filters & Search
+            </button>
+          </div>
+        )
       )}
 
       {/* Floating Action Bar for Bulk Actions */}
