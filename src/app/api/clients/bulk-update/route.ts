@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (fetchError) throw fetchError;
 
-    const results = { updated: 0, unmatched: [] as string[] };
+    const results = { updated: 0, created: 0, unmatched: [] as string[] };
 
     for (const record of records) {
       if (!record.company) continue;
@@ -48,7 +48,27 @@ export async function POST(request: NextRequest) {
       });
 
       if (!match) {
-        results.unmatched.push(record.company);
+        // Insert new client
+        const newClient = {
+          company_name: record.company,
+          phone: record.phone && record.phone !== 'N/A' ? record.phone : null,
+          email: record.email && record.email !== 'N/A' ? record.email : null,
+          website_url: record.website && record.website !== 'N/A'
+            ? (record.website.startsWith('http') ? record.website : `https://${record.website}`)
+            : null,
+          status: 'Prospect',
+          notes: 'Added via contact list import.'
+        };
+        const { error: insertError } = await supabase
+          .from('clients')
+          .insert([newClient]);
+
+        if (!insertError) {
+          results.created++;
+        } else {
+          console.error('Failed to insert client during import:', insertError);
+          results.unmatched.push(record.company);
+        }
         continue;
       }
 

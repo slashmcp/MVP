@@ -343,12 +343,16 @@ export default function ClientsPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         await fetchDatabase();
-        if (data.updated === 0) {
-          const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : 'No matching clients found';
-          addToast({ type: 'info', message: `No clients were updated. ${unmatchedMsg}` });
-        } else {
+        const total = (data.updated || 0) + (data.created || 0);
+        if (total === 0) {
           const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : '';
-          addToast({ type: 'success', message: `Updated ${data.updated} clients${unmatchedMsg}` });
+          addToast({ type: 'info', message: `No client records were modified.${unmatchedMsg}` });
+        } else {
+          const parts = [];
+          if (data.created > 0) parts.push(`Added ${data.created}`);
+          if (data.updated > 0) parts.push(`Updated ${data.updated}`);
+          const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : '';
+          addToast({ type: 'success', message: `${parts.join(' & ')} client(s)${unmatchedMsg}` });
         }
       } else {
         addToast({ type: 'error', message: data.error || 'Import failed' });
