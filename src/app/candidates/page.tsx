@@ -21,6 +21,7 @@ import {
   List,
   MapPin,
   Globe,
+  Phone,
 } from 'lucide-react';
 import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -631,11 +632,23 @@ export default function CandidatesPage() {
                     <div className="flex items-center justify-end gap-1">
                       <Link
                         href={`/outreach?candidate=${candidate.id}`}
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
-                        title="Send email"
+                        className={`p-1.5 rounded-md transition-all ${candidate.email && candidate.email !== 'N/A' ? 'text-text-tertiary hover:text-accent hover:bg-accent-soft' : 'text-text-tertiary/40 cursor-not-allowed'}`}
+                        title={candidate.email && candidate.email !== 'N/A' ? "Send email" : "No email available"}
+                        onClick={(e) => {
+                          if (!candidate.email || candidate.email === 'N/A') e.preventDefault();
+                        }}
                       >
                         <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                       </Link>
+                      {candidate.phone && candidate.phone !== 'N/A' && (
+                        <a
+                          href={`tel:${candidate.phone}`}
+                          className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
+                          title="Call phone"
+                        >
+                          <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        </a>
+                      )}
                       {candidate.linkedinUrl && (
                         <a
                           href={candidate.linkedinUrl}
@@ -775,11 +788,17 @@ export default function CandidatesPage() {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
-                {candidate.email && (
+                {candidate.email && candidate.email !== 'N/A' && (
                   <span className="flex items-center gap-1">
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.email}
                   </span>
+                )}
+                {candidate.phone && candidate.phone !== 'N/A' && (
+                  <a href={`tel:${candidate.phone}`} className="flex items-center gap-1 hover:text-accent transition-colors" title="Call phone">
+                    <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {candidate.phone}
+                  </a>
                 )}
                 {candidate.location && candidate.location !== 'Unknown Location' && (
                   <span className="flex items-center gap-1">
