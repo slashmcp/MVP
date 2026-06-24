@@ -16,7 +16,7 @@ import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
 
 export default function ClientsPage() {
-  const { showCredentialPrompt, bypassedServices, hiddenClientIds, hideClient, dbClients } = useAppStore();
+  const { showCredentialPrompt, bypassedServices, hiddenClientIds, hideClient, dbClients, fetchDatabase } = useAppStore();
   const clients = dbClients || [];
   
   const [search, setSearch] = useState('');
@@ -44,8 +44,17 @@ export default function ClientsPage() {
          setIsSourcing(false);
          return;
       }
-      if (data.success) {
-        // We'd update the DB here instead of local state now
+      if (data.success && data.clients) {
+        // Save sourced clients to DB
+        await Promise.all(data.clients.map((client: any) => 
+          fetch('/api/clients', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(client)
+          })
+        ));
+        
+        await fetchDatabase();
         setShowSourcing(false);
         setSourcingQuery('');
       }
