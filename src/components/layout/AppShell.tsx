@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ToastContainer } from '../ui/ToastContainer';
 import { CredentialPrompt } from '../ui/CredentialPrompt';
 import { useAppStore } from '@/store/app-store';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { sidebarCollapsed, fetchDatabase } = useAppStore();
+  const { fetchDatabase } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
   const [isFading, setIsFading] = useState(false);
 
@@ -58,15 +57,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/20 blur-[150px] pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[150px] pointer-events-none" />
         
-        <Sidebar />
-        <div
-          className={`transition-all duration-200 
-            ml-0 relative z-10
-            ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'}
-          `}
-        >
+        <div className="flex flex-col min-h-screen">
           <Header />
-          <main className="p-4 lg:p-8 w-full">{children}</main>
+          <main className="p-4 lg:p-8 w-full flex-grow relative z-10">{children}</main>
         </div>
         <ToastContainer />
         <CredentialPrompt />
