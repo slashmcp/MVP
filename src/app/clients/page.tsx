@@ -244,11 +244,6 @@ export default function ClientsPage() {
   };
 
   const handleBulkEnrich = async () => {
-    if (!process.env.NEXT_PUBLIC_SERPAPI_KEY && !bypassedServices.includes('serpapi')) {
-      showCredentialPrompt({ service: 'serpapi', feature: 'Bulk Client Enrichment' });
-      return;
-    }
-    
     setIsEnriching(true);
     let successCount = 0;
     
