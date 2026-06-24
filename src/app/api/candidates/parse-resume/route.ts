@@ -87,7 +87,7 @@ Return ONLY valid JSON. Do not include any markdown formatting like \`\`\`json.`
     }
 
     const message = await anthropic.messages.create({
-      model: isPdf ? 'claude-3-5-sonnet-20241022' : 'claude-3-haiku-20240307',
+      model: isPdf ? 'claude-3-5-haiku-20241022' : 'claude-3-5-haiku-20241022',
       max_tokens: 1000,
       temperature: 0.1,
       system: "You are a JSON extractor. Only output raw JSON, nothing else.",
