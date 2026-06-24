@@ -630,36 +630,41 @@ export default function CandidatesPage() {
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Link
-                        href={`/outreach?candidate=${candidate.id}`}
-                        className={`p-1.5 rounded-md transition-all ${candidate.email && candidate.email !== 'N/A' ? 'text-text-tertiary hover:text-accent hover:bg-accent-soft' : 'text-text-tertiary/40 cursor-not-allowed'}`}
-                        title={candidate.email && candidate.email !== 'N/A' ? "Send email" : "No email available"}
-                        onClick={(e) => {
-                          if (!candidate.email || candidate.email === 'N/A') e.preventDefault();
-                        }}
-                      >
-                        <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                      </Link>
+                      {/* Email */}
+                      {candidate.email && candidate.email !== 'N/A' && (
+                        <Link
+                          href={`/outreach?candidate=${candidate.id}`}
+                          className="p-1.5 rounded-md text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+                          title={`Email: ${candidate.email}`}
+                        >
+                          <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        </Link>
+                      )}
+                      {/* Phone */}
                       {candidate.phone && candidate.phone !== 'N/A' && (
                         <a
                           href={`tel:${candidate.phone}`}
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
-                          title="Call phone"
+                          className="p-1.5 rounded-md text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
+                          title={`Call: ${candidate.phone}`}
                         >
                           <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
                         </a>
                       )}
+                      {/* LinkedIn */}
                       {candidate.linkedinUrl && (
                         <a
                           href={candidate.linkedinUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
-                          title="LinkedIn"
+                          className="p-1.5 rounded-md text-[#0A66C2] hover:text-[#0A66C2]/80 hover:bg-[#0A66C2]/10 transition-all"
+                          title="LinkedIn Profile"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                          </svg>
                         </a>
                       )}
+                      {/* Website */}
                       {candidate.websiteUrl && (
                         <a
                           href={candidate.websiteUrl}
@@ -671,6 +676,7 @@ export default function CandidatesPage() {
                           <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
                         </a>
                       )}
+                      {/* Delete */}
                       <button
                         onClick={async (e) => {
                           e.preventDefault();
@@ -787,33 +793,35 @@ export default function CandidatesPage() {
                   <span className="text-xs text-text-tertiary ml-1">+{candidate.skills.length - 4}</span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-text-secondary">
+              <div className="flex flex-wrap items-center gap-3 mt-4 text-xs">
                 {candidate.email && candidate.email !== 'N/A' && (
-                  <span className="flex items-center gap-1">
+                  <Link href={`/outreach?candidate=${candidate.id}`} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 transition-colors" title={`Email: ${candidate.email}`}>
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                    {candidate.email}
-                  </span>
+                    <span className="text-text-secondary">{candidate.email}</span>
+                  </Link>
                 )}
                 {candidate.phone && candidate.phone !== 'N/A' && (
-                  <a href={`tel:${candidate.phone}`} className="flex items-center gap-1 hover:text-accent transition-colors" title="Call phone">
+                  <a href={`tel:${candidate.phone}`} className="flex items-center gap-1 text-emerald-500 hover:text-emerald-400 transition-colors" title={`Call: ${candidate.phone}`}>
                     <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
-                    {candidate.phone}
+                    <span className="text-text-secondary">{candidate.phone}</span>
                   </a>
                 )}
                 {candidate.location && candidate.location !== 'Unknown Location' && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-text-secondary">
                     <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.location}
                   </span>
                 )}
                 {candidate.linkedinUrl && (
-                  <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent transition-colors" title="LinkedIn">
-                    <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[#0A66C2] hover:text-[#0A66C2]/80 transition-colors" title="LinkedIn Profile">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
                     LinkedIn
                   </a>
                 )}
                 {candidate.websiteUrl && (
-                  <a href={candidate.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent transition-colors" title="Website">
+                  <a href={candidate.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-text-secondary hover:text-accent transition-colors" title="Website">
                     <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
                     Website
                   </a>
