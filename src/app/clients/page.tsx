@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -15,7 +15,8 @@ import {
   LayoutGrid,
   List,
   Globe,
-  Phone
+  Phone,
+  UploadCloud
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
@@ -28,6 +29,8 @@ export default function ClientsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isEnriching, setIsEnriching] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
   
   const [showSourcing, setShowSourcing] = useState(false);
   const [sourcingQuery, setSourcingQuery] = useState('');
@@ -287,6 +290,52 @@ export default function ClientsPage() {
     }
   };
 
+
+  const handleImportContacts = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+      const companyIdx = headers.findIndex(h => h.includes('company'));
+      const phoneIdx = headers.findIndex(h => h.includes('phone'));
+      const emailIdx = headers.findIndex(h => h.includes('email'));
+      const websiteIdx = headers.findIndex(h => h.includes('website') || h.includes('url'));
+
+      const records = lines.slice(1).map(line => {
+        const cols = line.split(',').map(c => c.trim().replace(/"/g, ''));
+        return {
+          company: cols[companyIdx] || '',
+          phone: phoneIdx >= 0 ? cols[phoneIdx] : '',
+          email: emailIdx >= 0 ? cols[emailIdx] : '',
+          website: websiteIdx >= 0 ? cols[websiteIdx] : '',
+        };
+      }).filter(r => r.company);
+
+      const res = await fetch('/api/clients/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        await fetchDatabase();
+        const unmatchedMsg = data.unmatched?.length > 0 ? ` (${data.unmatched.length} unmatched)` : '';
+        addToast({ type: 'success', message: `Updated ${data.updated} clients${unmatchedMsg}` });
+      } else {
+        addToast({ type: 'error', message: data.error || 'Import failed' });
+      }
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', message: 'Failed to import contact data' });
+    } finally {
+      setIsImporting(false);
+      if (importFileRef.current) importFileRef.current.value = '';
+    }
+  };
   return (
     <div className="space-y-6 animate-fade-in pb-16">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -297,6 +346,22 @@ export default function ClientsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <input
+            type="file"
+            ref={importFileRef}
+            onChange={handleImportContacts}
+            accept=".csv,.txt"
+            className="hidden"
+          />
+          <button
+            className="btn btn-secondary"
+            onClick={() => importFileRef.current?.click()}
+            disabled={isImporting}
+            title="Import contact data from CSV/TXT (Company, Phone, Email, Website)"
+          >
+            {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" strokeWidth={1.75} />}
+            {isImporting ? 'Importing...' : 'Import Contacts'}
+          </button>
           <button 
             className="btn bg-accent-soft text-accent border border-accent/20 hover:bg-accent/10"
             onClick={() => setShowSourcing(!showSourcing)}
@@ -310,7 +375,7 @@ export default function ClientsPage() {
             disabled={isDeduping}
             title="Scan and merge duplicate clients"
           >
-            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">⚡</span>}
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">âš¡</span>}
             {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
           <button 
@@ -550,7 +615,7 @@ export default function ClientsPage() {
                       <span className="flex items-center gap-1">
                         {col.label}
                         <span className="text-text-tertiary ml-0.5">
-                          {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                          {sortKey === col.key ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
                         </span>
                       </span>
                     </th>
@@ -580,10 +645,10 @@ export default function ClientsPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-text-secondary">
-                      {client.contactPerson || '—'}
+                      {client.contactPerson || 'â€”'}
                       {client.email && client.email !== 'N/A' && <div className="text-xs text-text-tertiary">{client.email}</div>}
                     </td>
-                    <td className="px-4 py-3 text-text-secondary">{client.location && client.location !== 'Unknown Location' ? client.location : '—'}</td>
+                    <td className="px-4 py-3 text-text-secondary">{client.location && client.location !== 'Unknown Location' ? client.location : 'â€”'}</td>
                     <td className="px-4 py-3">
                       <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
                     </td>
@@ -709,3 +774,4 @@ export default function ClientsPage() {
     </div>
   );
 }
+
