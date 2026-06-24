@@ -60,6 +60,7 @@ export async function POST(req: Request) {
           companyName: companyName,
           industry: 'Software / Technology',
           location: 'Unknown Location',
+          websiteUrl: result.link,
           status: 'Prospect',
           contactPerson: 'Requires Outreach',
           email: 'N/A',

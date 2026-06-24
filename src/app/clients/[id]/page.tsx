@@ -23,8 +23,17 @@ export default function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { dbClients, dbJobs, fetchDatabase } = useAppStore();
+  const { dbClients, dbJobs, fetchDatabase, showCredentialPrompt } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleEmailClick = (e: React.MouseEvent, email: string) => {
+    e.preventDefault();
+    if (email && email !== 'N/A') {
+      showCredentialPrompt({ service: 'outlook', feature: `Email ${email}` });
+    } else {
+      showCredentialPrompt({ service: 'outlook', feature: `Draft Outreach Email` });
+    }
+  };
   
   const clients = dbClients || [];
   const jobs = dbJobs || [];
@@ -68,18 +77,24 @@ export default function ClientDetailPage({
                   <span>{client.contactPerson}</span>
                 )}
                 {client.email && (
-                  <a href={`mailto:${client.email}`} className="flex items-center gap-1 hover:text-accent transition-colors">
+                  <button onClick={(e) => handleEmailClick(e, client.email)} className="flex items-center gap-1 hover:text-accent transition-colors">
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {client.email}
-                  </a>
+                  </button>
                 )}
               </div>
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <span className={`badge ${statusColors[client.status]}`}>{client.status}</span>
                 <span className="badge badge-neutral">
                   <Briefcase className="w-3 h-3 mr-1" strokeWidth={1.75} />
                   {client.openRoles} open roles
                 </span>
+                {client.websiteUrl && (
+                  <a href={client.websiteUrl} target="_blank" rel="noopener noreferrer" className="badge badge-blue hover:bg-blue-100 transition-colors cursor-pointer text-xs">
+                    <Globe className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Website / LinkedIn
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -192,7 +207,9 @@ export default function ClientDetailPage({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Email</span>
                 {client.email ? (
-                  <a href={`mailto:${client.email}`} className="text-accent hover:underline text-xs">{client.email}</a>
+                  <button onClick={(e) => handleEmailClick(e, client.email)} className="text-accent hover:underline text-xs">
+                    {client.email}
+                  </button>
                 ) : (
                   <span className="text-text-primary text-xs">—</span>
                 )}
