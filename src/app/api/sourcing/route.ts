@@ -140,7 +140,7 @@ export async function POST(req: Request) {
         success: true,
         count: enrichedLeads.length,
         leads: enrichedLeads,
-        provider: 'serper'
+        provider: 'serpapi'
       });
     }
   } catch (error) {

@@ -35,12 +35,12 @@ export default function ClientsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: sourcingQuery,
-          mock: bypassedServices.includes('serper')
+          mock: bypassedServices.includes('serpapi')
         }),
       });
       const data = await res.json();
       if (data.error === 'MISSING_API_KEY') {
-         showCredentialPrompt({ service: 'serper', feature: 'Live Client Sourcing' });
+         showCredentialPrompt({ service: 'serpapi', feature: 'Live Client Sourcing' });
          setIsSourcing(false);
          return;
       }
