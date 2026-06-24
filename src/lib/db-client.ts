@@ -24,6 +24,8 @@ export async function getCandidates(): Promise<Candidate[]> {
     skills: typeof c.skills === 'string' ? c.skills.split(',').map((s: string) => s.trim()) : (c.skills || []),
     linkedinUrl: c.linkedin_url,
     websiteUrl: c.website_url,
+    notes: c.notes,
+    resume: c.resume_url,
   }));
 }
 
@@ -134,6 +136,8 @@ export async function createCandidate(candidate: Partial<Candidate>): Promise<Ca
       skills: candidate.skills || [],
       linkedin_url: candidate.linkedinUrl,
       website_url: candidate.websiteUrl,
+      notes: candidate.notes,
+      resume_url: candidate.resume,
     }
   ]).select().single();
 
@@ -159,6 +163,8 @@ export async function createCandidate(candidate: Partial<Candidate>): Promise<Ca
     skills: data.skills || [],
     linkedinUrl: data.linkedin_url,
     websiteUrl: data.website_url,
+    notes: data.notes,
+    resume: data.resume_url,
   };
 }
 
@@ -179,6 +185,8 @@ export async function updateCandidate(id: string, candidate: Partial<Candidate>)
   if (candidate.skills !== undefined) updatePayload.skills = candidate.skills;
   if (candidate.linkedinUrl !== undefined) updatePayload.linkedin_url = candidate.linkedinUrl;
   if (candidate.websiteUrl !== undefined) updatePayload.website_url = candidate.websiteUrl;
+  if (candidate.notes !== undefined) updatePayload.notes = candidate.notes;
+  if (candidate.resume !== undefined) updatePayload.resume_url = candidate.resume;
 
   const { data, error } = await supabase
     .from('candidates')
@@ -209,6 +217,8 @@ export async function updateCandidate(id: string, candidate: Partial<Candidate>)
     skills: data.skills || [],
     linkedinUrl: data.linkedin_url,
     websiteUrl: data.website_url,
+    notes: data.notes,
+    resume: data.resume_url,
   };
 }
 
