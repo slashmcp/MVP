@@ -19,6 +19,15 @@ type ScrapedCompany = {
   openRoles: ScrapedJob[];
 };
 
+const ensureAbsoluteUrl = (url: string | undefined | null): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
 export default function ClientSourcingPage() {
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');
@@ -179,7 +188,7 @@ export default function ClientSourcingPage() {
                       </div>
                       <div>
                         <h3 className="text-base font-semibold text-text-primary">{company.companyName}</h3>
-                        <a href={company.websiteUrl} target="_blank" rel="noreferrer" className="text-xs text-accent hover:underline">
+                        <a href={ensureAbsoluteUrl(company.websiteUrl)} target="_blank" rel="noreferrer" className="text-xs text-accent hover:underline">
                           {company.websiteUrl}
                         </a>
                       </div>
