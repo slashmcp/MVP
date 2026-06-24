@@ -15,6 +15,7 @@ import {
   FileText,
   Sparkles,
   Target,
+  Clock,
   Plus,
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
