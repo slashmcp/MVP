@@ -345,7 +345,7 @@ function MasterFunnel() {
               <div>
                 <h2 className="text-lg font-semibold text-text-primary mb-1">Master Funnel</h2>
                 <p className="text-sm text-text-secondary">
-                  Drag and drop anything here to intelligently populate your CRM. Supports <span className="font-medium text-text-primary">PDF/DOCX Resumes</span> and <span className="font-medium text-text-primary">Apollo CSV Exports</span>.
+                  Drag and drop anything here to intelligently populate your CRM. Supports <span className="font-medium text-text-primary">PDF/DOCX Resumes</span> and <span className="font-medium text-text-primary">CSV files</span>.
                 </p>
               </div>
             </div>
