@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache',
+          'X-Api-Key': apolloKey
         },
         body: JSON.stringify({
-          api_key: apolloKey,
           first_name: name?.split(' ')[0],
           last_name: name?.split(' ').slice(1).join(' '),
           organization_name: company,
@@ -43,6 +43,9 @@ export async function POST(request: NextRequest) {
           if (person.city) enrichedData.location = `${person.city}${person.state ? `, ${person.state}` : ''}`;
         }
       } else {
+         if (res.status === 403 || res.status === 401) {
+           return NextResponse.json({ error: 'Apollo API key does not have access to the Enrichment endpoint (requires paid plan)' }, { status: 403 });
+         }
          return NextResponse.json({ error: `Apollo returned status ${res.status}` }, { status: 500 });
       }
     } else if (provider === 'serp') {
