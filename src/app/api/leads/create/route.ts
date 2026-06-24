@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const newClient = await createClient({
       companyName,
       location: location || 'Unknown',
-      status: 'Lead',
+      status: 'Prospect',
       openRoles: 1,
       notes: 'Sourced from Vacancy Search',
     });
