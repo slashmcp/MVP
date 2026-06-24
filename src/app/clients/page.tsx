@@ -34,6 +34,39 @@ export default function ClientsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
+  // Sort State (list mode)
+  type SortKey = 'companyName' | 'location' | 'contactPerson' | 'status' | 'openRoles';
+  const [sortKey, setSortKey] = useState<SortKey>('companyName');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [isDeduping, setIsDeduping] = useState(false);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const handleDedup = async () => {
+    setIsDeduping(true);
+    try {
+      const res = await fetch('/api/clients/deduplicate', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        await fetchDatabase();
+        addToast({ type: 'success', message: data.message });
+      } else {
+        addToast({ type: 'error', message: 'Deduplication failed.' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'An error occurred during deduplication.' });
+    }
+    setIsDeduping(false);
+  };
+
   const handleSourceClients = async () => {
     if (!sourcingQuery) return;
     setIsSourcing(true);
@@ -118,16 +151,28 @@ export default function ClientsPage() {
   };
 
   const filtered = useMemo(() => {
-    return clients.filter((c) => {
+    const list = clients.filter((c) => {
       if (hiddenClientIds.includes(c.id)) return false;
       const matchSearch =
         !search ||
         c.companyName.toLowerCase().includes(search.toLowerCase()) ||
-        c.contactPerson?.toLowerCase().includes(search.toLowerCase());
+        c.contactPerson?.toLowerCase().includes(search.toLowerCase()) ||
+        c.location?.toLowerCase().includes(search.toLowerCase()) ||
+        c.email?.toLowerCase().includes(search.toLowerCase());
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter, hiddenClientIds, clients]);
+
+    list.sort((a, b) => {
+      const aVal = (a[sortKey] ?? '').toString().toLowerCase();
+      const bVal = (b[sortKey] ?? '').toString().toLowerCase();
+      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [search, statusFilter, hiddenClientIds, clients, sortKey, sortDir]);
 
   const availableClients = useMemo(() => clients.filter((c) => !hiddenClientIds.includes(c.id)), [hiddenClientIds, clients]);
 
@@ -211,6 +256,15 @@ export default function ClientsPage() {
           >
             <Sparkles className="w-4 h-4" strokeWidth={1.75} />
             AI Source
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={handleDedup}
+            disabled={isDeduping}
+            title="Scan and merge duplicate clients"
+          >
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">⚡</span>}
+            {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
           <button 
             className="btn btn-primary" 
@@ -414,10 +468,26 @@ export default function ClientsPage() {
                       className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
                     />
                   </th>
-                  <th className="px-4 py-3 font-medium">Company</th>
-                  <th className="px-4 py-3 font-medium">Contact</th>
-                  <th className="px-4 py-3 font-medium">Location</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  {([
+                    { key: 'companyName', label: 'Company' },
+                    { key: 'contactPerson', label: 'Contact' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'openRoles', label: 'Open Roles' },
+                  ] as { key: SortKey; label: string }[]).map(col => (
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-text-primary transition-colors"
+                      onClick={() => handleSort(col.key)}
+                    >
+                      <span className="flex items-center gap-1">
+                        {col.label}
+                        <span className="text-text-tertiary ml-0.5">
+                          {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
+                      </span>
+                    </th>
+                  ))}
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
