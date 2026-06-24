@@ -15,6 +15,7 @@ import {
   Phone,
   Globe,
   MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
