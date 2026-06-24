@@ -13,6 +13,9 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
     companyName: client.companyName || '',
     contactPerson: client.contactPerson || '',
     email: client.email || '',
+    phone: client.phone || '',
+    websiteUrl: client.websiteUrl || '',
+    linkedinUrl: client.linkedinUrl || '',
     status: client.status || 'Active',
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -63,7 +66,7 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="px-6 py-5 space-y-4">
+          <div className="px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto">
             {error && <div className="text-sm text-error bg-error/10 p-3 rounded-md">{error}</div>}
 
             <div>
@@ -79,6 +82,21 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Email</label>
               <input type="email" name="email" value={formData.email} onChange={handleChange} className="input" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Phone</label>
+              <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="input" placeholder="e.g. (515) 555-0199" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Website URL</label>
+              <input type="text" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="input" placeholder="e.g. https://example.com" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">LinkedIn Profile URL</label>
+              <input type="text" name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="input" placeholder="e.g. https://linkedin.com/company/example" />
             </div>
 
             <div>
@@ -105,3 +123,4 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
     </div>
   );
 }
+

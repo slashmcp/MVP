@@ -1,6 +1,85 @@
 import { supabase } from './supabase';
 import type { Candidate, Job, Client, Sequence } from './schemas';
 
+function updateContactDetailsInNotes(
+  existingNotes: string | undefined | null,
+  phone: string | undefined | null,
+  websiteUrl: string | undefined | null,
+  linkedinUrl: string | undefined | null
+): string {
+  let notes = existingNotes || '';
+
+  // Clean existing contact details block and any phone/website/linkedin lines
+  const lines = notes.split('\n');
+  const cleanedLines = [];
+  let inContactBlock = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.toLowerCase() === 'contact details:') {
+      inContactBlock = true;
+      continue;
+    }
+    if (
+      line.toLowerCase().startsWith('phone:') ||
+      line.toLowerCase().startsWith('linkedin:') ||
+      line.toLowerCase().startsWith('website:') ||
+      line.toLowerCase().startsWith('website/linkedin:')
+    ) {
+      continue;
+    }
+    if (inContactBlock && line === '') {
+      continue;
+    }
+    inContactBlock = false;
+    cleanedLines.push(lines[i]);
+  }
+
+  notes = cleanedLines.join('\n').trim();
+
+  // Create new contact block
+  const notesParts: string[] = [];
+  if (phone && phone !== 'N/A') notesParts.push(`Phone: ${phone}`);
+  if (websiteUrl && websiteUrl !== 'N/A') notesParts.push(`Website: ${websiteUrl}`);
+  if (linkedinUrl && linkedinUrl !== 'N/A') notesParts.push(`LinkedIn: ${linkedinUrl}`);
+
+  if (notesParts.length > 0) {
+    const contactBlock = `Contact details:\n${notesParts.join('\n')}`;
+    notes = notes ? `${notes}\n\n${contactBlock}` : contactBlock;
+  }
+
+  return notes;
+}
+
+function parseContactDetailsFromNotes(notes: string | undefined | null) {
+  let phone = undefined;
+  let linkedinUrl = undefined;
+  let websiteUrl = undefined;
+
+  if (notes) {
+    const phoneMatch = notes.match(/Phone:\s*([^\n\r]+)/i);
+    if (phoneMatch) phone = phoneMatch[1].trim();
+
+    const linkedinMatch = notes.match(/LinkedIn:\s*([^\n\r]+)/i);
+    if (linkedinMatch) linkedinUrl = linkedinMatch[1].trim();
+
+    const websiteMatch = notes.match(/Website:\s*([^\n\r]+)/i);
+    if (websiteMatch) websiteUrl = websiteMatch[1].trim();
+
+    const webLinkMatch = notes.match(/Website\/LinkedIn:\s*([^\n\r]+)/i);
+    if (webLinkMatch) {
+      const val = webLinkMatch[1].trim();
+      if (val.includes('linkedin.com')) {
+        if (!linkedinUrl) linkedinUrl = val;
+      } else {
+        if (!websiteUrl) websiteUrl = val;
+      }
+    }
+  }
+
+  return { phone, linkedinUrl, websiteUrl };
+}
+
 export async function getCandidates(): Promise<Candidate[]> {
   const { data, error } = await supabase.from('candidates').select('*').order('created_at', { ascending: false });
   if (error) {
@@ -57,22 +136,25 @@ export async function getClients(): Promise<Client[]> {
     console.error('Error fetching clients:', error);
     return [];
   }
-  return data.map(c => ({
-    id: c.id,
-    companyName: c.company_name,
-    industry: c.industry,
-    location: c.location,
-    status: c.status,
-    contactPerson: c.contact_person,
-    email: c.email,
-    phone: c.phone,
-    linkedinUrl: c.linkedin_url,
-    websiteUrl: c.website_url,
-    openRoles: c.open_roles,
-    totalPlacements: c.total_placements,
-    activeSince: c.active_since,
-    notes: c.notes,
-  }));
+  return data.map(c => {
+    const contacts = parseContactDetailsFromNotes(c.notes);
+    return {
+      id: c.id,
+      companyName: c.company_name,
+      industry: c.industry,
+      location: c.location,
+      status: c.status,
+      contactPerson: c.contact_person,
+      email: c.email,
+      phone: contacts.phone,
+      linkedinUrl: contacts.linkedinUrl,
+      websiteUrl: contacts.websiteUrl,
+      openRoles: c.open_roles,
+      totalPlacements: c.total_placements,
+      activeSince: c.active_since,
+      notes: c.notes,
+    };
+  });
 }
 
 export async function getSequences(): Promise<Sequence[]> {
@@ -251,20 +333,24 @@ export async function incrementSequenceEnrollment(sequenceId: string): Promise<b
 }
 
 export async function createClient(clientData: Partial<Client>): Promise<Client | null> {
+  const finalNotes = updateContactDetailsInNotes(
+    clientData.notes,
+    clientData.phone,
+    clientData.websiteUrl,
+    clientData.linkedinUrl
+  );
+
   const { data, error } = await supabase.from('clients').insert([
     {
       company_name: clientData.companyName,
       contact_person: clientData.contactPerson,
       email: clientData.email,
-      phone: clientData.phone,
       location: clientData.location,
       industry: clientData.industry,
       status: clientData.status || 'Active',
-      linkedin_url: clientData.linkedinUrl,
-      website_url: clientData.websiteUrl,
       open_roles: clientData.openRoles || 0,
       total_placements: clientData.totalPlacements || 0,
-      notes: clientData.notes,
+      notes: finalNotes,
     }
   ]).select().single();
 
@@ -273,17 +359,19 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
     return null;
   }
 
+  const contacts = parseContactDetailsFromNotes(data.notes);
+
   return {
     id: data.id,
     companyName: data.company_name,
     contactPerson: data.contact_person,
     email: data.email,
-    phone: data.phone,
+    phone: contacts.phone,
     location: data.location,
     industry: data.industry,
     status: data.status,
-    linkedinUrl: data.linkedin_url,
-    websiteUrl: data.website_url,
+    linkedinUrl: contacts.linkedinUrl,
+    websiteUrl: contacts.websiteUrl,
     openRoles: data.open_roles,
     totalPlacements: data.total_placements,
     notes: data.notes,
@@ -291,18 +379,37 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
 }
 
 export async function updateClient(id: string, clientData: Partial<Client>): Promise<Client | null> {
+  // Load current client's notes to preserve existing values if they are not updated
+  const { data: currentClient } = await supabase
+    .from('clients')
+    .select('notes')
+    .eq('id', id)
+    .single();
+
+  const currentNotes = currentClient?.notes || '';
+  const currentContacts = parseContactDetailsFromNotes(currentNotes);
+
+  const finalPhone = clientData.phone !== undefined ? clientData.phone : currentContacts.phone;
+  const finalWebsite = clientData.websiteUrl !== undefined ? clientData.websiteUrl : currentContacts.websiteUrl;
+  const finalLinkedin = clientData.linkedinUrl !== undefined ? clientData.linkedinUrl : currentContacts.linkedinUrl;
+  const finalNotes = clientData.notes !== undefined ? clientData.notes : currentNotes;
+
+  const updatedNotes = updateContactDetailsInNotes(
+    finalNotes,
+    finalPhone,
+    finalWebsite,
+    finalLinkedin
+  );
+
   const updatePayload: any = {};
   if (clientData.companyName !== undefined) updatePayload.company_name = clientData.companyName;
   if (clientData.contactPerson !== undefined) updatePayload.contact_person = clientData.contactPerson;
   if (clientData.email !== undefined) updatePayload.email = clientData.email;
-  if (clientData.phone !== undefined) updatePayload.phone = clientData.phone;
   if (clientData.location !== undefined) updatePayload.location = clientData.location;
   if (clientData.industry !== undefined) updatePayload.industry = clientData.industry;
   if (clientData.status !== undefined) updatePayload.status = clientData.status;
-  if (clientData.linkedinUrl !== undefined) updatePayload.linkedin_url = clientData.linkedinUrl;
-  if (clientData.websiteUrl !== undefined) updatePayload.website_url = clientData.websiteUrl;
   if (clientData.openRoles !== undefined) updatePayload.open_roles = clientData.openRoles;
-  if (clientData.notes !== undefined) updatePayload.notes = clientData.notes;
+  updatePayload.notes = updatedNotes;
 
   const { data, error } = await supabase
     .from('clients')
@@ -316,15 +423,19 @@ export async function updateClient(id: string, clientData: Partial<Client>): Pro
     return null;
   }
 
+  const contacts = parseContactDetailsFromNotes(data.notes);
+
   return {
     id: data.id,
     companyName: data.company_name,
     contactPerson: data.contact_person,
     email: data.email,
+    phone: contacts.phone,
     location: data.location,
     industry: data.industry,
     status: data.status,
-    linkedinUrl: data.linkedin_url,
+    linkedinUrl: contacts.linkedinUrl,
+    websiteUrl: contacts.websiteUrl,
     openRoles: data.open_roles,
     totalPlacements: data.total_placements,
     notes: data.notes,
