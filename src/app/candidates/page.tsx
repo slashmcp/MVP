@@ -61,6 +61,7 @@ export default function CandidatesPage() {
     skills: true,
     status: true,
     seniority: true,
+    location: true,
     lastContact: true,
   });
 
@@ -552,6 +553,7 @@ export default function CandidatesPage() {
                       { key: 'skills', label: 'Skills' },
                       { key: 'status', label: 'Status' },
                       { key: 'seniority', label: 'Seniority' },
+                      { key: 'location', label: 'Location' },
                       { key: 'lastContact', label: 'Last Contact' },
                     ] as { key: string; label: string }[]).map((col) => (
                       <label
@@ -605,6 +607,7 @@ export default function CandidatesPage() {
                   { key: 'skills', label: 'Skills', required: false, className: 'hidden md:table-cell' },
                   { key: 'status', label: 'Status', required: false, className: 'hidden sm:table-cell' },
                   { key: 'seniority', label: 'Seniority', required: false, className: 'hidden lg:table-cell' },
+                  { key: 'location', label: 'Location', required: false, className: 'hidden lg:table-cell' },
                   { key: 'lastContact', label: 'Last Contact', required: false, className: 'hidden xl:table-cell' },
                 ] as { key: string; label: string; required: boolean; className: string }[])
                   .filter(col => col.required || visibleColumns[col.key])
@@ -691,6 +694,11 @@ export default function CandidatesPage() {
                   {visibleColumns.seniority && (
                     <td className="text-text-secondary text-sm hidden lg:table-cell">
                       {candidate.seniority || '—'}
+                    </td>
+                  )}
+                  {visibleColumns.location && (
+                    <td className="text-text-secondary text-sm hidden lg:table-cell">
+                      {candidate.location || '—'}
                     </td>
                   )}
                   {visibleColumns.lastContact && (
