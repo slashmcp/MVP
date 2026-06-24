@@ -21,6 +21,15 @@ import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
 import { EditClientModal } from '@/components/ui/EditClientModal';
 
+const ensureAbsoluteUrl = (url: string | undefined | null): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
 export default function ClientDetailPage({
   params,
 }: {
@@ -131,7 +140,7 @@ export default function ClientDetailPage({
                   {client.openRoles} open roles
                 </span>
                 {client.websiteUrl && (
-                  <a href={client.websiteUrl} target="_blank" rel="noopener noreferrer" className="badge badge-blue hover:bg-blue-100 transition-colors cursor-pointer text-xs">
+                  <a href={ensureAbsoluteUrl(client.websiteUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-blue hover:bg-blue-100 transition-colors cursor-pointer text-xs">
                     <Globe className="w-3 h-3 mr-1" strokeWidth={1.75} />
                     Website / LinkedIn
                   </a>
@@ -260,9 +269,9 @@ export default function ClientDetailPage({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">LinkedIn</span>
                 {client.linkedinUrl ? (
-                  <Link href={client.linkedinUrl} target="_blank" className="text-accent hover:underline flex items-center gap-1">
+                  <a href={ensureAbsoluteUrl(client.linkedinUrl)} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline flex items-center gap-1">
                     View Profile <ExternalLink className="w-3 h-3" />
-                  </Link>
+                  </a>
                 ) : (
                   <span className="text-text-primary">—</span>
                 )}

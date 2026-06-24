@@ -22,6 +22,15 @@ import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
 import { EditCandidateModal } from '@/components/ui/EditCandidateModal';
 
+const ensureAbsoluteUrl = (url: string | undefined | null): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
 export default function CandidateDetailPage({
   params,
 }: {
@@ -138,7 +147,7 @@ export default function CandidateDetailPage({
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 {candidate.linkedinUrl && (
                   <a
-                    href={candidate.linkedinUrl}
+                    href={ensureAbsoluteUrl(candidate.linkedinUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-[#0a66c2] transition-colors py-1 px-2 rounded-md hover:bg-[#0a66c2]/10"
@@ -151,7 +160,7 @@ export default function CandidateDetailPage({
                 )}
                 {candidate.websiteUrl ? (
                   <a
-                    href={candidate.websiteUrl}
+                    href={ensureAbsoluteUrl(candidate.websiteUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent transition-colors py-1 px-2 rounded-md hover:bg-accent/10"
