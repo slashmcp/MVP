@@ -35,6 +35,40 @@ export default function JobsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
+  // Sort State (list mode)
+  type SortKey = 'title' | 'client' | 'location' | 'status' | 'applicants';
+  const [sortKey, setSortKey] = useState<SortKey>('title');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [isDeduping, setIsDeduping] = useState(false);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const handleDedup = async () => {
+    setIsDeduping(true);
+    try {
+      const res = await fetch('/api/jobs/deduplicate', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        await fetchDatabase();
+        addToast({ type: 'success', message: data.message });
+      } else {
+        addToast({ type: 'error', message: 'Deduplication failed.' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'An error occurred during deduplication.' });
+    }
+    setIsDeduping(false);
+  };
+
+
   const handleSourceJobs = async () => {
     if (!sourcingQuery) return;
     setIsSourcing(true);
@@ -92,7 +126,7 @@ export default function JobsPage() {
 
 
   const filtered = useMemo(() => {
-    return jobs.filter((j) => {
+    const list = jobs.filter((j) => {
       if (hiddenJobIds.includes(j.id)) return false;
       const matchSearch =
         !search ||
@@ -102,7 +136,17 @@ export default function JobsPage() {
       const matchStatus = statusFilter === 'all' || j.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [search, statusFilter, hiddenJobIds, jobs]);
+
+    list.sort((a, b) => {
+      const aVal = (a[sortKey] ?? '').toString().toLowerCase();
+      const bVal = (b[sortKey] ?? '').toString().toLowerCase();
+      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [search, statusFilter, hiddenJobIds, jobs, sortKey, sortDir]);
 
   const availableJobs = useMemo(() => jobs.filter((j) => !hiddenJobIds.includes(j.id)), [hiddenJobIds, jobs]);
 
@@ -186,6 +230,15 @@ export default function JobsPage() {
           >
             <Sparkles className="w-4 h-4" strokeWidth={1.75} />
             AI Source
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={handleDedup}
+            disabled={isDeduping}
+            title="Scan and merge duplicate jobs"
+          >
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">⚡</span>}
+            {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
           <button 
             className="btn btn-primary" 
@@ -410,11 +463,26 @@ export default function JobsPage() {
                       className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
                     />
                   </th>
-                  <th className="px-4 py-3 font-medium">Job Title</th>
-                  <th className="px-4 py-3 font-medium">Client</th>
-                  <th className="px-4 py-3 font-medium">Location</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Salary</th>
+                  {([
+                    { key: 'title', label: 'Role' },
+                    { key: 'client', label: 'Client' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'applicants', label: 'Applicants' },
+                  ] as { key: SortKey; label: string }[]).map(col => (
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-text-primary transition-colors"
+                      onClick={() => handleSort(col.key)}
+                    >
+                      <span className="flex items-center gap-1">
+                        {col.label}
+                        <span className="text-text-tertiary ml-0.5">
+                          {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
+                      </span>
+                    </th>
+                  ))}
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>

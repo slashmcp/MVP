@@ -117,14 +117,62 @@ export default function CandidatesPage() {
       base = base.filter(matchSearch);
     }
 
+    base.sort((a, b) => {
+      let aVal = (a[sortKey as keyof Candidate] ?? '').toString().toLowerCase();
+      let bVal = (b[sortKey as keyof Candidate] ?? '').toString().toLowerCase();
+      
+      if (sortKey === 'skills') {
+         aVal = (a.skills || []).length.toString();
+         bVal = (b.skills || []).length.toString();
+      }
+      
+      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
     return base.filter((c) => statusFilter === 'all' || c.status === statusFilter);
-  }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults, cands]);
+  }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults, cands, sortKey, sortDir]);
 
   const availableCandidates = useMemo(() => cands.filter((c) => !hiddenCandidateIds.includes(c.id)), [hiddenCandidateIds, cands]);
 
   // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+  // Sort State (list mode)
+  type SortKey = 'name' | 'status' | 'seniority' | 'lastContact' | 'skills';
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [isDeduping, setIsDeduping] = useState(false);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const handleDedup = async () => {
+    setIsDeduping(true);
+    try {
+      const res = await fetch('/api/candidates/deduplicate', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        await fetchDatabase();
+        addToast({ type: 'success', message: data.message });
+      } else {
+        addToast({ type: 'error', message: 'Deduplication failed.' });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'An error occurred during deduplication.' });
+    }
+    setIsDeduping(false);
+  };
+
 
   const handleCheckboxChange = (id: string, event: any) => {
     const isShiftPressed = event.nativeEvent?.shiftKey || false;
@@ -253,14 +301,23 @@ export default function CandidatesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
           <button
+            className="btn btn-secondary"
+            onClick={handleDedup}
+            disabled={isDeduping}
+            title="Scan and merge duplicate candidates"
+          >
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">⚡</span>}
+            {isDeduping ? 'Deduping...' : 'Dedup DB'}
+          </button>
+          <button 
+            className="btn btn-secondary" 
             onClick={handleSyncToSheets}
             disabled={isSyncing}
-            className="btn btn-secondary"
-            id="sync-sheets-btn"
           >
-            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} /> : <FileText className="w-4 h-4" strokeWidth={1.75} />}
-            Sync to Sheets
+            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" strokeWidth={1.75} />}
+            {isSyncing ? 'Syncing...' : 'Sync to Sheets'}
           </button>
           <button
             onClick={() => setShowBulkImportModal(true)}
@@ -412,11 +469,26 @@ export default function CandidatesPage() {
                     className="rounded border-border text-accent focus:ring-accent/50 cursor-pointer"
                   />
                 </th>
-                <th>Name</th>
-                <th>Skills</th>
-                <th>Status</th>
-                <th>Seniority</th>
-                <th>Last Contact</th>
+                {([
+                  { key: 'name', label: 'Name' },
+                  { key: 'skills', label: 'Skills' },
+                  { key: 'status', label: 'Status' },
+                  { key: 'seniority', label: 'Seniority' },
+                  { key: 'lastContact', label: 'Last Contact' },
+                ] as { key: SortKey; label: string }[]).map(col => (
+                  <th
+                    key={col.key}
+                    className="cursor-pointer select-none hover:text-text-primary transition-colors"
+                    onClick={() => handleSort(col.key)}
+                  >
+                    <span className="flex items-center gap-1">
+                      {col.label}
+                      <span className="text-text-tertiary ml-0.5">
+                        {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </span>
+                  </th>
+                ))}
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
