@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       const data = await response.json();
 
       // Map Google organic results to our internal Client format
-      enrichedClients = (data.organic || []).map((result: any, index: number) => {
+      enrichedClients = (data.organic_results || []).map((result: any, index: number) => {
         const companyName = result.title.replace(/ \| LinkedIn/g, '').trim();
         
         return {

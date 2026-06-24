@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
       const apolloKey = process.env.APOLLO_API_KEY;
 
-      const enrichedLeadsPromises = (data.organic || []).map(async (result: any, index: number) => {
+      const enrichedLeadsPromises = (data.organic_results || []).map(async (result: any, index: number) => {
         const titleParts = result.title.split('-').map((s: string) => s.trim());
         const name = titleParts[0] || 'Unknown Name';
         const role = titleParts[1] || 'Unknown Role';
