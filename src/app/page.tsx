@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Users,
   Building2,
@@ -180,6 +180,7 @@ function MasterFunnel() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressText, setProgressText] = useState('');
   const { addToast, fetchDatabase, dbCandidates } = useAppStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -320,15 +321,61 @@ function MasterFunnel() {
     }
   };
 
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setIsProcessing(true);
+    const allFiles = Array.from(e.target.files);
+    
+    try {
+      for (let i = 0; i < allFiles.length; i++) {
+        const file = allFiles[i];
+        setProgressText(`Processing ${file.name} (${i + 1}/${allFiles.length})...`);
+        
+        const ext = file.name.toLowerCase();
+        if (ext.endsWith('.pdf') || ext.endsWith('.docx') || ext.endsWith('.txt')) {
+          await processResume(file).catch(err => {
+            console.error(`Error processing ${file.name}:`, err);
+            addToast({ type: 'error', message: `Skipped ${file.name} (Parsing failed)` });
+          });
+        } else if (ext.endsWith('.csv')) {
+          await processCSV(file).catch(err => {
+            console.error(`Error processing ${file.name}:`, err);
+            addToast({ type: 'error', message: `Skipped ${file.name} (CSV Parsing failed)` });
+          });
+        } else {
+          console.warn(`Unsupported file type: ${file.name}`);
+        }
+      }
+      await fetchDatabase();
+      addToast({ type: 'success', message: 'Master Funnel processing complete!' });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', message: 'An error occurred during processing.' });
+    } finally {
+      setIsProcessing(false);
+      setProgressText('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div 
+      onClick={() => fileInputRef.current?.click()}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`card border-2 border-dashed transition-all duration-200 overflow-hidden relative ${
+      className={`card border-2 border-dashed transition-all duration-200 overflow-hidden relative cursor-pointer hover:border-accent/60 ${
         isDragging ? 'border-accent bg-accent/5' : 'border-border/60 bg-[var(--surface-elevated)]'
       }`}
     >
+      <input 
+        type="file" 
+        multiple 
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={handleFileInput} 
+        accept=".pdf,.docx,.txt,.csv" 
+      />
       <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-accent/5 blur-[100px] rounded-full pointer-events-none" />
       <div className="p-6 relative z-10 flex flex-col md:flex-row items-center justify-between min-h-[100px] gap-6">
         {isProcessing ? (
