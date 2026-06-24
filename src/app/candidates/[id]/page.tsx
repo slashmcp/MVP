@@ -10,11 +10,8 @@ import {
   Calendar,
   MapPin,
   Edit2,
-  Sparkles,
-  Target,
-  Clock,
-  MessageSquare,
   Globe,
+  MessageSquare,
   FileText,
   Plus,
 } from 'lucide-react';
@@ -30,7 +27,6 @@ export default function CandidateDetailPage({
   const { id } = use(params);
   const { dbCandidates, dbJobs, fetchDatabase, addToast } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showEnrichDropdown, setShowEnrichDropdown] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   
   const cands = dbCandidates || [];
@@ -64,7 +60,6 @@ export default function CandidateDetailPage({
   ];
 
   const handleEnrich = async (provider: string) => {
-    setShowEnrichDropdown(false);
     setIsEnriching(true);
     try {
       const res = await fetch('/api/enrich', {
@@ -207,32 +202,18 @@ export default function CandidateDetailPage({
                 </a>
               </>
             )}
-            <div className="relative">
-              <button 
-                onClick={() => setShowEnrichDropdown(!showEnrichDropdown)} 
-                className="btn btn-secondary btn-sm"
-                disabled={isEnriching}
-              >
-                {isEnriching ? (
-                  <span className="w-3.5 h-3.5 border-2 border-text-secondary border-t-accent rounded-full animate-spin"></span>
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} />
-                )}
-                {isEnriching ? 'Enriching...' : 'Enrich'}
-              </button>
-              {showEnrichDropdown && (
-                <div className="absolute right-0 mt-1 w-48 bg-[var(--surface-elevated)] border border-border rounded-lg shadow-lg z-50 overflow-hidden">
-                  <div className="p-1">
-                    <button onClick={() => handleEnrich('apollo')} className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-accent/10 rounded-md transition-colors flex items-center gap-2">
-                      <Target className="w-3.5 h-3.5" /> Apollo
-                    </button>
-                    <button onClick={() => handleEnrich('serp')} className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-accent/10 rounded-md transition-colors flex items-center gap-2">
-                      <Globe className="w-3.5 h-3.5" /> Web Search (SerpAPI)
-                    </button>
-                  </div>
-                </div>
+            <button 
+              onClick={() => handleEnrich('serp')} 
+              className="btn btn-secondary btn-sm"
+              disabled={isEnriching}
+            >
+              {isEnriching ? (
+                <span className="w-3.5 h-3.5 border-2 border-text-secondary border-t-accent rounded-full animate-spin"></span>
+              ) : (
+                <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
               )}
-            </div>
+              {isEnriching ? 'Searching Web...' : 'Web Search'}
+            </button>
             <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit
