@@ -710,18 +710,20 @@ export default function CandidatesPage() {
                     <div className="flex items-center justify-end gap-1">
                       {/* Email */}
                       {candidate.email && candidate.email !== 'N/A' && (
-                        <Link
-                          href={`/outreach?candidate=${candidate.id}`}
+                        <a
+                          href={`mailto:${candidate.email}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1.5 rounded-md text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
                           title={`Email: ${candidate.email}`}
                         >
                           <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                        </Link>
+                        </a>
                       )}
                       {/* Phone */}
                       {candidate.phone && candidate.phone !== 'N/A' && (
                         <a
                           href={`tel:${candidate.phone}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1.5 rounded-md text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
                           title={`Call: ${candidate.phone}`}
                         >
@@ -734,6 +736,7 @@ export default function CandidatesPage() {
                           href={ensureAbsoluteUrl(candidate.linkedinUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1.5 rounded-md text-[#0A66C2] hover:text-[#0A66C2]/80 hover:bg-[#0A66C2]/10 transition-all"
                           title="LinkedIn Profile"
                         >
@@ -748,6 +751,7 @@ export default function CandidatesPage() {
                           href={ensureAbsoluteUrl(candidate.websiteUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
                           title="Website"
                         >
@@ -873,10 +877,10 @@ export default function CandidatesPage() {
               </div>
               <div className="flex flex-wrap items-center gap-3 mt-4 text-xs">
                 {candidate.email && candidate.email !== 'N/A' && (
-                  <Link href={`/outreach?candidate=${candidate.id}`} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 transition-colors" title={`Email: ${candidate.email}`}>
+                  <a href={`mailto:${candidate.email}`} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 transition-colors" title={`Email: ${candidate.email}`}>
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     <span className="text-text-secondary">{candidate.email}</span>
-                  </Link>
+                  </a>
                 )}
                 {candidate.phone && candidate.phone !== 'N/A' && (
                   <a href={`tel:${candidate.phone}`} className="flex items-center gap-1 text-emerald-500 hover:text-emerald-400 transition-colors" title={`Call: ${candidate.phone}`}>

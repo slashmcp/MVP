@@ -19,18 +19,9 @@ const navItems = [
   { label: 'Candidates', href: '/candidates' },
   { label: 'Jobs', href: '/jobs' },
   { label: 'Clients', href: '/clients' },
-  { label: 'Outreach', href: '/outreach' },
-  { label: 'Sourcing', href: '/sourcing/clients' },
-  { label: 'Briefing', href: '/briefing' },
 ];
 
-const moreItems = [
-  { label: 'Placements', href: '/placements' },
-  { label: 'Sequences', href: '/sequences' },
-  { label: 'Pipeline', href: '/pipeline' },
-  { label: 'Matching', href: '/matching' },
-  { label: 'Find Vacancies', href: '/vacancies' },
-];
+const moreItems: {label: string, href: string}[] = [];
 
 const allNavItems = [...navItems, ...moreItems];
 

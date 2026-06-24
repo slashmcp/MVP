@@ -585,10 +585,10 @@ export default function ClientsPage() {
                   </span>
                 )}
                 {client.email && client.email !== 'N/A' && (
-                  <Link href={`/outreach?client=${client.id}`} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 transition-colors" title={`Email: ${client.email}`}>
+                  <a href={`mailto:${client.email}`} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 transition-colors" title={`Email: ${client.email}`}>
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     <span className="text-text-secondary">{client.email}</span>
-                  </Link>
+                  </a>
                 )}
                 {client.phone && client.phone !== 'N/A' && (
                   <a href={`tel:${client.phone}`} className="flex items-center gap-1 text-emerald-500 hover:text-emerald-400 transition-colors" title={`Call: ${client.phone}`}>
@@ -695,18 +695,20 @@ export default function ClientsPage() {
                       <div className="flex items-center justify-end gap-1">
                         {/* Email */}
                         {client.email && client.email !== 'N/A' && (
-                          <Link
-                            href={`/outreach?client=${client.id}`}
+                          <a
+                            href={`mailto:${client.email}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-md text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
                             title={`Email: ${client.email}`}
                           >
                             <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                          </Link>
+                          </a>
                         )}
                         {/* Phone */}
                         {client.phone && client.phone !== 'N/A' && (
                           <a
                             href={`tel:${client.phone}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-md text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
                             title={`Call: ${client.phone}`}
                           >
@@ -719,6 +721,7 @@ export default function ClientsPage() {
                             href={ensureAbsoluteUrl(client.linkedinUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-md text-[#0A66C2] hover:text-[#0A66C2]/80 hover:bg-[#0A66C2]/10 transition-all"
                             title="LinkedIn Profile"
                           >
@@ -733,6 +736,7 @@ export default function ClientsPage() {
                             href={ensureAbsoluteUrl(client.websiteUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-md text-text-tertiary hover:text-accent hover:bg-accent-soft transition-all"
                             title="Website"
                           >

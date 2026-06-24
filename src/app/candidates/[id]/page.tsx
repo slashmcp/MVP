@@ -119,15 +119,13 @@ export default function CandidateDetailPage({
               <h1 className="text-xl font-semibold text-text-primary">{candidate.name}</h1>
               <div className="flex items-center gap-3 mt-1.5 text-sm text-text-secondary">
                 {candidate.email && (
-                  <Link 
-                    href={`/outreach?candidate=${candidate.id}&body=${encodeURIComponent(
-                      `Hi ${candidate.name.split(' ')[0]},\n\nI hope this message finds you well. I was reviewing your profile and was very impressed by your background.\n\n${candidate.notes || 'Your experience aligns perfectly with some exciting opportunities we are currently working on.'}\n\nWould you be open to a brief 10-minute call this week to discuss?\n\nBest regards,\nRecruitment Command Center`
-                    )}`} 
+                  <a 
+                    href={`mailto:${candidate.email}`} 
                     className="flex items-center gap-1 hover:text-accent transition-colors"
                   >
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.email}
-                  </Link>
+                  </a>
                 )}
                 {candidate.phone && (
                   <span className="flex items-center gap-1">
@@ -199,15 +197,13 @@ export default function CandidateDetailPage({
             </div>
           </div>
           <div className="flex gap-2">
-            <Link 
-              href={`/outreach?candidate=${candidate.id}&body=${encodeURIComponent(
-                `Hi ${candidate.name.split(' ')[0]},\n\nI hope this message finds you well. I was reviewing your profile and was very impressed by your background.\n\n${candidate.notes || 'Your experience aligns perfectly with some exciting opportunities we are currently working on.'}\n\nWould you be open to a brief 10-minute call this week to discuss?\n\nBest regards,\nRecruitment Command Center`
-              )}`} 
+            <a 
+              href={`mailto:${candidate.email}`} 
               className="btn btn-secondary btn-sm"
             >
               <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
               Email
-            </Link>
+            </a>
             {candidate.phone && candidate.phone !== 'N/A' && (
               <>
                 <a href={`tel:${candidate.phone}`} className="btn btn-secondary btn-sm">
