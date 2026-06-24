@@ -20,32 +20,32 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    let text = '';
+    let extractedText = '';
     const fileType = file.type || file.name.split('.').pop()?.toLowerCase();
+    const isPdf = fileType === 'application/pdf' || fileType === 'pdf';
 
     try {
-      if (fileType === 'application/pdf' || fileType === 'pdf') {
-        const parsed = await pdfParse(buffer);
-        text = parsed.text;
-      } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'docx') {
-        const result = await mammoth.extractRawText({ buffer });
-        text = result.value;
-      } else {
-        return NextResponse.json({ error: 'Unsupported file type. Please upload a PDF or DOCX file.' }, { status: 400 });
+      if (!isPdf) {
+        if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'docx') {
+          const result = await mammoth.extractRawText({ buffer });
+          extractedText = result.value;
+        } else {
+          return NextResponse.json({ error: `Unsupported file type: ${fileType}. Please upload a PDF or DOCX file.` }, { status: 400 });
+        }
       }
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error('Error extracting text:', parseError);
-      return NextResponse.json({ error: 'Failed to extract text from the document.' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to extract text: ' + parseError.message }, { status: 500 });
     }
 
-    if (!text || text.trim() === '') {
+    if (!isPdf && (!extractedText || extractedText.trim() === '')) {
       return NextResponse.json({ error: 'No text could be extracted from the document.' }, { status: 400 });
     }
 
     // Initialize Anthropic
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const prompt = `You are an expert technical recruiter. I will provide you with the raw text of a candidate's resume.
+    const promptText = `You are an expert technical recruiter. I have provided the candidate's resume.
 Your job is to extract the following information and return it strictly as a JSON object:
 - name: The candidate's full name
 - email: The candidate's email address
@@ -58,19 +58,40 @@ Your job is to extract the following information and return it strictly as a JSO
 
 If you cannot find a piece of information, return an empty string "" for that field, or an empty array [] for skills.
 
-Resume Text:
-"""
-${text.substring(0, 15000)}
-"""
-
 Return ONLY valid JSON. Do not include any markdown formatting like \`\`\`json.`;
 
+    let userContent: any[] = [];
+    
+    if (isPdf) {
+      userContent = [
+        {
+          type: 'document',
+          source: {
+            type: 'base64',
+            media_type: 'application/pdf',
+            data: buffer.toString('base64'),
+          }
+        },
+        {
+          type: 'text',
+          text: promptText
+        }
+      ];
+    } else {
+      userContent = [
+        {
+          type: 'text',
+          text: `${promptText}\n\nResume Text:\n"""\n${extractedText.substring(0, 15000)}\n"""`
+        }
+      ];
+    }
+
     const message = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: isPdf ? 'claude-3-5-sonnet-20241022' : 'claude-3-haiku-20240307',
       max_tokens: 1000,
       temperature: 0.1,
       system: "You are a JSON extractor. Only output raw JSON, nothing else.",
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: userContent }],
     });
 
     const resultText = (message.content[0] as any).text || '{}';
