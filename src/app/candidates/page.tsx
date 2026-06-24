@@ -321,12 +321,9 @@ export default function CandidatesPage() {
           if (data.success && data.enrichedFields) {
             successCount++;
           }
-        } else if (res.status === 403 || res.status === 401) {
-           addToast({ type: 'error', message: 'Apollo API key missing or lacks access.' });
-           break;
-        } else if (res.status === 500) {
-           const data = await res.json().catch(() => ({}));
-           addToast({ type: 'error', message: data.error || 'Apollo API Error' });
+        } else {
+           const errData = await res.json().catch(() => ({}));
+           addToast({ type: 'error', message: errData.error || `Enrichment failed (Status ${res.status})` });
            break;
         }
       }
@@ -969,13 +966,12 @@ export default function CandidatesPage() {
             {selectedIds.length} selected
           </span>
           <div className="h-4 w-px bg-border" />
-          <button
+          <button 
             onClick={handleBulkEnrich}
             disabled={isBulkEnriching}
-            className="btn btn-sm bg-accent hover:bg-accent-hover text-white font-medium flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-all shadow-md disabled:opacity-70"
+            className="btn btn-secondary btn-sm"
           >
-            {isBulkEnriching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            {isBulkEnriching ? 'Enriching...' : 'Enrich via Apollo'}
+            {isBulkEnriching ? 'Enriching...' : 'Enrich Data'}
           </button>
           <button
             onClick={handleBulkDelete}
