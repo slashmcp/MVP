@@ -114,10 +114,10 @@ export default function CandidateDetailPage({
               <h1 className="text-xl font-semibold text-text-primary">{candidate.name}</h1>
               <div className="flex items-center gap-3 mt-1.5 text-sm text-text-secondary">
                 {candidate.email && (
-                  <a href={`mailto:${candidate.email}`} className="flex items-center gap-1 hover:text-accent transition-colors">
+                  <Link href={`/outreach?candidate=${candidate.id}&body=${encodeURIComponent(candidate.notes || '')}`} className="flex items-center gap-1 hover:text-accent transition-colors">
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.email}
-                  </a>
+                  </Link>
                 )}
                 {candidate.phone && (
                   <span className="flex items-center gap-1">
@@ -189,7 +189,7 @@ export default function CandidateDetailPage({
             </div>
           </div>
           <div className="flex gap-2">
-            <Link href={`/outreach?candidate=${candidate.id}`} className="btn btn-secondary btn-sm">
+            <Link href={`/outreach?candidate=${candidate.id}&body=${encodeURIComponent(candidate.notes || '')}`} className="btn btn-secondary btn-sm">
               <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
               Email
             </Link>

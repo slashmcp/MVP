@@ -23,17 +23,8 @@ export default function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { dbClients, dbJobs, fetchDatabase, showCredentialPrompt } = useAppStore();
+  const { dbClients, dbJobs, fetchDatabase } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
-
-  const handleEmailClick = (e: React.MouseEvent, email: string) => {
-    e.preventDefault();
-    if (email && email !== 'N/A') {
-      showCredentialPrompt({ service: 'outlook', feature: `Email ${email}` });
-    } else {
-      showCredentialPrompt({ service: 'outlook', feature: `Draft Outreach Email` });
-    }
-  };
   
   const clients = dbClients || [];
   const jobs = dbJobs || [];
@@ -77,10 +68,10 @@ export default function ClientDetailPage({
                   <span>{client.contactPerson}</span>
                 )}
                 {client.email && (
-                  <button onClick={(e) => handleEmailClick(e, client.email)} className="flex items-center gap-1 hover:text-accent transition-colors">
+                  <Link href={`/outreach?client=${client.id}&body=${encodeURIComponent(client.notes || '')}`} className="flex items-center gap-1 hover:text-accent transition-colors">
                     <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {client.email}
-                  </button>
+                  </Link>
                 )}
               </div>
               <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -207,9 +198,9 @@ export default function ClientDetailPage({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Email</span>
                 {client.email ? (
-                  <button onClick={(e) => handleEmailClick(e, client.email)} className="text-accent hover:underline text-xs">
+                  <Link href={`/outreach?client=${client.id}&body=${encodeURIComponent(client.notes || '')}`} className="text-accent hover:underline text-xs">
                     {client.email}
-                  </button>
+                  </Link>
                 ) : (
                   <span className="text-text-primary text-xs">—</span>
                 )}

@@ -55,27 +55,35 @@ const statusBadge: Record<string, string> = {
 export function OutreachPageContent() {
   const searchParams = useSearchParams();
   const initialCandidate = searchParams.get('candidate');
+  const initialClient = searchParams.get('client');
+  const initialBody = searchParams.get('body');
   
   const [selectedTemplate, setSelectedTemplate] = useState('outreach');
-  const [selectedCandidate, setSelectedCandidate] = useState(initialCandidate || '');
-  const [emailBody, setEmailBody] = useState(mockEmailDraft);
-  const [subject, setSubject] = useState('Exciting Senior Full-Stack Opportunity at TechVentures');
+  const [selectedRecipient, setSelectedRecipient] = useState(initialCandidate || initialClient || '');
+  const [emailBody, setEmailBody] = useState(initialBody || mockEmailDraft);
+  const [subject, setSubject] = useState('Exciting Opportunity from Recruitment Command Center');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  const { showCredentialPrompt, dbCandidates, addToast } = useAppStore();
+  const { showCredentialPrompt, dbCandidates, dbClients, addToast } = useAppStore();
   const cands = dbCandidates || [];
+  const clients = dbClients || [];
+
+  const allRecipients = [
+    ...cands.map(c => ({ id: c.id, name: c.name, email: c.email, type: 'Candidate' })),
+    ...clients.map(c => ({ id: c.id, name: c.companyName, email: c.email, type: 'Client' }))
+  ];
 
   useEffect(() => {
-    if (cands.length > 0 && !selectedCandidate) {
-      setSelectedCandidate(cands[0].id);
+    if (allRecipients.length > 0 && !selectedRecipient) {
+      setSelectedRecipient(allRecipients[0].id);
     }
-  }, [cands, selectedCandidate]);
+  }, [allRecipients, selectedRecipient]);
 
-  const candidate = cands.find((c) => c.id === selectedCandidate);
+  const recipient = allRecipients.find((r) => r.id === selectedRecipient);
 
   const handleSendEmail = async (isDraft: boolean = false) => {
-    if (!candidate) {
+    if (!recipient) {
       addToast({ type: 'error', message: 'Please select a recipient' });
       return;
     }
@@ -86,7 +94,7 @@ export function OutreachPageContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: candidate.email,
+          to: recipient.email,
           subject,
           bodyText: emailBody,
           isDraft,
@@ -157,16 +165,25 @@ export function OutreachPageContent() {
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium text-text-secondary w-12">To</label>
                 <select
-                  value={selectedCandidate}
-                  onChange={(e) => setSelectedCandidate(e.target.value)}
+                  value={selectedRecipient}
+                  onChange={(e) => setSelectedRecipient(e.target.value)}
                   className="input flex-1"
                   id="outreach-recipient"
                 >
-                  {cands.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.email})
-                    </option>
-                  ))}
+                  <optgroup label="Candidates">
+                    {cands.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.email})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Clients">
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.companyName} ({c.email})
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
