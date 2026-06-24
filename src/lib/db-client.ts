@@ -61,7 +61,12 @@ function parseContactDetailsFromNotes(notes: string | undefined | null) {
     if (phoneMatch) phone = phoneMatch[1].trim();
 
     const linkedinMatch = notes.match(/LinkedIn:\s*([^\n\r]+)/i);
-    if (linkedinMatch) linkedinUrl = linkedinMatch[1].trim();
+    if (linkedinMatch) {
+      const val = linkedinMatch[1].trim();
+      if (val.includes('linkedin.com')) {
+        linkedinUrl = val;
+      }
+    }
 
     const websiteMatch = notes.match(/Website:\s*([^\n\r]+)/i);
     if (websiteMatch) websiteUrl = websiteMatch[1].trim();

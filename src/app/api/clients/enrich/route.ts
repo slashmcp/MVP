@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
         const data = await res.json();
         const org = data.organization;
         if (org) {
-          if (org.linkedin_url && !linkedinUrl) enrichedData.linkedinUrl = org.linkedin_url;
+          const hasValidLinkedin = linkedinUrl && linkedinUrl.includes('linkedin.com');
+          if (org.linkedin_url && !hasValidLinkedin) enrichedData.linkedinUrl = org.linkedin_url;
           if (org.primary_phone) enrichedData.phone = org.primary_phone;
           if (org.website_url) enrichedData.websiteUrl = org.website_url;
           if (org.industry) enrichedData.industry = org.industry;
@@ -61,7 +62,8 @@ export async function POST(request: NextRequest) {
         const organicResults = data.organic_results || [];
         const linkedinResult = organicResults.find((r: any) => r.link && r.link.includes('linkedin.com/company/'));
         
-        if (linkedinResult && !linkedinUrl) {
+        const hasValidLinkedin = linkedinUrl && linkedinUrl.includes('linkedin.com');
+        if (linkedinResult && !hasValidLinkedin) {
           enrichedData.linkedinUrl = linkedinResult.link;
         }
 
