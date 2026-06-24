@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Fetch all existing clients
     const { data: clients, error: fetchError } = await supabase
       .from('clients')
-      .select('id, company_name');
+      .select('id, company_name, notes');
 
     if (fetchError) throw fetchError;
 
@@ -73,13 +73,14 @@ export async function POST(request: NextRequest) {
       }
 
       const updates: Record<string, string> = {};
-      if (record.phone && record.phone !== 'N/A') updates.phone = record.phone;
       if (record.email && record.email !== 'N/A') updates.email = record.email;
-      if (record.website && record.website !== 'N/A') {
-        const url = record.website.startsWith('http')
-          ? record.website
-          : `https://${record.website}`;
-        updates.website_url = url;
+
+      let newNotes = '';
+      if (record.phone && record.phone !== 'N/A') newNotes += `Phone: ${record.phone}\n`;
+      if (record.website && record.website !== 'N/A') newNotes += `Website/LinkedIn: ${record.website}\n`;
+
+      if (newNotes) {
+        updates.notes = match.notes ? `${match.notes}\n\n${newNotes.trim()}` : newNotes.trim();
       }
 
       if (Object.keys(updates).length === 0) continue;
@@ -89,7 +90,12 @@ export async function POST(request: NextRequest) {
         .update(updates)
         .eq('id', match.id);
 
-      if (!updateError) results.updated++;
+      if (!updateError) {
+        results.updated++;
+      } else {
+        console.error('Failed to update client during import:', updateError);
+        results.unmatched.push(record.company);
+      }
     }
 
     return NextResponse.json({ success: true, ...results });

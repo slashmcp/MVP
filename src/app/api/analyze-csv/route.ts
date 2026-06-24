@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { createCandidate } from '@/lib/db-client'; // We'll add update functionality later if needed
+import { createCandidate } from '@/lib/db-client';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -18,18 +18,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Anthropic API Key is missing.' }, { status: 500 });
     }
 
-    // Since a CSV can be large, we'll only send the first 10 rows to Anthropic to figure out the schema mapping.
-    // Then we can use PapaParse locally to parse the rest, or just ask Anthropic to parse the whole thing if it's small.
-    // For MVP, we will ask Anthropic to parse the whole text if it's under ~50k characters.
-    
-    // We will ask Anthropic to always output a JSON array of parsed objects that map to our Candidate schema.
+    // Ask Anthropic to classify and parse the CSV/TXT content
     const prompt = `You are an intelligent data migration assistant for a recruitment CRM.
-The user has uploaded a CSV file named "${filename}". 
-Your job is to read the CSV data, determine if it represents Candidates, and map the columns to our Candidate schema.
-If it represents Jobs or Clients, ignore it for now and return an empty array (MVP constraint).
+The user has uploaded a CSV or text file named "${filename}". 
+Your job is to read the file data, determine which type of records it represents (Candidates, Clients, or Jobs), map the data to the appropriate schema below, and output a JSON response.
 
-Our Candidate schema is:
-- name (string)
+Here are the target schemas:
+
+1. Candidate Schema:
+- name (string, required)
 - email (string)
 - phone (string)
 - linkedinUrl (string)
@@ -42,11 +39,40 @@ Our Candidate schema is:
 - location (string)
 - notes (string, put any extra unmapped data here)
 
-CRITICAL INSTRUCTION: If a location is mentioned anywhere in the candidate's data (e.g., inside notes, descriptions, or summaries like "Based in Glasgow"), you MUST extract it and place it in the 'location' field. Do not leave 'location' blank if it can be inferred from the text.
+2. Client Schema:
+- companyName (string, required)
+- contactPerson (string)
+- email (string)
+- phone (string)
+- location (string)
+- industry (string)
+- status (string, defaults to "Prospect")
+- linkedinUrl (string)
+- websiteUrl (string)
+- openRoles (number, defaults to 0)
+- notes (string, put any extra unmapped data here)
 
-Return ONLY a strict JSON array of objects representing the candidates. Do not include markdown formatting or explanations.
+3. Job Schema:
+- title (string, required)
+- client (string, required)
+- requirements (string or array of strings)
+- location (string)
+- type (string, e.g. "Full-time", "Contract")
+- salary (string)
+- status (string, defaults to "Open")
+- priority (string, defaults to "Medium")
+- postedDate (string)
+- applicants (number, defaults to 0)
 
-CSV Data:
+CRITICAL INSTRUCTIONS:
+- You must classify the input data into ONE of the three categories: 'candidates', 'clients', or 'jobs'.
+- Return a JSON object with two fields:
+  - "type": the classified category (either "candidates", "clients", or "jobs")
+  - "data": a JSON array of records matching that schema.
+- For Clients: note that the 'phone', 'linkedinUrl', and 'websiteUrl' cannot be stored in separate database columns, but you should still place them in their respective schema fields.
+- Return ONLY a strict JSON object. Do not include markdown formatting or explanations.
+
+CSV/TXT Data:
 ${csvText.substring(0, 50000)} // Truncated to 50k chars for safety
 `;
 
@@ -54,7 +80,7 @@ ${csvText.substring(0, 50000)} // Truncated to 50k chars for safety
       model: "claude-3-haiku-20240307",
       max_tokens: 4000,
       temperature: 0,
-      system: "You are a strict data parsing machine. You only output valid JSON arrays.",
+      system: "You are a strict data parsing machine. You only output valid JSON objects containing type and data fields.",
       messages: [
         {
           role: "user",
@@ -65,34 +91,67 @@ ${csvText.substring(0, 50000)} // Truncated to 50k chars for safety
 
     const text = (message.content[0] as any).text;
     
-    let parsedData = [];
+    let responseJson: { type: string; data: any[] } = { type: '', data: [] };
     try {
-      parsedData = JSON.parse(text);
+      responseJson = JSON.parse(text);
     } catch (e) {
       // In case Anthropic included markdown ticks
-      const match = text.match(/\[[\s\S]*\]/);
+      const match = text.match(/\{[\s\S]*\}/);
       if (match) {
-        parsedData = JSON.parse(match[0]);
+        responseJson = JSON.parse(match[0]);
       } else {
         throw new Error('Failed to parse Anthropic JSON response');
       }
     }
 
-    if (!Array.isArray(parsedData) || parsedData.length === 0) {
-      return NextResponse.json({ error: 'No recognizable candidates found in CSV.' }, { status: 400 });
+    const { type, data: parsedRecords } = responseJson;
+
+    if (!type || !Array.isArray(parsedRecords) || parsedRecords.length === 0) {
+      return NextResponse.json({ error: 'No recognizable records found in the upload.' }, { status: 400 });
     }
 
-    // Insert into Supabase
     let count = 0;
-    for (const cand of parsedData) {
-       // Just blindly create for the MVP
-       await createCandidate(cand);
-       count++;
+    
+    if (type === 'candidates') {
+      for (const record of parsedRecords) {
+        await createCandidate(record);
+        count++;
+      }
+    } else if (type === 'clients') {
+      const { createClient } = await import('@/lib/db-client');
+      for (const record of parsedRecords) {
+        // Construct notes including phone and website
+        let notes = record.notes || '';
+        const notesParts = [];
+        if (record.phone && record.phone !== 'N/A') notesParts.push(`Phone: ${record.phone}`);
+        if (record.linkedinUrl && record.linkedinUrl !== 'N/A') notesParts.push(`LinkedIn: ${record.linkedinUrl}`);
+        if (record.websiteUrl && record.websiteUrl !== 'N/A') notesParts.push(`Website: ${record.websiteUrl}`);
+        if (notesParts.length > 0) {
+          notes = notes ? `${notes}\n\nContact details:\n${notesParts.join('\n')}` : `Contact details:\n${notesParts.join('\n')}`;
+        }
+        
+        await createClient({
+          companyName: record.companyName,
+          contactPerson: record.contactPerson,
+          email: record.email,
+          location: record.location,
+          industry: record.industry,
+          status: record.status || 'Prospect',
+          notes: notes,
+        });
+        count++;
+      }
+    } else if (type === 'jobs') {
+      const { createJob } = await import('@/lib/db-client');
+      for (const record of parsedRecords) {
+        await createJob(record);
+        count++;
+      }
     }
 
     return NextResponse.json({
       success: true,
-      type: 'Candidates',
+      type: type.charAt(0).toUpperCase() + type.slice(1),
       count: count
     });
   } catch (error: any) {
