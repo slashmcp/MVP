@@ -11,7 +11,9 @@ import {
   X,
   Trash2,
   LayoutGrid,
-  List
+  List,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { statusColors, jobPipelineStages } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
@@ -21,12 +23,73 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const { showCredentialPrompt, hiddenJobIds, hideJob, dbJobs, fetchDatabase } = useAppStore();
+  const { showCredentialPrompt, bypassedServices, hiddenJobIds, hideJob, addToast, dbJobs, fetchDatabase } = useAppStore();
   const jobs = dbJobs || [];
+
+  // Sourcing State
+  const [showSourcing, setShowSourcing] = useState(false);
+  const [sourcingQuery, setSourcingQuery] = useState('');
+  const [isSourcing, setIsSourcing] = useState(false);
 
   // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+  const handleSourceJobs = async () => {
+    if (!sourcingQuery) return;
+    setIsSourcing(true);
+    try {
+      const res = await fetch('/api/sourcing/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: sourcingQuery }),
+      });
+      const data = await res.json();
+      
+      if (data.error === 'MISSING_API_KEY') {
+        showCredentialPrompt({ service: 'serpapi', feature: 'Live Job Sourcing' });
+        setIsSourcing(false);
+        return;
+      }
+      
+      if (data.success && data.jobs) {
+        let added = 0;
+        let skipped = 0;
+
+        await Promise.all(data.jobs.map(async (sourcedJob: any) => {
+          // Dedup logic: check if job with same title and company exists
+          const existing = jobs.find(j => 
+            j.title.toLowerCase() === sourcedJob.title.toLowerCase() &&
+            j.client.toLowerCase() === sourcedJob.client.toLowerCase()
+          );
+
+          if (existing) {
+            skipped++;
+          } else {
+            await fetch('/api/jobs', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(sourcedJob)
+            });
+            added++;
+          }
+        }));
+        
+        await fetchDatabase();
+        setShowSourcing(false);
+        setSourcingQuery('');
+        addToast({
+          type: 'success',
+          message: `Done! ${added} new job(s) added, ${skipped} duplicate(s) skipped.`
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      addToast({ type: 'error', message: 'Sourcing failed. Please try again.' });
+    }
+    setIsSourcing(false);
+  };
+
 
   const filtered = useMemo(() => {
     return jobs.filter((j) => {
@@ -116,15 +179,67 @@ export default function JobsPage() {
             {availableJobs.length} total &middot; {availableJobs.filter((j) => j.status === 'Open').length} open
           </p>
         </div>
-        <button 
-          className="btn btn-primary" 
-          id="add-job-btn"
-          onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Job' })}
-        >
-          <Plus className="w-4 h-4" strokeWidth={1.75} />
-          Add Job
-        </button>
+        <div className="flex gap-2">
+          <button 
+            className="btn bg-accent-soft text-accent border border-accent/20 hover:bg-accent/10"
+            onClick={() => setShowSourcing(!showSourcing)}
+          >
+            <Sparkles className="w-4 h-4" strokeWidth={1.75} />
+            AI Source
+          </button>
+          <button 
+            className="btn btn-primary" 
+            id="add-job-btn"
+            onClick={() => showCredentialPrompt({ service: 'google-sheets', feature: 'Save New Job' })}
+          >
+            <Plus className="w-4 h-4" strokeWidth={1.75} />
+            Add Job
+          </button>
+        </div>
       </div>
+
+      {showSourcing && (
+        <div className="card bg-accent-soft/30 border border-accent/20 animate-slide-up relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-3 opacity-20 pointer-events-none">
+            <Sparkles className="w-24 h-24 text-accent" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-accent flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Live Job Sourcing
+              </h3>
+              <button onClick={() => setShowSourcing(false)} className="text-text-tertiary hover:text-text-primary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-text-secondary mb-4 max-w-xl">
+              Search Google Jobs to instantly find live vacancies and companies actively hiring. We'll automatically identify duplicates and skip them.
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1 max-w-xl">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+                <input
+                  type="text"
+                  placeholder="e.g. React Developer in London"
+                  className="input pl-9 w-full"
+                  value={sourcingQuery}
+                  onChange={(e) => setSourcingQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSourceJobs()}
+                />
+              </div>
+              <button 
+                className="btn btn-primary"
+                onClick={handleSourceJobs}
+                disabled={!sourcingQuery || isSourcing}
+              >
+                {isSourcing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                {isSourcing ? 'Searching...' : 'Search Google Jobs'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
