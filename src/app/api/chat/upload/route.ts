@@ -35,8 +35,23 @@ async function extractText(file: File, buffer: Buffer): Promise<{ text: string; 
   }
 
   if (isCsv || isTxt) {
-    return { text: buffer.toString('utf-8'), isImage: false, isPdf: false };
+    // Strip UTF-8 BOM if present
+    let stripped = buffer;
+    if (buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+      stripped = buffer.slice(3);
+    }
+    // Try UTF-8, fall back to latin-1
+    let text: string;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(stripped);
+    } catch {
+      text = new TextDecoder('windows-1252').decode(stripped);
+    }
+    // Normalise line endings
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    return { text, isImage: false, isPdf: false };
   }
+
 
   // Try as text for unknown types
   return { text: buffer.toString('utf-8'), isImage: false, isPdf: false };

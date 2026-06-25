@@ -49,13 +49,33 @@ export function BulkImportModal({ onClose }: { onClose: () => void }) {
     setIsMapping(true);
     setError(null);
 
-    Papa.parse(file, {
+    // Read as ArrayBuffer so we can strip BOM and fix encoding
+    const arrayBuffer = await file.arrayBuffer();
+    let uint8 = new Uint8Array(arrayBuffer);
+
+    // Strip UTF-8 BOM (EF BB BF) if present
+    if (uint8[0] === 0xef && uint8[1] === 0xbb && uint8[2] === 0xbf) {
+      uint8 = uint8.slice(3);
+    }
+
+    // Decode — try UTF-8, fall back to latin-1
+    let csvText: string;
+    try {
+      csvText = new TextDecoder('utf-8', { fatal: true }).decode(uint8);
+    } catch {
+      csvText = new TextDecoder('windows-1252').decode(uint8);
+    }
+
+    // Normalise line endings
+    csvText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
       complete: async (results) => {
         const data = results.data as Record<string, string>[];
         if (data.length === 0) {
-          setError('CSV file is empty.');
+          setError('CSV file appears to be empty or could not be read.');
           setIsMapping(false);
           return;
         }
@@ -97,13 +117,11 @@ export function BulkImportModal({ onClose }: { onClose: () => void }) {
                 if (newRow[mappedField] === '') {
                   newRow[mappedField] = value;
                 } else {
-                  // Append if multiple map to the same field (e.g. notes)
                   newRow[mappedField] += `\n${originalHeader}: ${value}`;
                 }
               }
             }
 
-            // Ensure skills is an array for display if we wanted to, but keeping string is easier here
             if (newRow.skills && typeof newRow.skills === 'string') {
                newRow.skills = newRow.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
             } else {
@@ -121,13 +139,14 @@ export function BulkImportModal({ onClose }: { onClose: () => void }) {
           setIsMapping(false);
         }
       },
-      error: (err) => {
-        console.error(err);
-        setError('Error parsing CSV file.');
+      error: (err: any) => {
+        console.error('PapaParse error:', err);
+        setError(`CSV parsing failed: ${err?.message || 'unknown error'}. Try saving as UTF-8 CSV.`);
         setIsMapping(false);
       }
     });
   };
+
 
   const confirmImport = async () => {
     if (!mappedData || mappedData.length === 0) return;
