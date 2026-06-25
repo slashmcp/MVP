@@ -128,7 +128,7 @@ Return ONLY valid JSON with no markdown formatting.`;
 
   const message = await anthropic.messages.create({
     model,
-    max_tokens: 4000,
+    max_tokens: 8192,
     temperature: 0,
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
@@ -137,7 +137,32 @@ Return ONLY valid JSON with no markdown formatting.`;
   let raw = (message.content[0] as any).text;
   raw = raw.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
 
-  const parsed = JSON.parse(raw);
+  let parsed: any = { type: 'unknown', summary: 'Processed partially.', data: [] };
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    console.warn('JSON parse failed, attempting to recover partial JSON...');
+    // If it's cut off, try to extract whatever complete objects we can find
+    const typeMatch = raw.match(/"type"\s*:\s*"([^"]+)"/);
+    if (typeMatch) parsed.type = typeMatch[1];
+    
+    const summaryMatch = raw.match(/"summary"\s*:\s*"([^"]+)"/);
+    if (summaryMatch) parsed.summary = summaryMatch[1];
+
+    const dataMatch = raw.match(/"data"\s*:\s*\[([\s\S]*)/);
+    if (dataMatch) {
+      const dataStr = dataMatch[1];
+      // Find all complete JSON objects
+      const objectRegex = /\{[^{}]*\}/g;
+      const objects = dataStr.match(objectRegex) || [];
+      for (const objStr of objects) {
+        try {
+          parsed.data.push(JSON.parse(objStr));
+        } catch { /* ignore broken objects */ }
+      }
+    }
+  }
+
   const records: any[] = parsed.data || [];
 
   return {
