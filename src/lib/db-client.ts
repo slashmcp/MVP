@@ -1,5 +1,8 @@
-import { supabase } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Candidate, Job, Client, Sequence } from './schemas';
+
+// db-client functions now accept an authenticated Supabase client (from @supabase/ssr)
+// so that Supabase RLS policies are enforced — each user only sees their org's data.
 
 function updateContactDetailsInNotes(
   existingNotes: string | undefined | null,
@@ -134,7 +137,7 @@ function parseContactDetailsFromNotes(notes: string | undefined | null) {
   return { phone, linkedinUrl, websiteUrl, googleRating, reviewCount, instagramUrl, facebookUrl, twitterUrl, youtubeUrl, mapsUrl };
 }
 
-export async function getCandidates(): Promise<Candidate[]> {
+export async function getCandidates(supabase: SupabaseClient): Promise<Candidate[]> {
   const { data, error } = await supabase.from('candidates').select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching candidates:', error);
@@ -162,7 +165,7 @@ export async function getCandidates(): Promise<Candidate[]> {
   }));
 }
 
-export async function getJobs(): Promise<Job[]> {
+export async function getJobs(supabase: SupabaseClient): Promise<Job[]> {
   const { data, error } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching jobs:', error);
@@ -184,7 +187,7 @@ export async function getJobs(): Promise<Job[]> {
   }));
 }
 
-export async function getClients(): Promise<Client[]> {
+export async function getClients(supabase: SupabaseClient): Promise<Client[]> {
   const { data, error } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching clients:', error);
@@ -211,7 +214,7 @@ export async function getClients(): Promise<Client[]> {
   });
 }
 
-export async function getSequences(): Promise<Sequence[]> {
+export async function getSequences(supabase: SupabaseClient): Promise<Sequence[]> {
   const { data, error } = await supabase.from('sequences').select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching sequences:', error);
@@ -229,7 +232,7 @@ export async function getSequences(): Promise<Sequence[]> {
   }));
 }
 
-export async function createSequence(sequence: Partial<Sequence>): Promise<Sequence | null> {
+export async function createSequence(supabase: SupabaseClient, sequence: Partial<Sequence>): Promise<Sequence | null> {
   const { data, error } = await supabase.from('sequences').insert([
     {
       name: sequence.name,
@@ -257,7 +260,7 @@ export async function createSequence(sequence: Partial<Sequence>): Promise<Seque
   };
 }
 
-export async function createCandidate(candidate: Partial<Candidate>): Promise<Candidate | null> {
+export async function createCandidate(supabase: SupabaseClient, candidate: Partial<Candidate>): Promise<Candidate | null> {
   const { data, error } = await supabase.from('candidates').insert([
     {
       name: candidate.name,
@@ -307,7 +310,7 @@ export async function createCandidate(candidate: Partial<Candidate>): Promise<Ca
   };
 }
 
-export async function updateCandidate(id: string, candidate: Partial<Candidate>): Promise<Candidate | null> {
+export async function updateCandidate(supabase: SupabaseClient, id: string, candidate: Partial<Candidate>): Promise<Candidate | null> {
   const updatePayload: any = {};
   if (candidate.name !== undefined) updatePayload.name = candidate.name;
   if (candidate.email !== undefined) updatePayload.email = candidate.email;
@@ -361,7 +364,7 @@ export async function updateCandidate(id: string, candidate: Partial<Candidate>)
   };
 }
 
-export async function incrementSequenceEnrollment(sequenceId: string): Promise<boolean> {
+export async function incrementSequenceEnrollment(supabase: SupabaseClient, sequenceId: string): Promise<boolean> {
   const { data: seq, error: fetchErr } = await supabase
     .from('sequences')
     .select('enrolled')
@@ -386,7 +389,7 @@ export async function incrementSequenceEnrollment(sequenceId: string): Promise<b
   return true;
 }
 
-export async function createClient(clientData: Partial<Client>): Promise<Client | null> {
+export async function createClient(supabase: SupabaseClient, clientData: Partial<Client>): Promise<Client | null> {
   const finalNotes = updateContactDetailsInNotes(
     clientData.notes,
     clientData.phone,
@@ -446,7 +449,7 @@ export async function createClient(clientData: Partial<Client>): Promise<Client 
   };
 }
 
-export async function updateClient(id: string, clientData: Partial<Client>): Promise<Client | null> {
+export async function updateClient(supabase: SupabaseClient, id: string, clientData: Partial<Client>): Promise<Client | null> {
   // Load current client's notes to preserve existing values if they are not updated
   const { data: currentClient } = await supabase
     .from('clients')
@@ -532,7 +535,7 @@ export async function updateClient(id: string, clientData: Partial<Client>): Pro
   };
 }
 
-export async function createJob(jobData: Partial<Job>): Promise<Job | null> {
+export async function createJob(supabase: SupabaseClient, jobData: Partial<Job>): Promise<Job | null> {
   const { data, error } = await supabase.from('jobs').insert([
     {
       title: jobData.title,
@@ -570,7 +573,7 @@ export async function createJob(jobData: Partial<Job>): Promise<Job | null> {
   };
 }
 
-export async function deleteClient(id: string): Promise<boolean> {
+export async function deleteClient(supabase: SupabaseClient, id: string): Promise<boolean> {
   const { error } = await supabase.from('clients').delete().eq('id', id);
   if (error) {
     console.error('Error deleting client:', error);
@@ -579,7 +582,7 @@ export async function deleteClient(id: string): Promise<boolean> {
   return true;
 }
 
-export async function deleteClients(ids: string[]): Promise<boolean> {
+export async function deleteClients(supabase: SupabaseClient, ids: string[]): Promise<boolean> {
   const { error } = await supabase.from('clients').delete().in('id', ids);
   if (error) {
     console.error('Error bulk deleting clients:', error);
@@ -588,7 +591,7 @@ export async function deleteClients(ids: string[]): Promise<boolean> {
   return true;
 }
 
-export async function deleteCandidate(id: string): Promise<boolean> {
+export async function deleteCandidate(supabase: SupabaseClient, id: string): Promise<boolean> {
   const { error } = await supabase.from('candidates').delete().eq('id', id);
   if (error) {
     console.error('Error deleting candidate:', error);
@@ -597,7 +600,7 @@ export async function deleteCandidate(id: string): Promise<boolean> {
   return true;
 }
 
-export async function deleteCandidates(ids: string[]): Promise<boolean> {
+export async function deleteCandidates(supabase: SupabaseClient, ids: string[]): Promise<boolean> {
   const { error } = await supabase.from('candidates').delete().in('id', ids);
   if (error) {
     console.error('Error bulk deleting candidates:', error);
@@ -606,7 +609,7 @@ export async function deleteCandidates(ids: string[]): Promise<boolean> {
   return true;
 }
 
-export async function deleteJob(id: string): Promise<boolean> {
+export async function deleteJob(supabase: SupabaseClient, id: string): Promise<boolean> {
   const { error } = await supabase.from('jobs').delete().eq('id', id);
   if (error) {
     console.error('Error deleting job:', error);
@@ -615,7 +618,7 @@ export async function deleteJob(id: string): Promise<boolean> {
   return true;
 }
 
-export async function deleteJobs(ids: string[]): Promise<boolean> {
+export async function deleteJobs(supabase: SupabaseClient, ids: string[]): Promise<boolean> {
   const { error } = await supabase.from('jobs').delete().in('id', ids);
   if (error) {
     console.error('Error bulk deleting jobs:', error);

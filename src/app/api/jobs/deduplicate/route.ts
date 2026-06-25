@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getJobs, deleteJobs } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST() {
   try {
-    const jobs = await getJobs();
+    const supabase = await createClient();
+    const jobs = await getJobs(supabase);
 
     // Group by normalized title + client
     const groups: Record<string, typeof jobs> = {};
@@ -41,7 +43,7 @@ export async function POST() {
     }
 
     if (toDelete.length > 0) {
-      await deleteJobs(toDelete);
+      await deleteJobs(supabase, toDelete);
     }
 
     return NextResponse.json({

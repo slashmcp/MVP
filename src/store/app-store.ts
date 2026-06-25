@@ -125,11 +125,13 @@ export const useAppStore = create<AppState>()(
     set({ isDbLoading: true });
     // Dynamically import to avoid server-side issues with Zustand
     const { getCandidates, getJobs, getClients, getSequences } = await import('@/lib/db-client');
+    const { createClient } = await import('@/utils/supabase/client');
+    const supabase = createClient();
     const [cands, jobs, clients, sequences] = await Promise.all([
-      getCandidates(),
-      getJobs(),
-      getClients(),
-      getSequences()
+      getCandidates(supabase),
+      getJobs(supabase),
+      getClients(supabase),
+      getSequences(supabase)
     ]);
     set({
       dbCandidates: cands,

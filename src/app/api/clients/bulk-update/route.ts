@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { createClient, updateClient } from '@/lib/db-client';
+import { createClient as createClientRecord, updateClient } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 interface ContactRecord {
   company: string;
@@ -24,7 +24,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No records provided' }, { status: 400 });
     }
 
-    // Fetch all existing clients
+    const supabase = await createClient();
+
+    // Fetch all existing clients (RLS will scope to user's org)
     const { data: clients, error: fetchError } = await supabase
       .from('clients')
       .select('id, company_name, notes');
@@ -49,14 +51,14 @@ export async function POST(request: NextRequest) {
       });
 
       if (!match) {
-        // Insert new client using createClient helper
+        // Insert new client using createClientRecord helper
         const websiteVal = record.website && record.website !== 'N/A'
           ? (record.website.startsWith('http') ? record.website : `https://${record.website}`)
           : undefined;
 
         const isLinkedin = websiteVal && websiteVal.includes('linkedin.com');
 
-        const newClient = {
+        const newClientData = {
           companyName: record.company,
           email: record.email && record.email !== 'N/A' ? record.email : undefined,
           phone: record.phone && record.phone !== 'N/A' ? record.phone : undefined,
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
           linkedinUrl: isLinkedin ? websiteVal : undefined,
           status: 'Prospect' as const,
         };
-        const created = await createClient(newClient);
+        const created = await createClientRecord(supabase, newClientData);
 
         if (created) {
           results.created++;
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
 
       if (Object.keys(updates).length === 0) continue;
 
-      const updated = await updateClient(match.id, updates);
+      const updated = await updateClient(supabase, match.id, updates);
 
       if (updated) {
         results.updated++;
@@ -103,4 +105,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

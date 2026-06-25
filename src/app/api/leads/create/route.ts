@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient, createJob } from '@/lib/db-client';
+import { createClient as createClientRecord, createJob } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req: Request) {
   try {
@@ -10,8 +11,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Company and Job Title required' }, { status: 400 });
     }
 
+    const supabase = await createClient();
+
     // 1. Create the Client (Lead)
-    const newClient = await createClient({
+    const newClient = await createClientRecord(supabase, {
       companyName,
       location: location || 'Unknown',
       status: 'Prospect',
@@ -24,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Create the Job under that Client
-    const newJob = await createJob({
+    const newJob = await createJob(supabase, {
       title: jobTitle,
       client: companyName,
       clientId: newClient.id,

@@ -173,28 +173,28 @@ Return ONLY valid JSON with no markdown formatting.`;
   };
 }
 
-async function importRecords(type: RecordType, records: any[]): Promise<number> {
+async function importRecords(type: RecordType, records: any[], supabase: any): Promise<number> {
   if (type === 'unknown' || records.length === 0) return 0;
 
-  const { createCandidate, createClient, createJob } = await import('@/lib/db-client');
+  const { createCandidate, createClient: createClientRecord, createJob } = await import('@/lib/db-client');
   let count = 0;
 
   if (type === 'candidates') {
     for (const r of records) {
-      try { await createCandidate(r); count++; } catch { /* skip duplicates */ }
+      try { await createCandidate(supabase, r); count++; } catch { /* skip duplicates */ }
     }
   } else if (type === 'clients') {
     for (const r of records) {
       try {
         const notes = [r.notes, r.phone && `Phone: ${r.phone}`, r.websiteUrl && `Website: ${r.websiteUrl}`]
           .filter(Boolean).join('\n');
-        await createClient({ ...r, notes });
+        await createClientRecord(supabase, { ...r, notes });
         count++;
       } catch { /* skip duplicates */ }
     }
   } else if (type === 'jobs') {
     for (const r of records) {
-      try { await createJob(r); count++; } catch { /* skip duplicates */ }
+      try { await createJob(supabase, r); count++; } catch { /* skip duplicates */ }
     }
   }
 
@@ -221,10 +221,12 @@ export async function POST(req: NextRequest) {
 
     let importedCount = 0;
     if (autoImport && result.type !== 'unknown') {
+      const { createClient: createSupabaseClient } = await import('@/utils/supabase/server');
+      const supabase = await createSupabaseClient();
       // Re-run classification to get full data for import
       const fullResult = await classifyAndParse(file, buffer, text, isImage, isPdf);
       const fullRecords: any[] = (fullResult as any).data || result.preview;
-      importedCount = await importRecords(result.type, fullRecords);
+      importedCount = await importRecords(result.type, fullRecords, supabase);
     }
 
     return NextResponse.json({

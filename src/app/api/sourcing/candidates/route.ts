@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createCandidate } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
 
     const newCandidates = [];
     let enrichedCount = 0;
+    const supabase = await createClient();
 
     for (const result of organicResults) {
       const link = result.link || '';
@@ -111,7 +113,7 @@ export async function POST(req: Request) {
         else if (snippet.toLowerCase().includes('london')) candidateData.location = 'London, England';
       }
 
-      const created = await createCandidate(candidateData);
+      const created = await createCandidate(supabase, candidateData);
       if (created) {
         newCandidates.push(created);
       }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCandidates, deleteCandidates, updateCandidate } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 function richness(c: any): number {
   let score = 0;
@@ -18,7 +19,8 @@ function richness(c: any): number {
 
 export async function POST() {
   try {
-    const candidates = await getCandidates();
+    const supabase = await createClient();
+    const candidates = await getCandidates(supabase);
 
     // Group by normalized name
     const groups: Record<string, typeof candidates> = {};
@@ -64,14 +66,14 @@ export async function POST() {
 
       // Update winner if we gained new fields
       if (Object.keys(merged).length > 1) {
-        await updateCandidate(winner.id, merged);
+        await updateCandidate(supabase, winner.id, merged);
       }
 
       mergedCount++;
     }
 
     if (toDelete.length > 0) {
-      await deleteCandidates(toDelete);
+      await deleteCandidates(supabase, toDelete);
     }
 
     return NextResponse.json({

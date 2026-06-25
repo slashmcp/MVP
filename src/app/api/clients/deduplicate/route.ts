@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getClients, updateClient, deleteClients } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 /** Score a client record by how much real data it has. Higher = richer. */
 function richness(c: any): number {
@@ -17,7 +18,8 @@ function richness(c: any): number {
 
 export async function POST() {
   try {
-    const clients = await getClients();
+    const supabase = await createClient();
+    const clients = await getClients(supabase);
 
     // Group by normalized company name
     const groups: Record<string, typeof clients> = {};
@@ -53,14 +55,14 @@ export async function POST() {
 
       // Only update if we actually gained new fields
       if (Object.keys(merged).length > 1) {
-        await updateClient(winner.id, merged);
+        await updateClient(supabase, winner.id, merged);
       }
 
       mergedCount++;
     }
 
     if (toDelete.length > 0) {
-      await deleteClients(toDelete);
+      await deleteClients(supabase, toDelete);
     }
 
     return NextResponse.json({

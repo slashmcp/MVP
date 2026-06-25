@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { incrementSequenceEnrollment } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -10,7 +11,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Sequence ID is required for updating enrollment' }, { status: 400 });
     }
 
-    const success = await incrementSequenceEnrollment(sequenceId);
+    const supabase = await createClient();
+    const success = await incrementSequenceEnrollment(supabase, sequenceId);
     if (!success) {
       return NextResponse.json({ error: 'Failed to update sequence enrollment' }, { status: 500 });
     }

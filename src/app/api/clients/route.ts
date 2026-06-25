@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
-import { getClients, createClient, updateClient, deleteClient, deleteClients } from '@/lib/db-client';
+import { getClients, createClient as createClientRecord, updateClient, deleteClient, deleteClients } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== 'Bearer 54321') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const dbClients = await getClients();
+    const supabase = await createClient();
+    const dbClients = await getClients(supabase);
     if (dbClients && dbClients.length > 0) {
       return NextResponse.json(dbClients);
     }
@@ -39,9 +36,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const supabase = await createClient();
 
     // 1. Create in Supabase (primary database)
-    const newClient = await createClient(body);
+    const newClient = await createClientRecord(supabase, body);
     if (!newClient) {
       return NextResponse.json({ error: 'Failed to write client to Supabase' }, { status: 500 });
     }
@@ -77,7 +75,8 @@ export async function PATCH(request: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'Client ID is required' }, { status: 400 });
     }
-    const updated = await updateClient(id, rest);
+    const supabase = await createClient();
+    const updated = await updateClient(supabase, id, rest);
     if (!updated) {
       return NextResponse.json({ error: 'Failed to update client' }, { status: 500 });
     }
@@ -92,16 +91,17 @@ export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const queryId = url.searchParams.get('id');
+    const supabase = await createClient();
 
     if (queryId) {
-      const ok = await deleteClient(queryId);
+      const ok = await deleteClient(supabase, queryId);
       return NextResponse.json({ success: ok });
     }
 
     const body = await request.json().catch(() => ({}));
     const { ids } = body;
     if (ids && Array.isArray(ids)) {
-      const ok = await deleteClients(ids);
+      const ok = await deleteClients(supabase, ids);
       return NextResponse.json({ success: ok });
     }
 
@@ -111,4 +111,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to delete client' }, { status: 500 });
   }
 }
-

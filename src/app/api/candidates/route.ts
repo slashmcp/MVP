@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGoogleSheetsConfigured, getSheetData, appendSheetRow, TABS } from '@/lib/google-sheets';
 import { getCandidates, createCandidate, updateCandidate, deleteCandidate, deleteCandidates } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET() {
   try {
-    // 1. Try fetching from Supabase
-    const dbCands = await getCandidates();
+    const supabase = await createClient();
+    const dbCands = await getCandidates(supabase);
     if (dbCands && dbCands.length > 0) {
       return NextResponse.json({ data: dbCands, source: 'supabase' });
     }
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Create in Supabase (primary database)
-    const newCand = await createCandidate(body);
+    const supabase = await createClient();
+    const newCand = await createCandidate(supabase, body);
     if (!newCand) {
       return NextResponse.json({ error: 'Failed to write candidate to Supabase' }, { status: 500 });
     }
@@ -92,7 +94,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Candidate ID is required for updating.' }, { status: 400 });
     }
 
-    const updated = await updateCandidate(id, updates);
+    const supabase = await createClient();
+    const updated = await updateCandidate(supabase, id, updates);
     if (!updated) {
       return NextResponse.json({ error: 'Failed to update candidate record' }, { status: 500 });
     }
@@ -113,14 +116,16 @@ export async function DELETE(request: NextRequest) {
     const queryId = url.searchParams.get('id');
 
     if (queryId) {
-      const ok = await deleteCandidate(queryId);
+      const supabase = await createClient();
+      const ok = await deleteCandidate(supabase, queryId);
       return NextResponse.json({ success: ok });
     }
 
     const body = await request.json().catch(() => ({}));
     const { ids } = body;
     if (ids && Array.isArray(ids)) {
-      const ok = await deleteCandidates(ids);
+      const supabase = await createClient();
+      const ok = await deleteCandidates(supabase, ids);
       return NextResponse.json({ success: ok });
     }
 

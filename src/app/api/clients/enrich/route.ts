@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateClient } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -120,7 +121,8 @@ export async function POST(request: NextRequest) {
 
     if (Object.keys(enrichedData).length > 0) {
       // Update client in DB
-      const updated = await updateClient(clientId, enrichedData);
+      const supabase = await createClient();
+      const updated = await updateClient(supabase, clientId, enrichedData);
       if (!updated) {
         return NextResponse.json({ error: 'Failed to update client with enriched data' }, { status: 500 });
       }

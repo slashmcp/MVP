@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { createCandidate } from '@/lib/db-client';
+import { createCandidate, createClient as createClientRecord, createJob } from '@/lib/db-client';
+import { createClient } from '@/utils/supabase/server';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -110,15 +111,15 @@ ${csvText.substring(0, 50000)} // Truncated to 50k chars for safety
       return NextResponse.json({ error: 'No recognizable records found in the upload.' }, { status: 400 });
     }
 
+    const supabase = await createClient();
     let count = 0;
     
     if (type === 'candidates') {
       for (const record of parsedRecords) {
-        await createCandidate(record);
+        await createCandidate(supabase, record);
         count++;
       }
     } else if (type === 'clients') {
-      const { createClient } = await import('@/lib/db-client');
       for (const record of parsedRecords) {
         // Construct notes including phone and website
         let notes = record.notes || '';
@@ -130,7 +131,7 @@ ${csvText.substring(0, 50000)} // Truncated to 50k chars for safety
           notes = notes ? `${notes}\n\nContact details:\n${notesParts.join('\n')}` : `Contact details:\n${notesParts.join('\n')}`;
         }
         
-        await createClient({
+        await createClientRecord(supabase, {
           companyName: record.companyName,
           contactPerson: record.contactPerson,
           email: record.email,
@@ -142,9 +143,8 @@ ${csvText.substring(0, 50000)} // Truncated to 50k chars for safety
         count++;
       }
     } else if (type === 'jobs') {
-      const { createJob } = await import('@/lib/db-client');
       for (const record of parsedRecords) {
-        await createJob(record);
+        await createJob(supabase, record);
         count++;
       }
     }
