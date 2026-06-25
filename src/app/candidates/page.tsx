@@ -24,6 +24,7 @@ import {
   Phone,
   Eye,
   EyeOff,
+  Zap,
 } from 'lucide-react';
 import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -367,7 +368,7 @@ export default function CandidatesPage() {
             disabled={isDeduping}
             title="Scan and merge duplicate candidates"
           >
-            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">âš¡</span>}
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
           <button 

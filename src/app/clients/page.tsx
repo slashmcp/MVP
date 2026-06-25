@@ -17,7 +17,8 @@ import {
   List,
   Globe,
   Phone,
-  UploadCloud
+  UploadCloud,
+  Zap
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
@@ -413,7 +414,7 @@ export default function ClientsPage() {
             disabled={isDeduping}
             title="Scan and merge duplicate clients"
           >
-            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">âš¡</span>}
+            {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
           <button 
