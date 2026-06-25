@@ -6,4 +6,4 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse'],
 };
 
-export default withEve(nextConfig, { eveRoot: "./src/agent" });
+export default withEve(nextConfig, { eveRoot: "./src/agent", eveBuildCommand: "npx eve build" });
