@@ -22,7 +22,7 @@ export default function EveChatWidget() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || status !== 'idle') return;
+    if (!inputValue.trim()) return;
     
     send(inputValue);
     setInputValue('');
