@@ -10,9 +10,14 @@ import {
   Moon,
   X,
   ChevronDown,
+  UserCircle,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState, useRef, useMemo } from 'react';
+import { createClient } from '@/utils/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 const navItems = [
   { label: 'Dashboard', href: '/' },
@@ -32,8 +37,12 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   
   const moreRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,9 +52,22 @@ export function Header() {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
         setShowMoreDropdown(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    // Auth state listener
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const searchResults = useMemo(() => {
@@ -150,6 +172,55 @@ export function Header() {
               {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" strokeWidth={1.75} /> : <Moon className="w-[18px] h-[18px]" strokeWidth={1.75} />}
             </button>
           )}
+
+          {/* User Auth / Avatar Menu */}
+          <div className="relative ml-2" ref={userMenuRef}>
+            <button 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-8 h-8 rounded-full border border-border bg-[var(--surface-elevated)] flex items-center justify-center hover:border-accent/50 hover:shadow-md transition-all overflow-hidden cursor-pointer"
+            >
+              {user && user.user_metadata?.avatar_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle className="w-5 h-5 text-text-secondary" strokeWidth={1.75} />
+              )}
+            </button>
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 bg-[var(--surface-overlay)] border border-border shadow-xl rounded-xl py-2 w-56 z-50 animate-fade-in">
+                {user ? (
+                  <>
+                    <div className="px-4 py-2 border-b border-border mb-2">
+                      <div className="text-sm font-semibold text-text-primary truncate">{user.user_metadata?.full_name || 'User'}</div>
+                      <div className="text-xs text-text-secondary truncate">{user.email}</div>
+                    </div>
+                    <button 
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)] transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="px-4 py-2 border-b border-border mb-2">
+                      <div className="text-xs text-text-secondary">You are signed out</div>
+                    </div>
+                    <Link 
+                      href="/login"
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full text-left px-4 py-2 text-sm font-medium text-text-secondary hover:text-accent hover:bg-accent-soft transition-colors flex items-center gap-2"
+                    >
+                      <LogIn className="w-4 h-4" /> Sign In
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mobile Search Overlay */}
