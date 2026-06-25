@@ -4,6 +4,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 
+export const maxDuration = 60; // Allow up to 60 seconds for Vercel
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 type RecordType = 'candidates' | 'clients' | 'jobs' | 'placements' | 'unknown';

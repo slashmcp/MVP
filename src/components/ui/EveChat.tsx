@@ -92,7 +92,13 @@ export function EveChat() {
 
     try {
       const res = await fetch('/api/chat/upload', { method: 'POST', body: fd });
-      const json = await res.json();
+      
+      let json;
+      try {
+        json = await res.json();
+      } catch (e) {
+        throw new Error(`Server returned an invalid response (Status ${res.status}).`);
+      }
 
       if (!res.ok) throw new Error(json.error || 'Upload failed');
 
