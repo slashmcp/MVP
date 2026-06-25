@@ -20,6 +20,12 @@
     },
     {
       "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \".workflow-data/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\.workflow-data",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
       "message": "Ignoring unsupported directory \"node_modules/\" in the agent root.",
       "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\node_modules",
       "severity": "warning"
@@ -46,7 +52,7 @@
   "kind": "eve-discovery-diagnostics",
   "summary": {
     "errors": 0,
-    "warnings": 7
+    "warnings": 8
   },
   "version": 1
 }

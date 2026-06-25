@@ -1,0 +1,22 @@
+{
+  "eventType": "run_created",
+  "specVersion": 5,
+  "eventData": {
+    "deploymentId": "dpl_local@bundled",
+    "workflowName": "workflow//eve//turnWorkflow",
+    "input": {
+      "__type": "Uint8Array",
+      "data": "enN0ZCi1L/1gzAkFLgCaWgQQK+CQuA3I3b+Jm7ZiG2HjZRcxf6YXZP0/FH1usVcf+zD4jsILk5YmzDDDzAv+APwA8QAbOTZxoNXgCz+OrylKgbhORow4vcWWUxjSzDx8s1TJOEWcpuZiEGn7cdiSludbrAu2dDES6lOSsoqRnaGUrFQ+/Y0wK3HkLJ6anpKLOY1jWXeWHM4FW5MvMPJbLOM00HoMAlr+VsZqAq3XMAPyQIt/38IlDrR+A39LicccYFw42Rd7ONDiSNmHs8I3z50Wk8DVga3t5YCantRDD4PIggMOFDiAYLHgiVRMGCCQmFg8FigwcBwYTU3MYkzNZ5nnnSkNPFcHloF4oNUS+uTLYg/QemrqiYnfF4tAi5+UFoNAqzlDSmgJn+MkSbfYA1rO8GGElJ3WrQ7sgnNxES/8As8DLbfY43mKAuf/ViQOiMRBsMQ9PE0EwkE0k2VIA/FAeWgiD+cizA/EF4YWy0A8oLW/b5+lxSaPDmxN/9EDWvz7WJ6hMbmZVmqax1O2Frdha256a++wNcdYGQ7fYq1NHhU3YYnkSRwPDWTitoFIIpDmwSF5NA/FYQhnUmmcCyXirkFqzV9GPm17ayzBb2o2F37caG3yN7vm9UoPqel4tlZBwUFrk/wMZwOt8QVOA9wUrcFv9tZ8sk9oDZJYLPNEbJCU1/vYislvZYNpHXCknAdzPKD1UkaYpnWTks5PdiRiyl/4sKHzQCt6ah3PUg2/peQBUfO9JyAPaEXuDu5yOrZsr6SNKvKlUuEqxn2w4t8Mo1MGEzR6iNFvjvsa18GOHP8kn7ul04qi0WPktCiM0G1F5atDjSstWs2V4Jx0sstpUhU6KWlBAQBoDHi98aWzUIaRFt+YQBvqY1+KAG28bzBlRSf3z53UYoI6+M6SfMrRq79bjdD5zpGbFPp61dLQQlcZXw4oz1VKWujWbQBfDgjQ732H7hEaQR9QTCiAbgOgAHW3WOaBQEvi98ohEGhVU77DqNmyDgRaDluLORh73ArLTJ4N/CRPM6Xh8U8HBFqLPTzQ8gjVBjkrfKPFIlC68GtWhqdKQtwJuoZzWiwXLlyw1ZDWG06OXvZqS60iT33Z6iyfwyo2hTYix7i+S9HfV76wMvaWk/N0b574NVSOE/xISRpjpZUJbbRUX/Wmpsa4TimUc1QJn3K8gTVKKWG1d24ZsX7K4lbknFZT6PVOinqABxQT3ha4LV9XG+43XClif5/y74Ov18XXG+mUKic5J22OMIrhSY3IURKDgMcIM5wABm19cKNiZIyyol4tJq6+U1IjSvmKAePZgsEp9XcY9Z1/Y+SeK9rrtOkmoTylhHOkplYPI1QYSFDFd3C+T47eKkcYYdQxMlYypsTo5DclpQmAu6jRIFNMITMyIjIyUpCmAxCGDIPqPBKAdzlkiGgqKCiqVDb2MwcJ7k9G9Udp7/wFxlzMA5CyhCFTONpIE40Gq8nApQFLUNUVR+iHRcyNTZLYAg5x5BFYsYN2EecO9/zq1lKe6Yq0WQEUP7LWjP7oaqIHf4CIEsmHE2yDo0JYeK1mfACV2pULdtmPJdgaCcImyHewRuNmxbw43YHNaAtZgZjkCgkyBMzdQVb0sEwVkYQs7c5OoOZ6+EnjRxcMPI0zhSQzYFK31j+wuCAIMLAB58HormeHI2E4up5gHqo8YyejrAx5QnYiKV8wTK6QuknVXxmeMdpXIGZv6DGFvVQRVCygCWm+2avVpXTNTDrMz/lU8F9nL6XRuvoHHHdM42J6LoM+/fDB1D6kWPaEoohXqnUfr69dlqJmtj/upX2tTDd+pGE1mdfQUBkslC4+MXFUUY0+Ashg4g4xlgWBpH2Dcb378GVtlDmr6HMT7mMybzfwIw8zqKq6A2k35GruQ/CzdgXwFru5EcVSyHrNi5YM73GRKT38UChA8az7GMbQQLFHPevl+Ckokpfq/LumMEEohBdxPv3vRoZXAQ=="
+    },
+    "executionContext": {
+      "traceCarrier": {},
+      "workflowCoreVersion": "5.0.0-beta.24",
+      "features": {
+        "encryption": false
+      }
+    }
+  },
+  "runId": "wrun_01KVY3S8J3R2V7NAC102CCD9S2",
+  "eventId": "evnt_01KVY3S8J7X5TPFS4F1R29S2BC",
+  "createdAt": "2026-06-25T00:44:52.679Z"
+}
