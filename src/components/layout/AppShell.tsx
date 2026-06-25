@@ -7,22 +7,39 @@ import { ToastContainer } from '../ui/ToastContainer';
 import { CredentialPrompt } from '../ui/CredentialPrompt';
 import { useAppStore } from '@/store/app-store';
 import { AgentWidget } from '../ui/AgentWidget';
+import { createClient } from '@/utils/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { fetchDatabase } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
   const [isFading, setIsFading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    const supabase = createClient();
+
+    // Get initial user state
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+
     // Fetch real DB data
     fetchDatabase();
 
     // Hold splash screen for 1.8 seconds, then fade out
     const timer = setTimeout(() => {
       setIsFading(true);
-      setTimeout(() => setShowSplash(false), 500); // 500ms fade duration
+      setTimeout(() => setShowSplash(false), 500);
     }, 1800);
-    return () => clearTimeout(timer);
+
+    return () => {
+      clearTimeout(timer);
+      authListener.subscription.unsubscribe();
+    };
   }, [fetchDatabase]);
 
   return (
@@ -64,7 +81,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <ToastContainer />
         <CredentialPrompt />
-        <AgentWidget />
+        {/* Eve only available when signed in */}
+        {user && <AgentWidget />}
       </div>
     </>
   );
