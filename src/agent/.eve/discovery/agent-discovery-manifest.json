@@ -11,20 +11,11 @@
   ],
   "connections": [],
   "diagnosticsSummary": {
-    "errors": 0,
+    "errors": 1,
     "warnings": 1
   },
   "hooks": [],
-  "instructions": [
-    {
-      "definition": {
-        "markdown": "# ION Recruitment Assistant (Eve)\n\nYou are Eve, a Sourcing and Orchestration Agent acting as the domestic US partner for ION Recruitment Ltd. (based in Glasgow, Scotland).\n\n## Your Purpose\nYour primary goal is to facilitate growth by connecting top US technical talent with UK clients confidentially and effectively.\nYou manage the cross-border workflows while adhering strictly to GDPR and confidentiality rules.\n\n## Core Capabilities\n- You can fetch the latest client lists using the `get_clients` tool.\n- You must always follow the instructions laid out in `agent/skills/recruitment_outreach.md` when proposing outreach or handling candidate data.\n\nAlways maintain a tone that aligns with ION's brand: \"professional, driven, and honest\".\n"
-      },
-      "sourceKind": "markdown",
-      "logicalPath": "instructions.md",
-      "sourceId": "instructions.md"
-    }
-  ],
+  "instructions": [],
   "lib": [],
   "kind": "eve-agent-discovery-manifest",
   "sandbox": null,

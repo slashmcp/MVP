@@ -8,15 +8,15 @@
   "discovery": {
     "diagnostics": {
       "path": ".eve/discovery/diagnostics.json",
-      "sha256": "b4e6ac8479fe4f6aba49166ecaae799826dc263454e213a74ff084e2071f81b2"
+      "sha256": "7f8ff329fd2f2c8dc3f28b689ea531b4b4344b22b44c8ab4cf10cb6c1908c131"
     },
     "manifest": {
       "path": ".eve/discovery/agent-discovery-manifest.json",
-      "sha256": "a6949200685ab4f6b1d8948c322180aab4b246b588b521248e8aa8fc1349ccc6"
+      "sha256": "a5e27e95db3940db317604435329d39bddbb7a58ea9d7a0b2b23bd18668acb6a"
     },
-    "sourceGraphHash": "156c0de1238b78bcb0cdedb9a41e722dc304e2c85111bd38e266becc26400956",
+    "sourceGraphHash": "e96b7aa5ea3786e64877409e48462baaeb1153b8e1349f7f38b8af2ef27bc433",
     "summary": {
-      "errors": 0,
+      "errors": 1,
       "warnings": 1
     }
   },
@@ -25,6 +25,6 @@
     "version": "0.13.6"
   },
   "kind": "eve-compile-metadata",
-  "status": "ready",
+  "status": "failed",
   "version": 5
 }

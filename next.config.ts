@@ -6,4 +6,4 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse'],
 };
 
-export default withEve(nextConfig);
+export default withEve(nextConfig, { eveRoot: "./src/agent" });
