@@ -7,16 +7,22 @@
       "severity": "warning"
     },
     {
-      "code": "discover/required-instructions-missing",
-      "message": "Expected authored instructions at \"instructions.md\", \"instructions.ts\", \"instructions.cts\", \"instructions.mts\", \"instructions.js\", \"instructions.cjs\", \"instructions.mjs\", or \"instructions/\" directory.",
-      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\src\\agent",
-      "severity": "error"
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \".output/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\src\\agent\\.output",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \"node_modules/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\src\\agent\\node_modules",
+      "severity": "warning"
     }
   ],
   "kind": "eve-discovery-diagnostics",
   "summary": {
-    "errors": 1,
-    "warnings": 1
+    "errors": 0,
+    "warnings": 3
   },
   "version": 1
 }

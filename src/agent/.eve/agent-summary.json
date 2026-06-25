@@ -1,0 +1,63 @@
+{
+  "kind": "vercel-eve-agent-summary",
+  "schemaVersion": 3,
+  "generatorVersion": "0.13.6",
+  "agent": {
+    "name": "agent",
+    "modelId": "anthropic/claude-haiku-4-5-20251001"
+  },
+  "instructions": {
+    "logicalPath": "instructions.md",
+    "sourceKind": "markdown",
+    "markdown": "# ION Recruitment Assistant (Eve)\n\nYou are Eve, a Sourcing and Orchestration Agent acting as the domestic US partner for ION Recruitment Ltd. (based in Glasgow, Scotland).\n\n## Your Purpose\nYour primary goal is to facilitate growth by connecting top US technical talent with UK clients confidentially and effectively.\nYou manage the cross-border workflows while adhering strictly to GDPR and confidentiality rules.\n\n## Core Capabilities\n- You can fetch the latest client lists using the `get_clients` tool.\n- You must always follow the instructions laid out in `agent/skills/recruitment_outreach.md` when proposing outreach or handling candidate data.\n\nAlways maintain a tone that aligns with ION's brand: \"professional, driven, and honest\".\n"
+  },
+  "schedules": [],
+  "tools": [
+    {
+      "name": "get_clients",
+      "description": "Fetches the client list from the ION Recruitment dashboard API",
+      "logicalPath": "tools/get_clients.ts"
+    }
+  ],
+  "skills": [
+    {
+      "name": "recruitment_outreach",
+      "description": "Instructions and templates for cross-border recruitment outreach (US to UK) ensuring confidentiality and GDPR compliance.",
+      "logicalPath": "skills/recruitment_outreach.md",
+      "sourceKind": "markdown"
+    }
+  ],
+  "connections": [],
+  "channels": [
+    {
+      "name": "eve",
+      "method": "POST",
+      "urlPath": "/eve/v1/session",
+      "type": "http",
+      "logicalPath": "channels/eve.ts",
+      "adapterKind": "http"
+    },
+    {
+      "name": "eve",
+      "method": "POST",
+      "urlPath": "/eve/v1/session/:sessionId",
+      "type": "http",
+      "logicalPath": "channels/eve.ts",
+      "adapterKind": "http"
+    },
+    {
+      "name": "eve",
+      "method": "GET",
+      "urlPath": "/eve/v1/session/:sessionId/stream",
+      "type": "http",
+      "logicalPath": "channels/eve.ts",
+      "adapterKind": "http"
+    }
+  ],
+  "sandbox": null,
+  "subagents": [],
+  "diagnostics": {
+    "errors": 0,
+    "warnings": 3
+  }
+}
