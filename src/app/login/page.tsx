@@ -22,7 +22,7 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes: provider === 'google' 
             ? 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/calendar email profile'
-            : 'Mail.Send Mail.ReadWrite Calendars.ReadWrite User.Read',
+            : 'openid email profile Mail.Send Mail.ReadWrite Calendars.ReadWrite User.Read',
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
