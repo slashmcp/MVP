@@ -34,21 +34,45 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname === '/login' || request.nextUrl.pathname.startsWith('/auth/callback') || request.nextUrl.pathname.startsWith('/api/auth');
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/') && !request.nextUrl.pathname.startsWith('/api/auth');
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = pathname === '/login' || pathname.startsWith('/auth/callback') || pathname.startsWith('/api/auth');
+  const isPinRoute = pathname === '/pin';
+  const isApiRoute = pathname.startsWith('/api/') && !pathname.startsWith('/api/auth');
 
-  // Protect all non-auth routes
-  if (!user && !isAuthRoute && !isApiRoute) {
+  // Layer 1: Must be logged in via OAuth
+  if (!user && !isAuthRoute && !isPinRoute && !isApiRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from /login
-  if (user && isAuthRoute && request.nextUrl.pathname === '/login') {
+  // Redirect logged-in users away from /login to the pin page
+  if (user && isAuthRoute && pathname === '/login') {
     const url = request.nextUrl.clone();
-    url.pathname = '/candidates';
+    url.pathname = '/pin';
     return NextResponse.redirect(url);
+  }
+
+  // Layer 2: PIN gate — must have the correct PIN cookie
+  const correctPin = process.env.NEXT_PUBLIC_APP_PIN;
+  if (correctPin && user && !isAuthRoute && !isPinRoute && !isApiRoute) {
+    const pinCookie = request.cookies.get('app-access-pin')?.value;
+    if (pinCookie !== correctPin) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/pin';
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // If already pinned and verified, redirect away from /pin to the app
+  if (isPinRoute && user) {
+    const correctPin = process.env.NEXT_PUBLIC_APP_PIN;
+    const pinCookie = request.cookies.get('app-access-pin')?.value;
+    if (correctPin && pinCookie === correctPin) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/candidates';
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
@@ -60,7 +84,7 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
