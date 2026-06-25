@@ -1,0 +1,50 @@
+{
+  "agentRoot": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\.eve\\dev-runtime\\snapshots\\mqsrws1n-806f052f-880c-429e-a8b3-686e07de2bdc\\source",
+  "appRoot": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\.eve\\dev-runtime\\snapshots\\mqsrws1n-806f052f-880c-429e-a8b3-686e07de2bdc\\source",
+  "channels": [],
+  "connections": [],
+  "config": {
+    "compaction": {},
+    "model": {
+      "id": "anthropic/claude-sonnet-4.6",
+      "routing": {
+        "kind": "gateway",
+        "target": "anthropic"
+      },
+      "contextWindowTokens": 1000000
+    },
+    "name": "recruitment-command-center"
+  },
+  "diagnosticsSummary": {
+    "errors": 0,
+    "warnings": 7
+  },
+  "disabledFrameworkTools": [],
+  "workflowEnabled": false,
+  "dynamicInstructions": [],
+  "dynamicSkills": [],
+  "dynamicTools": [],
+  "hooks": [],
+  "remoteAgents": [],
+  "sandbox": null,
+  "sandboxWorkspaces": [],
+  "schedules": [],
+  "skills": [],
+  "tools": [],
+  "workspaceResourceRoot": {
+    "contentHash": "5777dd4d87493e836b5597e87f6b3d07482c551341171ea7836996b231207c7b",
+    "logicalPath": "workspace-resources/__root__",
+    "rootEntries": []
+  },
+  "instructions": {
+    "name": "instructions",
+    "logicalPath": "instructions.md",
+    "markdown": "# ION Recruitment Assistant (Eve)\n\nYou are Eve, a Sourcing and Orchestration Agent acting as the domestic US partner for ION Recruitment Ltd. (based in Glasgow, Scotland).\n\n## Your Purpose\nYour primary goal is to facilitate growth by connecting top US technical talent with UK clients confidentially and effectively.\nYou manage the cross-border workflows while adhering strictly to GDPR and confidentiality rules.\n\n## Core Capabilities\n- You can fetch the latest client lists using the `get_clients` tool.\n- You must always follow the instructions laid out in `agent/skills/recruitment_outreach.md` when proposing outreach or handling candidate data.\n\nAlways maintain a tone that aligns with ION's brand: \"professional, driven, and honest\".\n",
+    "sourceId": "instructions.md",
+    "sourceKind": "markdown"
+  },
+  "kind": "eve-agent-compiled-manifest",
+  "subagentEdges": [],
+  "subagents": [],
+  "version": 30
+}

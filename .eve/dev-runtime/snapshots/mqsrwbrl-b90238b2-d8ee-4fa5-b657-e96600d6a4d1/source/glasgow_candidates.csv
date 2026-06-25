@@ -1,0 +1,11 @@
+First Name,Last Name,Email,LinkedIn Profile,Current Title,Company,Location,Skills
+Ewan,MacGregor,ewan.macgregor.dev@example.com,linkedin.com/in/ewan-macgregor-dev,Senior Frontend Engineer,Skyscanner,"Glasgow, Scotland","React, TypeScript, GraphQL, Next.js"
+Fiona,Campbell,fcampbell_swe@example.com,linkedin.com/in/fiona-campbell-swe,Software Engineer II,JPMorgan Chase & Co.,"Glasgow, Scotland","JavaScript, React, Node.js, AWS"
+Callum,Robertson,callum.rob@example.com,linkedin.com/in/callum-robertson-tech,Lead UI Developer,Morgan Stanley,"Glasgow, Scotland","Vue.js, Nuxt, CSS, Tailwind, TypeScript"
+Ailsa,Murray,ailsa.murray.ui@example.com,linkedin.com/in/ailsa-murray,Frontend Developer,Barclays,"Glasgow, Scotland","React, Redux, SCSS, Jest"
+Ross,MacDonald,rossmac_dev@example.com,linkedin.com/in/ross-macdonald-front,Full Stack Software Engineer,BBC,"Glasgow, Scotland","React, Python, Django, PostgreSQL"
+Kirsty,Stewart,kirsty.stewart99@example.com,linkedin.com/in/kirsty-stewart-ui,Web Developer,Arnold Clark,"Glasgow, Scotland","HTML, CSS, JavaScript, Vue.js"
+Craig,Wallace,craig_wallace_se@example.com,linkedin.com/in/craig-wallace-se,Senior Software Engineer,Student Loans Company,"Glasgow, Scotland","Angular, TypeScript, RxJS, Java"
+Mairi,Scott,m.scott.frontend@example.com,linkedin.com/in/mairi-scott-fe,Frontend Engineer,FreeAgent,"Glasgow, Scotland","React, Ruby on Rails, HTML5, CSS3"
+Fraser,Henderson,fhenderson.tech@example.com,linkedin.com/in/fraser-henderson-tech,Software Developer,Leidos,"Glasgow, Scotland","JavaScript, React, .NET, C#"
+Iona,Graham,iona.graham.dev@example.com,linkedin.com/in/iona-graham-dev,Principal Frontend Engineer,Skyscanner,"Glasgow, Scotland","React, Next.js, System Architecture, Webpack"

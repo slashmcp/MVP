@@ -1,0 +1,16 @@
+{
+  "diagnostics": [
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \".eve/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\src\\agent\\.eve",
+      "severity": "warning"
+    }
+  ],
+  "kind": "eve-discovery-diagnostics",
+  "summary": {
+    "errors": 0,
+    "warnings": 1
+  },
+  "version": 1
+}

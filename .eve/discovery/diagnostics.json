@@ -1,0 +1,52 @@
+{
+  "diagnostics": [
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \".eve/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\.eve",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \".git/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\.git",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \".next/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\.next",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \"node_modules/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\node_modules",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \"public/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\public",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \"scripts/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\scripts",
+      "severity": "warning"
+    },
+    {
+      "code": "discover/unsupported-directory",
+      "message": "Ignoring unsupported directory \"src/\" in the agent root.",
+      "sourcePath": "C:\\Users\\senti\\OneDrive\\Desktop\\MVP\\recruitment-command-center\\src",
+      "severity": "warning"
+    }
+  ],
+  "kind": "eve-discovery-diagnostics",
+  "summary": {
+    "errors": 0,
+    "warnings": 7
+  },
+  "version": 1
+}

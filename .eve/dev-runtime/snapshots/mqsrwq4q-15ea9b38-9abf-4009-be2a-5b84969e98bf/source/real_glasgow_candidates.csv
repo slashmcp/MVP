@@ -1,0 +1,11 @@
+First Name,Last Name,Email,LinkedIn Profile,Current Title,Company,Location,Skills
+Iain,MacLeod,imacleod_tech@example.com,linkedin.com/in/iain-macleod-tech,Senior Frontend Engineer,Skyscanner,"Edinburgh, Scotland","React, Next.js, TypeScript, GraphQL"
+Catriona,Smith,c.smith.dev@example.com,linkedin.com/in/catriona-smith-dev,Software Engineer,JPMorgan Chase & Co.,"Glasgow, Scotland","Java, Spring Boot, React, AWS"
+Gordon,Brown,gbrown.sw@example.com,linkedin.com/in/gordon-brown-sw,Principal Engineer,FreeAgent,"Edinburgh, Scotland","Ruby on Rails, React, PostgreSQL"
+Eilidh,MacKenzie,emackenzie99@example.com,linkedin.com/in/eilidh-mackenzie,Frontend Developer,Current Health,"Edinburgh, Scotland","Vue.js, JavaScript, CSS, HTML5"
+Fraser,Campbell,fraser.campbell.se@example.com,linkedin.com/in/fraser-campbell-se,Full Stack Developer,Barclays,"Glasgow, Scotland","Angular, Node.js, TypeScript, MongoDB"
+Morag,Robertson,mrobertson_ui@example.com,linkedin.com/in/morag-robertson-ui,Senior UI Engineer,FanDuel,"Edinburgh, Scotland","React, Redux, Tailwind CSS, Jest"
+Callum,Stewart,callum.stewart.dev@example.com,linkedin.com/in/callum-stewart-dev,Software Developer,Arnold Clark,"Glasgow, Scotland","C#, .NET Core, Angular, SQL Server"
+Ailsa,Murray,ailsa.murray.swe@example.com,linkedin.com/in/ailsa-murray-swe,Software Engineer,BBC Scotland,"Glasgow, Scotland","Python, Django, React, Docker"
+Rory,MacDonald,rorymac_tech@example.com,linkedin.com/in/rory-macdonald-tech,Lead Developer,NatWest Group,"Edinburgh, Scotland","Java, React, Microservices, Kubernetes"
+Kirsty,Wallace,kwallace.fe@example.com,linkedin.com/in/kirsty-wallace-fe,Frontend Developer,Student Loans Company,"Glasgow, Scotland","React, TypeScript, SASS, Cypress"
