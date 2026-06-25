@@ -1,0 +1,369 @@
+'use client';
+
+import { use, useState } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Mail,
+  Briefcase,
+  Building2,
+  Calendar,
+  Search,
+  Sparkles,
+  Loader2,
+  Edit2,
+  Phone,
+  Globe,
+  MapPin,
+  ExternalLink,
+  Camera,
+  Users,
+  MessageSquare,
+  PlayCircle,
+  Star,
+  Map,
+} from 'lucide-react';
+import { statusColors } from '@/lib/mock-data';
+import { useAppStore } from '@/store/app-store';
+import { EditClientModal } from '@/components/ui/EditClientModal';
+
+const ensureAbsoluteUrl = (url: string | undefined | null): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
+export default function ClientDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const { dbClients, dbJobs, fetchDatabase } = useAppStore();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const searchJobs = async (clientData: any) => {
+    if (!clientData) return;
+    setIsSearching(true);
+    try {
+      const res = await fetch('/api/sourcing/enrich-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: clientData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to search jobs');
+      
+      if (data.jobs.length === 0) {
+        alert(data.message || 'No job listings found for this company.');
+        return;
+      }
+
+      for (const job of data.jobs) {
+        await fetch('/api/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(job),
+        });
+      }
+      
+      await fetchDatabase();
+    } catch (e: any) {
+      console.error(e);
+      alert('Error searching jobs: ' + e.message);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
+  const clients = dbClients || [];
+  const jobs = dbJobs || [];
+  
+  const client = clients.find((c) => c.id === id);
+
+  if (!client) {
+    return (
+      <div className="empty-state min-h-[60vh]">
+        <p className="text-lg font-medium">Client not found</p>
+        <Link href="/clients" className="btn btn-secondary mt-4">
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
+          Back to Clients
+        </Link>
+      </div>
+    );
+  }
+
+  const clientJobs = jobs.filter((j) => j.client === client.companyName);
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <Link
+        href="/clients"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
+        Back to Clients
+      </Link>
+
+      <div className="card">
+        <div className="px-6 py-5 flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent flex-shrink-0">
+              <Building2 className="w-6 h-6" strokeWidth={1.75} />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-text-primary">{client.companyName}</h1>
+              <div className="flex items-center gap-3 mt-1.5 text-sm text-text-secondary">
+                {client.contactPerson && (
+                  <span>{client.contactPerson}</span>
+                )}
+                {client.location && client.location !== 'Unknown Location' && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {client.location}
+                  </span>
+                )}
+                {client.email && (
+                  <a 
+                    href={`mailto:${client.email}`} 
+                    className="flex items-center gap-1 hover:text-accent transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    {client.email}
+                  </a>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className={`badge ${statusColors[client.status]}`}>{client.status}</span>
+                <span className="badge badge-neutral">
+                  <Briefcase className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                  {client.openRoles} open roles
+                </span>
+                {client.websiteUrl && (
+                  <a href={ensureAbsoluteUrl(client.websiteUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-blue hover:bg-blue-100 transition-colors cursor-pointer text-xs">
+                    <Globe className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Website
+                  </a>
+                )}
+                {client.linkedinUrl && (
+                  <a href={ensureAbsoluteUrl(client.linkedinUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-blue hover:bg-blue-100 transition-colors cursor-pointer text-xs">
+                    <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    LinkedIn
+                  </a>
+                )}
+                {client.instagramUrl && (
+                  <a href={ensureAbsoluteUrl(client.instagramUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-pink-600">
+                    <Camera className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Instagram
+                  </a>
+                )}
+                {client.facebookUrl && (
+                  <a href={ensureAbsoluteUrl(client.facebookUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-blue-600">
+                    <Users className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Facebook
+                  </a>
+                )}
+                {client.twitterUrl && (
+                  <a href={ensureAbsoluteUrl(client.twitterUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-sky-500">
+                    <MessageSquare className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Twitter/X
+                  </a>
+                )}
+                {client.youtubeUrl && (
+                  <a href={ensureAbsoluteUrl(client.youtubeUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-red-600">
+                    <PlayCircle className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    YouTube
+                  </a>
+                )}
+                {client.mapsUrl && (
+                  <a href={ensureAbsoluteUrl(client.mapsUrl)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral hover:bg-gray-100 transition-colors cursor-pointer text-xs text-emerald-600">
+                    <Map className="w-3 h-3 mr-1" strokeWidth={1.75} />
+                    Maps
+                  </a>
+                )}
+                {client.googleRating && (
+                  <span className="badge badge-neutral text-amber-600">
+                    <Star className="w-3 h-3 mr-1 fill-current" strokeWidth={1.75} />
+                    {client.googleRating} {client.reviewCount ? `(${client.reviewCount} reviews)` : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
+            <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+            Edit
+          </button>
+        </div>
+      </div>
+
+      {showEditModal && (
+        <EditClientModal
+          client={client}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={(updated) => {
+            fetchDatabase(); // Refresh the global store
+          }}
+        />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* AI Company Summary */}
+          <div className="card">
+            <div className="card-header">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-accent" strokeWidth={1.75} />
+                <h2 className="text-base font-semibold text-text-primary">AI Company Summary</h2>
+              </div>
+            </div>
+            <div className="card-body space-y-4">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                {client.notes}
+              </p>
+              <div>
+                <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary mb-2">Hiring Intent</h3>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  Active hiring across engineering and product roles. Strong growth trajectory with 
+                  competitive compensation. Typical time-to-hire is 2–3 weeks from initial submission.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary mb-2">Recommended Next Steps</h3>
+                <ul className="text-sm text-text-secondary space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-1">•</span>
+                    Schedule weekly check-in to review pipeline progress
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-1">•</span>
+                    Submit David Kim for Staff Backend Engineer role
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-1">•</span>
+                    Follow up on Emily Rodriguez submission feedback
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Open Roles */}
+          <div className="card">
+            <div className="card-header flex items-center justify-between">
+              <h2 className="text-base font-semibold text-text-primary">Open Roles</h2>
+              <button 
+                onClick={() => searchJobs(client)}
+                disabled={isSearching}
+                className="btn btn-secondary btn-sm flex items-center gap-1.5"
+              >
+                {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                {isSearching ? 'Searching...' : 'Search Open Roles'}
+              </button>
+            </div>
+            {clientJobs.length > 0 ? (
+              <div className="divide-y divide-border">
+                {clientJobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="px-5 py-3.5 flex items-center justify-between hover:bg-[var(--surface-elevated)] transition-colors group"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
+                        {job.title}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-text-secondary">
+                        {job.location && <span>{job.location}</span>}
+                        {job.salaryMin && job.salaryMax && (
+                          <span className="font-mono">
+                            ${(job.salaryMin / 1000).toFixed(0)}k–${(job.salaryMax / 1000).toFixed(0)}k
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`badge ${statusColors[job.status]}`}>{job.status}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state py-10">
+                <p className="text-sm">No open roles found. Use Search to find real listings.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="card">
+            <div className="card-header">
+              <h2 className="text-base font-semibold text-text-primary">Details</h2>
+            </div>
+            <div className="card-body space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Contact</span>
+                <span className="text-text-primary">{client.contactPerson || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Location</span>
+                <span className="text-text-primary text-right">{client.location || 'Unknown Location'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Category</span>
+                <span className="text-text-primary text-right">{client.industry || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">LinkedIn</span>
+                {client.linkedinUrl ? (
+                  <a href={ensureAbsoluteUrl(client.linkedinUrl)} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline flex items-center gap-1">
+                    View Profile <ExternalLink className="w-3 h-3" />
+                  </a>
+                ) : (
+                  <span className="text-text-primary">—</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Email</span>
+                {client.email ? (
+                  <a 
+                    href={`mailto:${client.email}`} 
+                    className="text-accent hover:underline text-xs"
+                  >
+                    {client.email}
+                  </a>
+                ) : (
+                  <span className="text-text-primary text-xs">—</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Status</span>
+                <span className={`badge ${statusColors[client.status]}`}>{client.status}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  Added
+                </span>
+                <span className="text-text-primary font-mono text-xs">
+                  {client.createdAt
+                    ? new Date(client.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

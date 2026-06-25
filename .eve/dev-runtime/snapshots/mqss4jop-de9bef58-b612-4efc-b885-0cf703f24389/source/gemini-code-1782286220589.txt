@@ -1,0 +1,14 @@
+Company,Phone,Email,Website
+Tech Stack Digital Solutions,(515) 855-6499,N/A,techstackdigital.com
+People-Friendly Tech,(515) 318-5350,hello@peoplefriendlytech.com,peoplefriendlytech.com
+Multifaceted Approach LLC,(319) 423-5818,N/A,displaylocal.io
+P3+Uplift,(877) 393-1223,N/A,p3-inc.com
+Softvoya,(515) 993-0476,N/A,softvoya.com
+Technology Association of Iowa,(515) 280-7700,info@technologyiowa.org,technologyiowa.org
+Visionary,(515) 274-0679,hello@visionary.com,visionary.com
+We Write Code,(515) 218-9717,hello@wewritecode.com,wewritecode.com
+Tylmen Tech,(515) 993-0476,info@tylmen.com,tylmen.com
+Shift Interactive,(876) 926-6019,info@shiftinteractive.com,shiftinteractive.com
+ABC VIRTUAL COMMUNICATIONS,(515) 220-7999,sales@abcv.com,abcv.com
+ClientCircle,N/A,info@clientcircle.com,clientcircle.com
+IMT Software Services,(800) 274-3531,support@imtapps.com,imtapps.com
