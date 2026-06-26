@@ -23,6 +23,7 @@ import {
   Briefcase,
   GraduationCap,
   Upload,
+  ExternalLink,
 } from 'lucide-react';
 import { useState } from 'react';
 import { statusColors } from '@/lib/mock-data';
