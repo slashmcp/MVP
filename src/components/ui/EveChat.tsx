@@ -323,7 +323,7 @@ export function EveChat() {
           </div>
         )}
 
-        {messages.map((m) => (
+        {messages.map((m, index) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] rounded-2xl px-4 py-2 ${
               m.role === 'user'
@@ -331,10 +331,13 @@ export function EveChat() {
                 : 'bg-surface-overlay text-text-primary border border-surface-highlight'
             }`}>
               <div className="text-sm">
-                {m.content ? renderMarkdownText(m.content) : (
-                  m.role === 'assistant' && isStreaming
-                    ? <Loader2 size={14} className="animate-spin text-emerald-500" />
-                    : null
+                {m.content ? renderMarkdownText(m.content) : null}
+                
+                {m.role === 'assistant' && isStreaming && index === messages.length - 1 && (
+                  <div className={`flex items-center gap-2 text-emerald-500/80 bg-emerald-500/10 w-fit px-3 py-1.5 rounded-full text-xs font-medium border border-emerald-500/20 ${m.content ? 'mt-3' : ''}`}>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Eve is thinking...</span>
+                  </div>
                 )}
               </div>
             </div>
