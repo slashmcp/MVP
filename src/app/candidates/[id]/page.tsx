@@ -231,18 +231,7 @@ export default function CandidateDetailPage({
                 Outreach
               </button>
             )}
-            <button 
-              onClick={() => handleEnrich('serp')} 
-              className="btn btn-secondary btn-sm"
-              disabled={isEnriching}
-            >
-              {isEnriching ? (
-                <span className="w-3.5 h-3.5 border-2 border-text-secondary border-t-accent rounded-full animate-spin"></span>
-              ) : (
-                <Globe className="w-3.5 h-3.5" strokeWidth={1.75} />
-              )}
-              {isEnriching ? 'Searching Web...' : 'Web Search'}
-            </button>
+
             <button onClick={() => setShowEditModal(true)} className="btn btn-secondary btn-sm">
               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               Edit
