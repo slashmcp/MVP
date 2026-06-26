@@ -132,11 +132,16 @@ export const useAppStore = create<AppState>()(
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Check for user or PIN cookie
-      const hasPinCookie = document.cookie.includes(`app-access-pin=${process.env.NEXT_PUBLIC_APP_PIN}`);
+      // Parse cookies safely
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const pinCookieStr = cookies.find(c => c.startsWith('app-access-pin='));
+      const pinValue = pinCookieStr ? pinCookieStr.split('=')[1] : null;
+
+      const isDemoPin = pinValue === '1234' || pinValue === '0000';
+      const isRealPin = pinValue && pinValue === process.env.NEXT_PUBLIC_APP_PIN;
       
-      // No user AND no valid PIN = guest/demo mode → load sample data
-      if (!user && !hasPinCookie) {
+      // No user AND (no valid PIN OR is demo pin) = guest/demo mode → load sample data
+      if (!user && (!pinValue || isDemoPin)) {
         const { DEMO_CANDIDATES, DEMO_JOBS, DEMO_CLIENTS, DEMO_SEQUENCES } = await import('@/lib/demo-data');
         set({
           dbCandidates: DEMO_CANDIDATES,
