@@ -371,14 +371,7 @@ export default function CandidatesPage() {
             {isDeduping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {isDeduping ? 'Deduping...' : 'Dedup DB'}
           </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={handleSyncToSheets}
-            disabled={isSyncing}
-          >
-            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" strokeWidth={1.75} />}
-            {isSyncing ? 'Syncing...' : 'Sync to Sheets'}
-          </button>
+
           <button
             onClick={() => setShowBulkImportModal(true)}
             className="btn btn-secondary"
