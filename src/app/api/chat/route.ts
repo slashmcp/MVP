@@ -1,11 +1,42 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
 import { eveTools } from '@/lib/agent-tools/schemas';
-import { sendEmail } from '@/lib/outlook';
+import { sendEmail as sendAzureEmail } from '@/lib/outlook';
+import { createClient } from '@/utils/supabase/server';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+async function sendGmail(token: string, to: string, subject: string, body: string) {
+  const emailLines = [];
+  emailLines.push(`To: ${to}`);
+  emailLines.push(`Subject: ${subject}`);
+  emailLines.push('Content-Type: text/html; charset=utf-8');
+  emailLines.push('');
+  emailLines.push(body);
+
+  const email = emailLines.join('\r\n');
+  const base64EncodedEmail = Buffer.from(email).toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+
+  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      raw: base64EncodedEmail,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    return { success: false, error: `Gmail Error: ${errorBody}` };
+  }
+
+  return { success: true };
+}
 
 const SYSTEM_PROMPT = `You are Eve, an AI assistant integrated into Ion Recruitment's CRM system. 
 You help recruiters manage candidates, clients, jobs, and placements efficiently.
@@ -22,6 +53,9 @@ Be concise, professional, and helpful. Format your responses clearly.`;
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
     const { messages } = await req.json();
 
     // Ensure messages format is strictly acceptable for Anthropic
@@ -71,7 +105,15 @@ export async function POST(req: NextRequest) {
           for (const tool of toolCalls as any[]) {
             if (tool.name === 'send_email') {
               try {
-                const result = await sendEmail(tool.input);
+                let result;
+                if (session?.provider_token) {
+                  // User logged in with OAuth (Google) and has a token
+                  result = await sendGmail(session.provider_token, tool.input.to, tool.input.subject, tool.input.body);
+                } else {
+                  // Fallback to Azure admin email
+                  result = await sendAzureEmail(tool.input);
+                }
+
                 if (result.success) {
                   controller.enqueue(
                     encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: I've successfully sent the email to ${tool.input.to})*` })}\n\n`)
