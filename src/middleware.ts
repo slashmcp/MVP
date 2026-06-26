@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({
             request,
           });
@@ -27,9 +27,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with cross-browser cookies.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -39,21 +36,22 @@ export async function middleware(request: NextRequest) {
   const isPinRoute = pathname === '/pin';
   const isApiRoute = pathname.startsWith('/api/') && !pathname.startsWith('/api/auth');
 
-  // Layer 1: Must be logged in via OAuth
-  if (!user && !isAuthRoute && !isPinRoute && !isApiRoute) {
+  // Unauthenticated users: allow through everywhere (they'll see demo data)
+  // Exception: redirect them away from /pin since that's only for logged-in users
+  if (!user && isPinRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from /login to the pin page
+  // Redirect logged-in users away from /login
   if (user && isAuthRoute && pathname === '/login') {
     const url = request.nextUrl.clone();
     url.pathname = '/pin';
     return NextResponse.redirect(url);
   }
 
-  // Layer 2: PIN gate — must have the correct PIN cookie
+  // Layer 2: PIN gate — logged-in users must have the correct PIN cookie
   const correctPin = process.env.NEXT_PUBLIC_APP_PIN;
   if (correctPin && user && !isAuthRoute && !isPinRoute && !isApiRoute) {
     const pinCookie = request.cookies.get('app-access-pin')?.value;
@@ -80,13 +78,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

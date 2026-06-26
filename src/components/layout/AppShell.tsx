@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Header } from './Header';
 import { ToastContainer } from '../ui/ToastContainer';
 import { CredentialPrompt } from '../ui/CredentialPrompt';
@@ -9,12 +10,14 @@ import { useAppStore } from '@/store/app-store';
 import { AgentWidget } from '../ui/AgentWidget';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { Sparkles, X } from 'lucide-react';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { fetchDatabase } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
   const [isFading, setIsFading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -27,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
     });
 
-    // Fetch real DB data
+    // Fetch real DB data (or demo data if not logged in)
     fetchDatabase();
 
     // Hold splash screen for 1.8 seconds, then fade out
@@ -42,22 +45,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [fetchDatabase]);
 
+  const showDemoBanner = !user && !bannerDismissed;
+
   return (
     <>
       {showSplash && (
-        <div 
+        <div
           className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--background)] transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}
         >
           <div className="relative animate-pulse flex flex-col items-center">
-            {/* Ambient glow behind logo */}
             <div className="absolute inset-0 w-full h-full bg-accent/20 blur-[80px] rounded-full scale-150 pointer-events-none" />
-            
-            <Image 
-              src="/logo.png" 
-              alt="Ion Recruitment" 
-              width={180} 
-              height={180} 
-              className="relative z-10 object-contain drop-shadow-2xl opacity-90 dark:invert-0 invert" 
+            <Image
+              src="/logo.png"
+              alt="Ion Recruitment"
+              width={180}
+              height={180}
+              className="relative z-10 object-contain drop-shadow-2xl opacity-90 dark:invert-0 invert"
               priority
             />
             <h1 className="relative z-10 mt-8 text-2xl tracking-[0.4em] uppercase font-light text-text-primary">
@@ -74,14 +77,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Ambient background glows */}
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/20 blur-[150px] pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[150px] pointer-events-none" />
-        
+
+        {/* Demo mode banner */}
+        {showDemoBanner && (
+          <div className="relative z-50 bg-accent/10 border-b border-accent/20 px-4 py-2.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
+              <Sparkles className="w-3.5 h-3.5 text-accent flex-shrink-0" strokeWidth={1.75} />
+              <span>
+                You&apos;re viewing <span className="font-semibold text-text-primary">demo data</span>.{' '}
+                <Link href="/login" className="text-accent font-semibold hover:underline">
+                  Sign in to your workspace →
+                </Link>
+              </span>
+            </div>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="text-text-tertiary hover:text-text-primary transition-colors flex-shrink-0"
+              aria-label="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="p-4 lg:p-8 w-full flex-grow relative z-10">{children}</main>
         </div>
         <ToastContainer />
         <CredentialPrompt />
-        {/* Eve only available when signed in */}
         {user && <AgentWidget />}
       </div>
     </>

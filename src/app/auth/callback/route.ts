@@ -40,7 +40,8 @@ export async function GET(request: Request) {
       // if we had the service role key. Since we don't, we assume the user will configure the DB 
       // trigger or we run an RPC. Actually, we'll let the user run a trigger eventually).
       
-      return NextResponse.redirect(new URL(next, request.url));
+      // Redirect to client page that sets the PIN cookie from sessionStorage
+      return NextResponse.redirect(new URL('/auth/set-pin', request.url));
     }
   }
 

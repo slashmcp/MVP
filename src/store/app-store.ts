@@ -40,6 +40,7 @@ interface AppState {
 
   // Real Database State
   isDbLoading: boolean;
+  isDemoMode: boolean;
   dbCandidates: any[];
   dbJobs: any[];
   dbClients: any[];
@@ -117,29 +118,52 @@ export const useAppStore = create<AppState>()(
   bypassService: (service) => set((state) => ({ bypassedServices: [...state.bypassedServices, service] })),
 
   isDbLoading: true,
+  isDemoMode: false,
   dbCandidates: [],
   dbJobs: [],
   dbClients: [],
   dbSequences: [],
   fetchDatabase: async () => {
     set({ isDbLoading: true });
-    // Dynamically import to avoid server-side issues with Zustand
-    const { getCandidates, getJobs, getClients, getSequences } = await import('@/lib/db-client');
-    const { createClient } = await import('@/utils/supabase/client');
-    const supabase = createClient();
-    const [cands, jobs, clients, sequences] = await Promise.all([
-      getCandidates(supabase),
-      getJobs(supabase),
-      getClients(supabase),
-      getSequences(supabase)
-    ]);
-    set({
-      dbCandidates: cands,
-      dbJobs: jobs,
-      dbClients: clients,
-      dbSequences: sequences,
-      isDbLoading: false
-    });
+    try {
+      const { createClient } = await import('@/utils/supabase/client');
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // No user = guest/demo mode → load sample data
+      if (!user) {
+        const { DEMO_CANDIDATES, DEMO_JOBS, DEMO_CLIENTS, DEMO_SEQUENCES } = await import('@/lib/demo-data');
+        set({
+          dbCandidates: DEMO_CANDIDATES,
+          dbJobs: DEMO_JOBS,
+          dbClients: DEMO_CLIENTS,
+          dbSequences: DEMO_SEQUENCES,
+          isDbLoading: false,
+          isDemoMode: true,
+        });
+        return;
+      }
+
+      // Authenticated user → fetch real data
+      const { getCandidates, getJobs, getClients, getSequences } = await import('@/lib/db-client');
+      const [cands, jobs, clients, sequences] = await Promise.all([
+        getCandidates(supabase),
+        getJobs(supabase),
+        getClients(supabase),
+        getSequences(supabase)
+      ]);
+      set({
+        dbCandidates: cands,
+        dbJobs: jobs,
+        dbClients: clients,
+        dbSequences: sequences,
+        isDbLoading: false,
+        isDemoMode: false,
+      });
+    } catch (e) {
+      console.error('fetchDatabase error:', e);
+      set({ isDbLoading: false });
+    }
   }
     }),
     {
