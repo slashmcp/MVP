@@ -21,6 +21,7 @@ import {
 import { statusColors } from '@/lib/mock-data';
 import { useAppStore } from '@/store/app-store';
 import { EditCandidateModal } from '@/components/ui/EditCandidateModal';
+import { EmailDraftModal } from '@/components/ui/EmailDraftModal';
 
 const ensureAbsoluteUrl = (url: string | undefined | null): string => {
   if (!url) return '';
@@ -39,6 +40,7 @@ export default function CandidateDetailPage({
   const { id } = use(params);
   const { dbCandidates, dbJobs, fetchDatabase, addToast } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   
   const cands = dbCandidates || [];
@@ -110,25 +112,25 @@ export default function CandidateDetailPage({
 
       {/* Profile header */}
       <div className="card">
-        <div className="px-6 py-5 flex items-start justify-between">
-          <div className="flex items-start gap-4">
+        <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-4 min-w-0">
             <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent text-lg font-semibold flex-shrink-0">
               {candidate.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-semibold text-text-primary">{candidate.name}</h1>
-              <div className="flex items-center gap-3 mt-1.5 text-sm text-text-secondary">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm text-text-secondary">
                 {candidate.email && (
                   <a 
                     href={`mailto:${candidate.email}`} 
-                    className="flex items-center gap-1 hover:text-accent transition-colors"
+                    className="flex items-center gap-1 hover:text-accent transition-colors min-w-0 truncate"
                   >
-                    <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
-                    {candidate.email}
+                    <Mail className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.75} />
+                    <span className="truncate">{candidate.email}</span>
                   </a>
                 )}
                 {candidate.phone && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 flex-shrink-0">
                     <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {candidate.phone}
                   </span>
@@ -196,14 +198,14 @@ export default function CandidateDetailPage({
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <a 
-              href={`mailto:${candidate.email}`} 
+          <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:flex-shrink-0">
+            <button
+              onClick={() => setShowEmailModal(true)}
               className="btn btn-secondary btn-sm"
             >
               <Mail className="w-3.5 h-3.5" strokeWidth={1.75} />
               Email
-            </a>
+            </button>
             {candidate.phone && candidate.phone !== 'N/A' && (
               <>
                 <a href={`tel:${candidate.phone}`} className="btn btn-secondary btn-sm">
@@ -241,8 +243,25 @@ export default function CandidateDetailPage({
           candidate={candidate}
           onClose={() => setShowEditModal(false)}
           onSuccess={(updated) => {
-            fetchDatabase(); // Refresh the global store
+            fetchDatabase();
           }}
+        />
+      )}
+
+      {showEmailModal && (
+        <EmailDraftModal
+          type="candidate"
+          data={{
+            name: candidate.name,
+            email: candidate.email,
+            role: candidate.role,
+            company: candidate.company,
+            skills: candidate.skills,
+            notes: candidate.notes,
+            seniority: candidate.seniority,
+            linkedinUrl: candidate.linkedinUrl,
+          }}
+          onClose={() => setShowEmailModal(false)}
         />
       )}
 
@@ -278,6 +297,66 @@ export default function CandidateDetailPage({
               <p className="text-sm text-text-secondary leading-relaxed">
                 {candidate.notes || 'No summary available. Upload a resume to generate an AI-powered candidate analysis.'}
               </p>
+            </div>
+          </div>
+
+          {/* Suggested Outreach */}
+          <div className="card">
+            <div className="card-header">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-accent" strokeWidth={1.75} />
+                <h2 className="text-base font-semibold text-text-primary">Suggested Outreach</h2>
+              </div>
+            </div>
+            <div className="card-body space-y-3">
+              <p className="text-xs text-text-tertiary">Click any option to generate an AI-drafted message, then send with one click.</p>
+              
+              {/* Email options */}
+              <div>
+                <p className="text-[11px] font-medium text-text-secondary uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Mail className="w-3 h-3" /> Email
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { template: 'intro', label: 'Intro Outreach' },
+                    { template: 'follow-up', label: 'Follow Up' },
+                    { template: 'interview', label: 'Interview Invite' },
+                  ].map(({ template, label }) => (
+                    <button
+                      key={template}
+                      onClick={() => setShowEmailModal(true)}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-border bg-[var(--surface-elevated)] text-text-secondary hover:border-accent/50 hover:text-accent transition-all"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* LinkedIn options */}
+              <div>
+                <p className="text-[11px] font-medium text-text-secondary uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                  LinkedIn
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'Connection Request', hint: '≤300 chars' },
+                    { label: 'InMail', hint: 'With subject' },
+                  ].map(({ label, hint }) => (
+                    <button
+                      key={label}
+                      onClick={() => setShowEmailModal(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[#0a66c2]/30 bg-[#0a66c2]/5 text-[#0a66c2] hover:bg-[#0a66c2]/10 hover:border-[#0a66c2]/60 transition-all"
+                    >
+                      {label}
+                      <span className="opacity-60 text-[10px]">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
