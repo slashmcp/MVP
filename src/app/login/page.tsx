@@ -21,9 +21,12 @@ export default function LoginPage() {
   const isLocked = attempts >= MAX_ATTEMPTS;
 
   useEffect(() => {
-    // Check if they already have the correct PIN cookie
-    const hasPinCookie = document.cookie.includes(`app-access-pin=${CORRECT_PIN}`);
-    if (hasPinCookie) {
+    // Check if they already have any PIN cookie (real or demo)
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const pinCookieStr = cookies.find(c => c.startsWith('app-access-pin='));
+    const pinValue = pinCookieStr ? pinCookieStr.split('=')[1] : null;
+
+    if (pinValue) {
       setStep('oauth');
     } else {
       setStep('pin');
