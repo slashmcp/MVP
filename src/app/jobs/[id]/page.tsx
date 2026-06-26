@@ -52,6 +52,27 @@ export default function JobDetailPage({
   const cands = dbCandidates || [];
   const sequences = dbSequences || [];
   
+  const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [addedLeads, setAddedLeads] = useState<Set<string>>(new Set());
+  const [isAddingLead, setIsAddingLead] = useState<string | null>(null);
+  const [activeSequenceSelector, setActiveSequenceSelector] = useState<string | null>(null);
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string>('');
+  const [isEnrollingLead, setIsEnrollingLead] = useState<string | null>(null);
+  const [enrolledLeads, setEnrolledLeads] = useState<Record<string, string>>({});
+  const [expandedCVs, setExpandedCVs] = useState<Set<string>>(new Set());
+
+  const toggleCV = (leadId: string) => {
+    const next = new Set(expandedCVs);
+    if (next.has(leadId)) {
+      next.delete(leadId);
+    } else {
+      next.add(leadId);
+    }
+    setExpandedCVs(next);
+  };
+
   const job = jobs.find((j) => j.id === id);
 
   if (!job) {
@@ -65,34 +86,6 @@ export default function JobDetailPage({
       </div>
     );
   }
-
-  const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  
-  // CRM tracking
-  const [addedLeads, setAddedLeads] = useState<Set<string>>(new Set());
-  const [isAddingLead, setIsAddingLead] = useState<string | null>(null);
-  
-  // Sequence tracking
-  const [activeSequenceSelector, setActiveSequenceSelector] = useState<string | null>(null);
-  const [selectedSequenceId, setSelectedSequenceId] = useState<string>('');
-  const [isEnrollingLead, setIsEnrollingLead] = useState<string | null>(null);
-  const [enrolledLeads, setEnrolledLeads] = useState<Record<string, string>>({}); // maps lead ID to sequence name
-  
-  // Expanded CV state for Juicebox candidates
-  const [expandedCVs, setExpandedCVs] = useState<Set<string>>(new Set());
-
-  const toggleCV = (leadId: string) => {
-    const next = new Set(expandedCVs);
-    if (next.has(leadId)) {
-      next.delete(leadId);
-    } else {
-      next.add(leadId);
-    }
-    setExpandedCVs(next);
-  };
-
 
 
   const handleAddLeadToCrm = async (lead: any) => {
