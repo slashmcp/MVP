@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useParams } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -23,7 +23,6 @@ import {
   Briefcase,
   GraduationCap,
   Upload,
-  ExternalLink,
 } from 'lucide-react';
 import { useState } from 'react';
 import { statusColors } from '@/lib/mock-data';
@@ -40,36 +39,18 @@ const ensureAbsoluteUrl = (url: string | undefined | null): string => {
   return `https://${trimmed}`;
 };
 
-export default function JobDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function JobDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const { dbJobs, dbCandidates, dbSequences, showCredentialPrompt, bypassedServices, addToast, fetchDatabase } = useAppStore();
   
   const jobs = dbJobs || [];
   const cands = dbCandidates || [];
   const sequences = dbSequences || [];
   
-  const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [addedLeads, setAddedLeads] = useState<Set<string>>(new Set());
-  const [isAddingLead, setIsAddingLead] = useState<string | null>(null);
-  const [activeSequenceSelector, setActiveSequenceSelector] = useState<string | null>(null);
-  const [selectedSequenceId, setSelectedSequenceId] = useState<string>('');
-  const [isEnrollingLead, setIsEnrollingLead] = useState<string | null>(null);
-  const [enrolledLeads, setEnrolledLeads] = useState<Record<string, string>>({});
-  const [expandedCVs, setExpandedCVs] = useState<Set<string>>(new Set());
-
-  const toggleCV = (leadId: string) => {
-    const next = new Set(expandedCVs);
-    if (next.has(leadId)) {
-      next.delete(leadId);
-    } else {
-      next.add(leadId);
-    }
-    setExpandedCVs(next);
-  };
-
   const job = jobs.find((j) => j.id === id);
 
   if (!job) {
@@ -83,6 +64,34 @@ export default function JobDetailPage() {
       </div>
     );
   }
+
+  const [sourcedLeads, setSourcedLeads] = useState<any[] | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  
+  // CRM tracking
+  const [addedLeads, setAddedLeads] = useState<Set<string>>(new Set());
+  const [isAddingLead, setIsAddingLead] = useState<string | null>(null);
+  
+  // Sequence tracking
+  const [activeSequenceSelector, setActiveSequenceSelector] = useState<string | null>(null);
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string>('');
+  const [isEnrollingLead, setIsEnrollingLead] = useState<string | null>(null);
+  const [enrolledLeads, setEnrolledLeads] = useState<Record<string, string>>({}); // maps lead ID to sequence name
+  
+  // Expanded CV state for Juicebox candidates
+  const [expandedCVs, setExpandedCVs] = useState<Set<string>>(new Set());
+
+  const toggleCV = (leadId: string) => {
+    const next = new Set(expandedCVs);
+    if (next.has(leadId)) {
+      next.delete(leadId);
+    } else {
+      next.add(leadId);
+    }
+    setExpandedCVs(next);
+  };
+
 
 
   const handleAddLeadToCrm = async (lead: any) => {
@@ -217,31 +226,10 @@ export default function JobDetailPage() {
     }
   };
 
-  // ── Real skill-based candidate matching ──────────────────────────────────
-  const jobSkillTokens = [
-    ...(job.requirements || '').toLowerCase().split(/[\s,;/|]+/),
-    ...(job.title || '').toLowerCase().split(/[\s,;/|]+/),
-  ].filter((t) => t.length > 2);
-
-  const scoredCandidates = cands
-    .map((c: any) => {
-      const candidateTokens = [
-        ...(c.skills || []).map((s: string) => s.toLowerCase()),
-        ...(c.role || '').toLowerCase().split(/[\s,;/|]+/),
-        ...(c.notes || '').toLowerCase().split(/[\s,;/|]+/).slice(0, 20),
-      ];
-      let matched = 0;
-      for (const token of jobSkillTokens) {
-        if (candidateTokens.some((ct) => ct.includes(token) || token.includes(ct))) matched++;
-      }
-      const raw = jobSkillTokens.length > 0 ? Math.round((matched / jobSkillTokens.length) * 100) : 50;
-      const fitScore = Math.min(99, Math.max(10, raw));
-      return { ...c, fitScore };
-    })
-    .sort((a: any, b: any) => b.fitScore - a.fitScore);
-
-  const matchedCandidates = scoredCandidates.slice(0, 4);
-  const topRecommended = scoredCandidates.filter((c: any) => c.fitScore >= 50).slice(0, 8);
+  const matchedCandidates = cands.slice(0, 4).map((c: any, i: number) => ({
+    ...c,
+    fitScore: [92, 85, 78, 62][i],
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -280,7 +268,7 @@ export default function JobDetailPage() {
               {job.salaryMin && job.salaryMax && (
                 <span className="flex items-center gap-1 font-mono">
                   <DollarSign className="w-4 h-4" strokeWidth={1.75} />
-                  ${(job.salaryMin / 1000).toFixed(0)}k – ${(job.salaryMax / 1000).toFixed(0)}k
+                  ${(job.salaryMin / 1000).toFixed(0)}k ΓÇô ${(job.salaryMax / 1000).toFixed(0)}k
                 </span>
               )}
             </div>
@@ -356,89 +344,7 @@ export default function JobDetailPage() {
             </div>
           </div>
 
-          {/* Recommended Applicants from CRM */}
-          {topRecommended.length > 0 && (
-            <div className="card">
-              <div className="card-header">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-accent" strokeWidth={1.75} />
-                  <h2 className="text-base font-semibold text-text-primary">Recommended Applicants</h2>
-                </div>
-                <span className="badge badge-blue text-[10px]">{topRecommended.length} from CRM</span>
-              </div>
-              <div className="divide-y divide-border">
-                {topRecommended.map((c: any) => (
-                  <div key={c.id} className="px-5 py-4 hover:bg-[var(--surface-elevated)] transition-colors">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center text-accent text-xs font-semibold flex-shrink-0">
-                          {c.name.split(' ').map((n: string) => n[0]).join('')}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            href={`/candidates/${c.id}`}
-                            className="text-sm font-semibold text-text-primary hover:text-accent transition-colors"
-                          >
-                            {c.name}
-                          </Link>
-                          <p className="text-xs text-text-secondary mt-0.5">
-                            {c.role || c.seniority || 'Candidate'}
-                            {c.company && c.company !== 'Unknown' ? ` · ${c.company}` : ''}
-                          </p>
-                          {c.skills && c.skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {c.skills.slice(0, 4).map((s: string) => (
-                                <span key={s} className="badge badge-blue text-[10px] px-1.5 py-0.5">{s}</span>
-                              ))}
-                              {c.skills.length > 4 && (
-                                <span className="text-[10px] text-text-tertiary self-center">+{c.skills.length - 4}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        <div className={`score-badge ${
-                          c.fitScore >= 80 ? 'score-high' : c.fitScore >= 60 ? 'score-medium' : 'score-low'
-                        }`}>
-                          {c.fitScore}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {c.linkedinUrl && (
-                            <a
-                              href={c.linkedinUrl.startsWith('http') ? c.linkedinUrl : `https://${c.linkedinUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg border border-[#0a66c2]/30 text-[#0a66c2] hover:bg-[#0a66c2]/10 transition-colors"
-                              title="View LinkedIn"
-                            >
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                              </svg>
-                            </a>
-                          )}
-                          <Link
-                            href={`/candidates/${c.id}`}
-                            className="p-1.5 rounded-lg border border-border text-text-tertiary hover:text-accent hover:border-accent/50 transition-colors"
-                            title="View profile"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {scoredCandidates.filter((c: any) => c.fitScore >= 50).length > 8 && (
-                <div className="px-5 py-3 border-t border-border">
-                  <Link href="/matching" className="text-xs text-accent hover:text-accent-hover font-medium transition-colors">
-                    View all matches →
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Sourcing Engine Results */}
           {sourcedLeads && (
             <div className="card border-accent/20 animate-slide-up shadow-lg">
               <div className="card-header bg-accent-soft border-b border-border py-4 px-6">
@@ -478,7 +384,7 @@ export default function JobDetailPage() {
                             )}
                           </div>
                           <p className="text-xs text-text-secondary mt-1 font-mono">
-                            {c.seniority} • {c.email} {c.phone && c.phone !== 'N/A' && `• ${c.phone}`}
+                            {c.seniority} ΓÇó {c.email} {c.phone && c.phone !== 'N/A' && `ΓÇó ${c.phone}`}
                           </p>
                           {c.location && (
                             <p className="text-[11px] text-text-tertiary mt-0.5 flex items-center gap-1">
