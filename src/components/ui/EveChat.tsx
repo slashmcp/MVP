@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Paperclip, X, CheckCircle, AlertCircle, Users, Building2, Briefcase, FileText } from 'lucide-react';
+import { Send, Loader2, Paperclip, X, CheckCircle, AlertCircle, Users, Building2, Briefcase, FileText, Lock } from 'lucide-react';
+import { useAppStore } from '@/store/app-store';
 
 interface Message {
   id: string;
@@ -35,6 +36,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function EveChat() {
+  const { isDemoMode, hasOAuth } = useAppStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -83,6 +85,14 @@ export function EveChat() {
 
   const processUpload = async (importData: boolean) => {
     if (!pendingFile) return;
+    
+    // Gate the import functionality behind OAuth
+    if (importData && !hasOAuth) {
+      alert('Please sign in with your workspace account to import data into the CRM.');
+      window.location.href = '/login';
+      return;
+    }
+
     setIsUploading(true);
     setError(null);
 
@@ -230,6 +240,21 @@ export function EveChat() {
   };
 
   const ACCEPTED_TYPES = '.pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp,.gif';
+
+  if (isDemoMode) {
+    return (
+      <div className="flex flex-col h-full bg-surface dark:bg-[#0A0A0A] items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-surface-highlight flex items-center justify-center mb-4">
+          <Lock size={24} className="text-text-muted" />
+        </div>
+        <h3 className="text-lg font-semibold text-text-primary mb-2">Eve is Resting</h3>
+        <p className="text-sm text-text-secondary max-w-xs">
+          Eve's AI capabilities are disabled in Demo Mode to protect the CRM sandbox. 
+          Please sign in with your workspace account to wake her up.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
