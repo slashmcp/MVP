@@ -102,31 +102,26 @@ export async function POST(req: NextRequest) {
         // If a tool was called, execute it in the background
         const toolCalls = finalMessage.content.filter((c: any) => c.type === 'tool_use');
         if (toolCalls.length > 0) {
+          const toolResults = [];
+          let needsSecondStream = false;
+
           for (const tool of toolCalls as any[]) {
             if (tool.name === 'send_email') {
               try {
                 let result;
                 if (session?.provider_token) {
-                  // User logged in with OAuth (Google) and has a token
                   result = await sendGmail(session.provider_token, tool.input.to, tool.input.subject, tool.input.body);
                 } else {
-                  // Fallback to Azure admin email
                   result = await sendAzureEmail(tool.input);
                 }
 
-                if (result.success) {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: I've successfully sent the email to ${tool.input.to})*` })}\n\n`)
-                  );
-                } else {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System Error: Failed to send email to ${tool.input.to}. Reason: ${result.error})*` })}\n\n`)
-                  );
-                }
+                const msg = result.success ? `*(System: I've successfully sent the email to ${tool.input.to})*` : `*(System Error: Failed to send email to ${tool.input.to}. Reason: ${result.error})*`;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: `\n\n${msg}\n\n` })}\n\n`));
+                toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: msg });
               } catch (e: any) {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System Error: Failed to send email to ${tool.input.to}. Reason: ${e.message || 'Unknown'})*` })}\n\n`)
-                );
+                const msg = `*(System Error: Failed to send email to ${tool.input.to}. Reason: ${e.message || 'Unknown'})*`;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: `\n\n${msg}\n\n` })}\n\n`));
+                toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: msg });
               }
             } else if (tool.name === 'search_crm') {
               const query = (tool.input.query || '').toLowerCase();
@@ -158,41 +153,40 @@ export async function POST(req: NextRequest) {
                 );
               }
 
-              // Do a second stream call to Anthropic with the tool result
-              const newMessages = [
-                ...anthropicMessages,
-                { role: 'assistant', content: finalMessage.content },
-                { 
-                  role: 'user', 
-                  content: [
-                    { type: 'tool_result', tool_use_id: tool.id, content: JSON.stringify(results) }
-                  ] 
-                }
-              ];
-
-              const stream2 = await anthropic.messages.stream({
-                model: 'claude-sonnet-4-5-20250929',
-                max_tokens: 1024,
-                system: SYSTEM_PROMPT,
-                messages: newMessages as any,
-                tools: eveTools as any,
-              });
-
-              for await (const chunk of stream2) {
-                if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`)
-                  );
-                }
-              }
+              toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: JSON.stringify(results) });
+              needsSecondStream = true;
             } else if (tool.name === 'read_recent_emails') {
-               controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: Inbox reading is still in beta, I'll have full access soon!)*` })}\n\n`)
-                );
+               const msg = `*(System: Inbox reading is still in beta, I'll have full access soon!)*`;
+               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: `\n\n${msg}\n\n` })}\n\n`));
+               toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: msg });
             } else if (tool.name === 'create_calendar_event') {
-               controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: Calendar booking is still in beta, I'll have full access soon!)*` })}\n\n`)
+               const msg = `*(System: Calendar booking is still in beta, I'll have full access soon!)*`;
+               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: `\n\n${msg}\n\n` })}\n\n`));
+               toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: msg });
+            }
+          }
+
+          if (needsSecondStream && toolResults.length > 0) {
+            const newMessages = [
+              ...anthropicMessages,
+              { role: 'assistant', content: finalMessage.content },
+              { role: 'user', content: toolResults }
+            ];
+
+            const stream2 = await anthropic.messages.stream({
+              model: 'claude-sonnet-4-5-20250929',
+              max_tokens: 1024,
+              system: SYSTEM_PROMPT,
+              messages: newMessages as any,
+              tools: eveTools as any,
+            });
+
+            for await (const chunk of stream2) {
+              if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`)
                 );
+              }
             }
           }
         }
