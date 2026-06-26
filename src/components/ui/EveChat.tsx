@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Paperclip, X, CheckCircle, AlertCircle, Users, Building2, Briefcase, FileText, Lock } from 'lucide-react';
+import { Send, Loader2, Paperclip, X, CheckCircle, AlertCircle, Users, Building2, Briefcase, FileText, Lock, Mic, MicOff } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 
 interface Message {
@@ -48,6 +48,43 @@ export function EveChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(prev => (prev + ' ' + transcript).trim());
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } else {
+        setError('Voice input is not supported in this browser.');
+      }
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -398,22 +435,35 @@ export function EveChat() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading || isStreaming}
+          disabled={isUploading || isStreaming || isListening}
           title="Upload file (PDF, DOCX, CSV, TXT, PNG, JPG...)"
           className="p-2 text-text-muted hover:text-emerald-400 hover:bg-emerald-500/10 rounded-full transition-colors disabled:opacity-40 flex-shrink-0"
         >
           <Paperclip size={18} />
         </button>
+        <button
+          type="button"
+          onClick={toggleListening}
+          disabled={isUploading || isStreaming}
+          title="Voice Dictation"
+          className={`p-2 rounded-full transition-all flex-shrink-0 disabled:opacity-40 ${
+            isListening 
+              ? 'text-red-400 bg-red-400/10 animate-pulse border border-red-400/30' 
+              : 'text-text-muted hover:text-emerald-400 hover:bg-emerald-500/10'
+          }`}
+        >
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+        </button>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Ask Eve or drop a file..."
+          placeholder={isListening ? "Listening..." : "Ask Eve or drop a file..."}
           className="flex-grow bg-surface border border-surface-highlight rounded-full px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500 transition-colors"
-          disabled={isStreaming || isUploading}
+          disabled={isStreaming || isUploading || isListening}
         />
         <button
           type="submit"
-          disabled={!input.trim() || isStreaming || isUploading}
+          disabled={!input.trim() || isStreaming || isUploading || isListening}
           className="p-2.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-400 disabled:opacity-50 transition-colors flex items-center justify-center flex-shrink-0"
         >
           <Send size={16} className="-ml-0.5 mt-0.5" />
