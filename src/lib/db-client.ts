@@ -280,6 +280,7 @@ export async function createCandidate(supabase: SupabaseClient, candidate: Parti
       website_url: candidate.websiteUrl,
       notes: candidate.notes,
       resume_url: candidate.resume,
+      org_id: '4d02e02b-f8f6-450a-a3ea-07f356e3f684', // Fallback for backend API routes without full session auth
     }
   ]).select().single();
 
