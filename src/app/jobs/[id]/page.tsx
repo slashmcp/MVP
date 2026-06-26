@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -40,12 +40,9 @@ const ensureAbsoluteUrl = (url: string | undefined | null): string => {
   return `https://${trimmed}`;
 };
 
-export default function JobDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function JobDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { dbJobs, dbCandidates, dbSequences, showCredentialPrompt, bypassedServices, addToast, fetchDatabase } = useAppStore();
   
   const jobs = dbJobs || [];
