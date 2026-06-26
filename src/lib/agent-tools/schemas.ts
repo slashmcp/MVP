@@ -37,4 +37,16 @@ export const eveTools = [
       required: ['title', 'start_time', 'end_time', 'attendee_email'],
     },
   },
+  {
+    name: 'search_crm',
+    description: 'Search the CRM database for jobs, candidates, or clients to find matches or retrieve information.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The search term (e.g., "React", "Surrey", "Safe Software")' },
+        entity_type: { type: 'string', description: 'Which entity to search: "jobs", "candidates", "clients", or "all"', enum: ['jobs', 'candidates', 'clients', 'all'] },
+      },
+      required: ['query', 'entity_type'],
+    },
+  },
 ];

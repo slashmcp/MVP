@@ -128,6 +128,63 @@ export async function POST(req: NextRequest) {
                   encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System Error: Failed to send email to ${tool.input.to}. Reason: ${e.message || 'Unknown'})*` })}\n\n`)
                 );
               }
+            } else if (tool.name === 'search_crm') {
+              const query = (tool.input.query || '').toLowerCase();
+              const type = tool.input.entity_type;
+              
+              const results: any = {};
+              
+              if (type === 'jobs' || type === 'all') {
+                const { mockJobs } = await import('@/lib/mock-data');
+                results.jobs = mockJobs.filter((j: any) => 
+                  j.title.toLowerCase().includes(query) || 
+                  j.client.toLowerCase().includes(query) || 
+                  j.requirements.some((r: string) => r.toLowerCase().includes(query))
+                );
+              }
+              if (type === 'clients' || type === 'all') {
+                const { mockClients } = await import('@/lib/mock-data');
+                results.clients = mockClients.filter((c: any) => 
+                  c.companyName.toLowerCase().includes(query) || 
+                  c.industry.toLowerCase().includes(query)
+                );
+              }
+              if (type === 'candidates' || type === 'all') {
+                const { mockCandidates, mockExternalLeads } = await import('@/lib/mock-data');
+                const allCands = [...mockCandidates, ...mockExternalLeads];
+                results.candidates = allCands.filter((c: any) => 
+                  c.name?.toLowerCase().includes(query) || 
+                  c.skills?.some((s: string) => s.toLowerCase().includes(query))
+                );
+              }
+
+              // Do a second stream call to Anthropic with the tool result
+              const newMessages = [
+                ...anthropicMessages,
+                { role: 'assistant', content: finalMessage.content },
+                { 
+                  role: 'user', 
+                  content: [
+                    { type: 'tool_result', tool_use_id: tool.id, content: JSON.stringify(results) }
+                  ] 
+                }
+              ];
+
+              const stream2 = await anthropic.messages.stream({
+                model: 'claude-sonnet-4-5-20250929',
+                max_tokens: 1024,
+                system: SYSTEM_PROMPT,
+                messages: newMessages as any,
+                tools: eveTools as any,
+              });
+
+              for await (const chunk of stream2) {
+                if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`)
+                  );
+                }
+              }
             } else if (tool.name === 'read_recent_emails') {
                controller.enqueue(
                   encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: Inbox reading is still in beta, I'll have full access soon!)*` })}\n\n`)
