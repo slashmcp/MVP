@@ -206,6 +206,7 @@ export function Header() {
                   </div>
                 )}
               </>
+            ) : (
               <div className="flex items-center gap-2">
                 <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-[var(--surface-elevated)]">
                   <div className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse`} />
