@@ -224,6 +224,7 @@ export function Header() {
                   <span className="text-xs font-semibold tracking-wide uppercase pr-1">Sign In</span>
                 </Link>
               </div>
+            )}
           </div>
         </div>
 
