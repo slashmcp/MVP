@@ -72,12 +72,18 @@ export async function POST(req: NextRequest) {
             if (tool.name === 'send_email') {
               try {
                 const result = await sendEmail(tool.input);
+                if (result.success) {
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: I've successfully sent the email to ${tool.input.to})*` })}\n\n`)
+                  );
+                } else {
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System Error: Failed to send email to ${tool.input.to}. Reason: ${result.error})*` })}\n\n`)
+                  );
+                }
+              } catch (e: any) {
                 controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System: I've successfully sent the email to ${tool.input.to})*` })}\n\n`)
-                );
-              } catch (e) {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System Error: Failed to send email to ${tool.input.to})*` })}\n\n`)
+                  encoder.encode(`data: ${JSON.stringify({ text: `\n\n*(System Error: Failed to send email to ${tool.input.to}. Reason: ${e.message || 'Unknown'})*` })}\n\n`)
                 );
               }
             } else if (tool.name === 'read_recent_emails') {
