@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <ToastContainer />
         <CredentialPrompt />
-        {user && <AgentWidget />}
+        <AgentWidget />
       </div>
     </>
   );

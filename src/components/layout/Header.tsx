@@ -33,7 +33,7 @@ const allNavItems = [...navItems, ...moreItems];
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { globalSearch, setGlobalSearch, dbCandidates, dbJobs, dbClients } = useAppStore();
+  const { globalSearch, setGlobalSearch, dbCandidates, dbJobs, dbClients, isDemoMode } = useAppStore();
   const [mounted, setMounted] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
@@ -206,17 +206,23 @@ export function Header() {
                   </div>
                 )}
               </>
-            ) : (
-              <Link 
-                href="/login"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/30 bg-accent/10 hover:bg-accent/20 hover:border-accent/50 transition-all text-accent group"
-              >
-                <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <UserCircle className="w-3.5 h-3.5" strokeWidth={2} />
+              <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-[var(--surface-elevated)]">
+                  <div className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse`} />
+                  <span className="text-xs font-medium text-text-secondary">
+                    {isDemoMode ? 'Demo Mode' : 'Ion Recruitment'}
+                  </span>
                 </div>
-                <span className="text-xs font-semibold tracking-wide uppercase pr-1">Workspace</span>
-              </Link>
-            )}
+                <Link 
+                  href="/login"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/30 bg-accent/10 hover:bg-accent/20 hover:border-accent/50 transition-all text-accent group"
+                >
+                  <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <LogIn className="w-3.5 h-3.5" strokeWidth={2} />
+                  </div>
+                  <span className="text-xs font-semibold tracking-wide uppercase pr-1">Sign In</span>
+                </Link>
+              </div>
           </div>
         </div>
 
