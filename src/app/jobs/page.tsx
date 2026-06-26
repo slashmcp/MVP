@@ -223,7 +223,7 @@ export default function JobsPage() {
             {availableJobs.length} total &middot; {availableJobs.filter((j) => j.status === 'Open').length} open
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button 
             className="btn bg-accent-soft text-accent border border-accent/20 hover:bg-accent/10"
             onClick={() => setShowSourcing(!showSourcing)}

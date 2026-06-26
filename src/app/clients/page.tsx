@@ -384,7 +384,7 @@ export default function ClientsPage() {
             {availableClients.length} total &middot; {availableClients.filter((c) => c.status === 'Active').length} active
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="file"
             ref={importFileRef}
