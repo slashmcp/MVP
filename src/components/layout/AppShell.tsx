@@ -45,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [fetchDatabase]);
 
-  const showDemoBanner = !user && !bannerDismissed;
+  const showDemoBanner = false;
 
   return (
     <>
@@ -78,27 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/20 blur-[150px] pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[150px] pointer-events-none" />
 
-        {/* Demo mode banner */}
-        {showDemoBanner && (
-          <div className="relative z-50 bg-accent/10 border-b border-accent/20 px-4 py-2.5 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Sparkles className="w-3.5 h-3.5 text-accent flex-shrink-0" strokeWidth={1.75} />
-              <span>
-                You&apos;re viewing <span className="font-semibold text-text-primary">demo data</span>.{' '}
-                <Link href="/login" className="text-accent font-semibold hover:underline">
-                  Sign in to your workspace →
-                </Link>
-              </span>
-            </div>
-            <button
-              onClick={() => setBannerDismissed(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors flex-shrink-0"
-              aria-label="Dismiss"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+
 
         <div className="flex flex-col min-h-screen">
           <Header />

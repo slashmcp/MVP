@@ -175,21 +175,21 @@ export function Header() {
 
           {/* User Auth / Avatar Menu */}
           <div className="relative ml-2" ref={userMenuRef}>
-            <button 
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-8 h-8 rounded-full border border-border bg-[var(--surface-elevated)] flex items-center justify-center hover:border-accent/50 hover:shadow-md transition-all overflow-hidden cursor-pointer"
-            >
-              {user && user.user_metadata?.avatar_url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <UserCircle className="w-5 h-5 text-text-secondary" strokeWidth={1.75} />
-              )}
-            </button>
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 bg-[var(--surface-overlay)] border border-border shadow-xl rounded-xl py-2 w-56 z-50 animate-fade-in">
-                {user ? (
-                  <>
+            {user ? (
+              <>
+                <button 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="w-8 h-8 rounded-full border border-border bg-[var(--surface-elevated)] flex items-center justify-center hover:border-accent/50 hover:shadow-md transition-all overflow-hidden cursor-pointer"
+                >
+                  {user.user_metadata?.avatar_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <UserCircle className="w-5 h-5 text-text-secondary" strokeWidth={1.75} />
+                  )}
+                </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 bg-[var(--surface-overlay)] border border-border shadow-xl rounded-xl py-2 w-56 z-50 animate-fade-in">
                     <div className="px-4 py-2 border-b border-border mb-2">
                       <div className="text-sm font-semibold text-text-primary truncate">{user.user_metadata?.full_name || 'User'}</div>
                       <div className="text-xs text-text-secondary truncate">{user.email}</div>
@@ -203,22 +203,19 @@ export function Header() {
                     >
                       <LogOut className="w-4 h-4" /> Sign Out
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="px-4 py-2 border-b border-border mb-2">
-                      <div className="text-xs text-text-secondary">You are signed out</div>
-                    </div>
-                    <Link 
-                      href="/login"
-                      onClick={() => setShowUserMenu(false)}
-                      className="w-full text-left px-4 py-2 text-sm font-medium text-text-secondary hover:text-accent hover:bg-accent-soft transition-colors flex items-center gap-2"
-                    >
-                      <LogIn className="w-4 h-4" /> Sign In
-                    </Link>
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
+            ) : (
+              <Link 
+                href="/login"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/30 bg-accent/10 hover:bg-accent/20 hover:border-accent/50 transition-all text-accent group"
+              >
+                <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <UserCircle className="w-3.5 h-3.5" strokeWidth={2} />
+                </div>
+                <span className="text-xs font-semibold tracking-wide uppercase pr-1">Workspace</span>
+              </Link>
             )}
           </div>
         </div>

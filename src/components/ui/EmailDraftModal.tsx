@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { X, Mail, Loader2, ExternalLink, Sparkles, Copy, Check } from 'lucide-react';
 
+import { useAppStore } from '@/store/app-store';
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface CandidateData {
@@ -113,6 +115,7 @@ function ensureAbsoluteUrl(url?: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
+  const { isDemoMode } = useAppStore();
   const templates = type === 'candidate' ? CANDIDATE_TEMPLATES : CLIENT_TEMPLATES;
   const [channel, setChannel] = useState<Channel>('email');
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0].key);
@@ -323,7 +326,14 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                 <div className="flex flex-wrap gap-2 pt-1">
                   {/* Outlook */}
                   <button
-                    onClick={() => window.open(buildOutlookUrl(toEmail, subject, body), '_blank')}
+                    onClick={() => {
+                      if (isDemoMode) {
+                        alert('Please sign in with your workspace account to send emails.');
+                        window.location.href = '/login';
+                        return;
+                      }
+                      window.open(buildOutlookUrl(toEmail, subject, body), '_blank');
+                    }}
                     className="flex items-center gap-2 px-4 py-2 bg-[#0078d4] hover:bg-[#006cbd] text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -333,7 +343,14 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                     <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                   </button>
                   <button
-                    onClick={() => window.open(buildGmailUrl(toEmail, subject, body), '_blank')}
+                    onClick={() => {
+                      if (isDemoMode) {
+                        alert('Please sign in with your workspace account to send emails.');
+                        window.location.href = '/login';
+                        return;
+                      }
+                      window.open(buildGmailUrl(toEmail, subject, body), '_blank');
+                    }}
                     className="flex items-center gap-2 px-3 py-2 bg-[var(--surface-elevated)] border border-border hover:border-accent/50 text-text-secondary hover:text-text-primary rounded-lg text-sm font-medium transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -346,7 +363,14 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                     <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                   </button>
                   <button
-                    onClick={() => { window.location.href = buildMailtoUrl(toEmail, subject, body); }}
+                    onClick={() => {
+                      if (isDemoMode) {
+                        alert('Please sign in with your workspace account to send emails.');
+                        window.location.href = '/login';
+                        return;
+                      }
+                      window.location.href = buildMailtoUrl(toEmail, subject, body);
+                    }}
                     className="flex items-center gap-2 px-3 py-2 bg-[var(--surface-elevated)] border border-border hover:border-accent/50 text-text-secondary hover:text-text-primary rounded-lg text-sm font-medium transition-colors"
                   >
                     <Mail className="w-4 h-4" strokeWidth={1.75} />
@@ -377,6 +401,13 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                       href={ensureAbsoluteUrl(linkedinUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => {
+                        if (isDemoMode) {
+                          e.preventDefault();
+                          alert('Please sign in with your workspace account for outreach.');
+                          window.location.href = '/login';
+                        }
+                      }}
                       className="flex items-center gap-2 px-3 py-2 bg-[var(--surface-elevated)] border border-[#0a66c2]/30 hover:border-[#0a66c2] text-[#0a66c2] rounded-lg text-sm font-medium transition-colors"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
