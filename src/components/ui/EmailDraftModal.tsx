@@ -115,7 +115,7 @@ function ensureAbsoluteUrl(url?: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
-  const { isDemoMode } = useAppStore();
+  const { hasOAuth } = useAppStore();
   const templates = type === 'candidate' ? CANDIDATE_TEMPLATES : CLIENT_TEMPLATES;
   const [channel, setChannel] = useState<Channel>('email');
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0].key);
@@ -327,7 +327,7 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                   {/* Outlook */}
                   <button
                     onClick={() => {
-                      if (isDemoMode) {
+                      if (!hasOAuth) {
                         alert('Please sign in with your workspace account to send emails.');
                         window.location.href = '/login';
                         return;
@@ -344,7 +344,7 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                   </button>
                   <button
                     onClick={() => {
-                      if (isDemoMode) {
+                      if (!hasOAuth) {
                         alert('Please sign in with your workspace account to send emails.');
                         window.location.href = '/login';
                         return;
@@ -364,7 +364,7 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                   </button>
                   <button
                     onClick={() => {
-                      if (isDemoMode) {
+                      if (!hasOAuth) {
                         alert('Please sign in with your workspace account to send emails.');
                         window.location.href = '/login';
                         return;
@@ -402,7 +402,7 @@ export function EmailDraftModal({ type, data, onClose }: EmailDraftModalProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => {
-                        if (isDemoMode) {
+                        if (!hasOAuth) {
                           e.preventDefault();
                           alert('Please sign in with your workspace account for outreach.');
                           window.location.href = '/login';

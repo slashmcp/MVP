@@ -41,6 +41,7 @@ interface AppState {
   // Real Database State
   isDbLoading: boolean;
   isDemoMode: boolean;
+  hasOAuth: boolean;
   dbCandidates: any[];
   dbJobs: any[];
   dbClients: any[];
@@ -119,6 +120,7 @@ export const useAppStore = create<AppState>()(
 
   isDbLoading: true,
   isDemoMode: false,
+  hasOAuth: false,
   dbCandidates: [],
   dbJobs: [],
   dbClients: [],
@@ -130,8 +132,11 @@ export const useAppStore = create<AppState>()(
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      // No user = guest/demo mode → load sample data
-      if (!user) {
+      // Check for user or PIN cookie
+      const hasPinCookie = document.cookie.includes(`app-access-pin=${process.env.NEXT_PUBLIC_APP_PIN}`);
+      
+      // No user AND no valid PIN = guest/demo mode → load sample data
+      if (!user && !hasPinCookie) {
         const { DEMO_CANDIDATES, DEMO_JOBS, DEMO_CLIENTS, DEMO_SEQUENCES } = await import('@/lib/demo-data');
         set({
           dbCandidates: DEMO_CANDIDATES,
@@ -140,11 +145,13 @@ export const useAppStore = create<AppState>()(
           dbSequences: DEMO_SEQUENCES,
           isDbLoading: false,
           isDemoMode: true,
+          hasOAuth: false,
         });
         return;
       }
 
-      // Authenticated user → fetch real data
+      // Authenticated user OR verified PIN → fetch real data
+      set({ isDemoMode: false, hasOAuth: !!user });
       const { getCandidates, getJobs, getClients, getSequences } = await import('@/lib/db-client');
       const [cands, jobs, clients, sequences] = await Promise.all([
         getCandidates(supabase),

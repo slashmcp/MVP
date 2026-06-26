@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Lock, Network, RefreshCw, ArrowRight, ShieldAlert } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const CORRECT_PIN = process.env.NEXT_PUBLIC_APP_PIN;
 
 export default function LoginPage() {
-  const [step, setStep] = useState<'pin' | 'oauth'>('pin');
+  const router = useRouter();
+  const [step, setStep] = useState<'loading' | 'pin' | 'oauth'>('loading');
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [attempts, setAttempts] = useState(0);
@@ -18,14 +20,25 @@ export default function LoginPage() {
   const MAX_ATTEMPTS = 5;
   const isLocked = attempts >= MAX_ATTEMPTS;
 
+  useEffect(() => {
+    // Check if they already have the correct PIN cookie
+    const hasPinCookie = document.cookie.includes(`app-access-pin=${CORRECT_PIN}`);
+    if (hasPinCookie) {
+      setStep('oauth');
+    } else {
+      setStep('pin');
+    }
+  }, []);
+
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pin || isLocked) return;
 
     if (!CORRECT_PIN || pin === CORRECT_PIN) {
-      // Store verified PIN in sessionStorage — auth/callback will pick it up and set the cookie
-      sessionStorage.setItem('pending-pin', pin);
-      setStep('oauth');
+      // Set the PIN cookie
+      document.cookie = `app-access-pin=${pin}; path=/; max-age=86400; SameSite=Lax`;
+      // Immediately redirect to the app, bypassing OAuth for now
+      window.location.href = '/candidates';
     } else {
       const remaining = MAX_ATTEMPTS - attempts - 1;
       setAttempts(a => a + 1);
@@ -63,13 +76,14 @@ export default function LoginPage() {
     }
   };
 
+  if (step === 'loading') return <div className="min-h-screen bg-background" />;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-sm relative z-10">
-        {/* Icon */}
         <div className="flex justify-center mb-8">
           <div className={`w-16 h-16 rounded-xl flex items-center justify-center border transition-colors ${
             isLocked
@@ -98,7 +112,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Step 1: PIN */}
         {step === 'pin' && !isLocked && (
           <form onSubmit={handlePinSubmit} className="space-y-3">
             <input
@@ -116,11 +129,11 @@ export default function LoginPage() {
               disabled={!pin}
               className="btn btn-primary w-full py-3 font-semibold flex items-center justify-center gap-2"
             >
-              Continue <ArrowRight className="w-4 h-4" />
+              Enter Workspace <ArrowRight className="w-4 h-4" />
             </button>
             <button
               type="button"
-              onClick={() => window.history.back()}
+              onClick={() => router.push('/')}
               className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors py-2"
             >
               ← Back to demo
@@ -134,7 +147,6 @@ export default function LoginPage() {
           </p>
         )}
 
-        {/* Step 2: OAuth */}
         {step === 'oauth' && (
           <div className="space-y-3">
             <button
@@ -174,10 +186,20 @@ export default function LoginPage() {
             </button>
 
             <button
-              onClick={() => { setStep('pin'); setPin(''); }}
+              onClick={() => {
+                document.cookie = 'app-access-pin=; path=/; max-age=0';
+                setStep('pin');
+                setPin('');
+              }}
               className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors py-2"
             >
-              ← Change PIN
+              ← Clear PIN & Go Back
+            </button>
+            <button
+              onClick={() => router.push('/candidates')}
+              className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors py-2 mt-2"
+            >
+              Skip to Workspace →
             </button>
           </div>
         )}
