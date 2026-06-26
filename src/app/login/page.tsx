@@ -62,7 +62,7 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes:
             provider === 'google'
-              ? 'openid email profile https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file'
+              ? 'openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file'
               : 'openid email profile Mail.Send Mail.ReadWrite Calendars.ReadWrite User.Read',
           queryParams: { access_type: 'offline', prompt: 'consent' },
         },
