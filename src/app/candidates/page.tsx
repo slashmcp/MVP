@@ -71,9 +71,9 @@ export default function CandidatesPage() {
   const [isSourcing, setIsSourcing] = useState(false);
 
   // Sort State (list mode)
-  type SortKey = 'name' | 'status' | 'seniority' | 'lastContact' | 'skills';
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  type SortKey = 'name' | 'status' | 'seniority' | 'lastContact' | 'skills' | 'createdAt';
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [isDeduping, setIsDeduping] = useState(false);
 
   const { hiddenCandidateIds, hideCandidate, addToast, dbCandidates, fetchDatabase } = useAppStore();
@@ -640,6 +640,11 @@ export default function CandidatesPage() {
                     >
                       <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
                         {candidate.name}
+                        {candidate.source === 'AI Sourced' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-500/10 text-purple-600 border border-purple-500/20 flex items-center gap-1 shadow-sm">
+                            ✨ AI Sourced
+                          </span>
+                        )}
                         {candidate.aiMatch && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                             candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
@@ -814,6 +819,11 @@ export default function CandidatesPage() {
                     <Link href={`/candidates/${candidate.id}`}>
                       <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
                         {candidate.name}
+                        {candidate.source === 'AI Sourced' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-500/10 text-purple-600 border border-purple-500/20 flex items-center gap-1 shadow-sm">
+                            ✨ AI Sourced
+                          </span>
+                        )}
                         {candidate.aiMatch && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                             candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'

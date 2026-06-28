@@ -107,6 +107,32 @@ export async function POST(req: Request) {
         }
       }
 
+      // Fallback: Enrich via Edge Execution Engine Playbook (Chrome Extension Compiler)
+      const edgeEngineUrl = process.env.EDGE_SCRAPER_URL || 'https://x402-edge-execution-engine.magnetarsenti.workers.dev';
+      if ((candidateData.email === 'N/A' || candidateData.location === 'Unknown Location') && process.env.ENABLE_EDGE_SCRAPER === 'true') {
+        try {
+          const playbookResponse = await fetch(edgeEngineUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              version: '1.0',
+              actions: [
+                { type: 'NAVIGATE', url: link },
+                { type: 'EXTRACT', selector: 'h1', dataKey: 'name' },
+                { type: 'EXTRACT', selector: '.text-body-medium', dataKey: 'headline' }
+              ]
+            })
+          });
+          if (playbookResponse.ok) {
+            const edgeData = await playbookResponse.json();
+            if (edgeData.extractedData?.headline) candidateData.role = edgeData.extractedData.headline;
+            enrichedCount++;
+          }
+        } catch (edgeErr) {
+          console.warn('Edge execution engine fallback failed or timed out:', edgeErr);
+        }
+      }
+
       // Add simple location fallback if still unknown
       if (candidateData.location === 'Unknown Location') {
         if (snippet.toLowerCase().includes('glasgow')) candidateData.location = 'Glasgow, Scotland';
