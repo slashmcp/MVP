@@ -296,38 +296,46 @@ export default function CandidatesPage() {
   };
 
   const [isBulkEnriching, setIsBulkEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ current: 0, total: 0 });
 
   const handleBulkEnrich = async () => {
     setIsBulkEnriching(true);
+    setEnrichProgress({ current: 0, total: selectedIds.length });
     let successCount = 0;
     try {
-      for (const id of selectedIds) {
-        const candidate = cands.find(c => c.id === id);
-        if (!candidate) continue;
-        
-        const res = await fetch('/api/enrich', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            candidateId: candidate.id,
-            provider: 'apollo',
-            name: candidate.name,
-            company: candidate.company,
-            email: candidate.email,
-            linkedinUrl: candidate.linkedinUrl
+      const batchSize = 4;
+      for (let i = 0; i < selectedIds.length; i += batchSize) {
+        const batchIds = selectedIds.slice(i, i + batchSize);
+        await Promise.all(
+          batchIds.map(async (id) => {
+            const candidate = cands.find(c => c.id === id);
+            if (!candidate) return;
+            try {
+              const res = await fetch('/api/enrich', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  candidateId: candidate.id,
+                  provider: 'apollo',
+                  name: candidate.name,
+                  company: candidate.company,
+                  email: candidate.email,
+                  linkedinUrl: candidate.linkedinUrl
+                })
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.enrichedFields) successCount++;
+              }
+            } catch (err) {
+              console.warn(`Failed enriching candidate ${id}:`, err);
+            } finally {
+              setEnrichProgress(prev => ({ ...prev, current: prev.current + 1 }));
+            }
           })
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.enrichedFields) {
-            successCount++;
-          }
-        } else {
-           const errData = await res.json().catch(() => ({}));
-           addToast({ type: 'error', message: errData.error || `Enrichment failed (Status ${res.status})` });
-           break;
-        }
+        );
+        // Refresh DB periodically so users see data appearing live
+        if (i % 12 === 0) fetchDatabase();
       }
       
       if (successCount > 0) {
@@ -335,13 +343,14 @@ export default function CandidatesPage() {
         await fetchDatabase();
         setSelectedIds([]);
       } else {
-        addToast({ type: 'info', message: 'No new data found or API error.' });
+        addToast({ type: 'info', message: 'Enrichment finished. No new data found or limits reached.' });
       }
     } catch (e) {
       console.error(e);
       addToast({ type: 'error', message: 'An error occurred during bulk enrichment' });
     }
     setIsBulkEnriching(false);
+    setEnrichProgress({ current: 0, total: 0 });
   };
 
   return (
@@ -981,9 +990,9 @@ export default function CandidatesPage() {
           <button 
             onClick={handleBulkEnrich}
             disabled={isBulkEnriching}
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm min-w-[120px]"
           >
-            {isBulkEnriching ? 'Enriching...' : 'Enrich Data'}
+            {isBulkEnriching ? (enrichProgress.total > 0 ? `Enriching (${enrichProgress.current}/${enrichProgress.total})...` : 'Enriching...') : 'Enrich Data'}
           </button>
           <button
             onClick={handleBulkDelete}
