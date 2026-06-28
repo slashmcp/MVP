@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
         const data = await res.json();
         const person = data.person;
         if (person) {
+          if (person.email && person.email !== 'N/A') enrichedData.email = person.email;
+          if (person.phone_numbers && person.phone_numbers.length > 0) {
+            enrichedData.phone = person.phone_numbers[0].sanitized_number || person.phone_numbers[0].raw_number || 'N/A';
+          }
           if (person.linkedin_url && !linkedinUrl) enrichedData.linkedinUrl = person.linkedin_url;
           if (person.title) enrichedData.role = person.title;
           if (person.organization?.name) enrichedData.company = person.organization.name;
@@ -77,6 +81,35 @@ export async function POST(request: NextRequest) {
       }
     } else if (activeProvider !== 'apollo' && activeProvider !== 'serp') {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
+    }
+
+    // Fallback: Use Edge Scraper Playbook to scrape contact info overlay if missing email or phone
+    const targetUrl = linkedinUrl || enrichedData.linkedinUrl;
+    if ((!enrichedData.email || !enrichedData.phone) && targetUrl && process.env.ENABLE_EDGE_SCRAPER === 'true') {
+      const edgeEngineUrl = process.env.EDGE_SCRAPER_URL || 'https://x402-edge-execution-engine.magnetarsenti.workers.dev';
+      try {
+        const contactOverlayUrl = targetUrl.endsWith('/') ? `${targetUrl}overlay/contact-info/` : `${targetUrl}/overlay/contact-info/`;
+        const playbookRes = await fetch(edgeEngineUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            version: '1.0',
+            actions: [
+              { type: 'NAVIGATE', url: contactOverlayUrl },
+              { type: 'WAIT', durationMs: 2000 },
+              { type: 'EXTRACT', selector: '.pv-contact-info__contact-type--email a', dataKey: 'email' },
+              { type: 'EXTRACT', selector: '.pv-contact-info__contact-type--phone span', dataKey: 'phone' }
+            ]
+          })
+        });
+        if (playbookRes.ok) {
+          const edgeData = await playbookRes.json();
+          if (edgeData.extractedData?.email && !enrichedData.email) enrichedData.email = edgeData.extractedData.email;
+          if (edgeData.extractedData?.phone && !enrichedData.phone) enrichedData.phone = edgeData.extractedData.phone;
+        }
+      } catch (edgeErr) {
+        console.warn('Edge scraper contact info fallback failed:', edgeErr);
+      }
     }
 
     if (Object.keys(enrichedData).length > 0) {
