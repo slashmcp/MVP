@@ -119,7 +119,13 @@ export default function CandidateDetailPage({
             </div>
             <div className="min-w-0">
               <h1 className="text-xl font-semibold text-text-primary">{candidate.name}</h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm text-text-secondary">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-text-secondary">
+                {candidate.location && (
+                  <span className="flex items-center gap-1 font-medium text-text-primary flex-shrink-0">
+                    <MapPin className="w-3.5 h-3.5 text-accent" strokeWidth={2} />
+                    {candidate.location}
+                  </span>
+                )}
                 {candidate.email && (
                   <a 
                     href={`mailto:${candidate.email}`} 
@@ -452,6 +458,15 @@ export default function CandidateDetailPage({
               <h2 className="text-base font-semibold text-text-primary">Details</h2>
             </div>
             <div className="card-body space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-accent" strokeWidth={1.75} />
+                  Location
+                </span>
+                <span className="text-text-primary font-medium text-xs truncate max-w-[150px]" title={candidate.location || 'Not specified'}>
+                  {candidate.location || 'Not specified'}
+                </span>
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" strokeWidth={1.75} />
