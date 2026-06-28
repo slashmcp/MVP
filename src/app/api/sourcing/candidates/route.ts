@@ -137,7 +137,7 @@ export async function POST(req: Request) {
 
       // Add smart location fallback from search snippet or query if still unknown
       if (candidateData.location === 'Unknown Location') {
-        const fullText = `${snippet} ${title}`.toLowerCase();
+        const fullText = `${snippet} ${result.title}`.toLowerCase();
         if (fullText.includes('edinburgh')) candidateData.location = 'Edinburgh, Scotland';
         else if (fullText.includes('glasgow')) candidateData.location = 'Glasgow, Scotland';
         else if (fullText.includes('london')) candidateData.location = 'London, England';
