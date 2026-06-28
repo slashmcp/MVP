@@ -117,41 +117,6 @@ export function Header() {
               </Link>
             );
           })}
-          
-          {/* More Dropdown */}
-          <div className="relative" ref={moreRef}>
-            <button 
-              onClick={() => setShowMoreDropdown(!showMoreDropdown)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide uppercase transition-all duration-150 flex items-center gap-1 ${
-                showMoreDropdown || moreItems.some(item => pathname.startsWith(item.href))
-                  ? 'bg-accent-soft text-accent'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)]'
-              }`}
-            >
-              More <ChevronDown className="w-3.5 h-3.5" strokeWidth={2} />
-            </button>
-            {showMoreDropdown && (
-              <div className="absolute right-0 mt-1.5 bg-[var(--surface-overlay)] border border-border shadow-xl rounded-lg py-1.5 w-48 z-30 animate-fade-in">
-                {moreItems.map(item => {
-                  const isActive = pathname.startsWith(item.href);
-                  return (
-                    <Link 
-                      key={item.href} 
-                      href={item.href} 
-                      onClick={() => setShowMoreDropdown(false)}
-                      className={`block px-4 py-2 text-xs font-medium transition-colors ${
-                        isActive
-                          ? 'bg-accent-soft text-accent'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)]'
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </nav>
 
         {/* Right: Actions */}

@@ -11,6 +11,7 @@ interface EditClientModalProps {
 export function EditClientModal({ client, onClose, onSuccess }: EditClientModalProps) {
   const [formData, setFormData] = useState({
     companyName: client.companyName || '',
+    location: client.location || '',
     contactPerson: client.contactPerson || '',
     email: client.email || '',
     industry: client.industry || '',
@@ -80,6 +81,11 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Company Name</label>
               <input required type="text" name="companyName" value={formData.companyName} onChange={handleChange} className="input" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Location / City</label>
+              <input type="text" name="location" value={formData.location} onChange={handleChange} className="input" placeholder="e.g. Edinburgh, Scotland" />
             </div>
 
             <div>
