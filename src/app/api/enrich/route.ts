@@ -73,8 +73,17 @@ export async function POST(request: NextRequest) {
         const organicResults = data.organic_results || [];
         const linkedinResult = organicResults.find((r: any) => r.link && r.link.includes('linkedin.com/in/'));
         
-        if (linkedinResult && !linkedinUrl) {
-          enrichedData.linkedinUrl = linkedinResult.link;
+        if (linkedinResult) {
+          if (!linkedinUrl) enrichedData.linkedinUrl = linkedinResult.link;
+          
+          // Smart location extraction from search result snippet or title
+          const fullText = `${linkedinResult.snippet || ''} ${linkedinResult.title || ''}`.toLowerCase();
+          if (fullText.includes('edinburgh')) enrichedData.location = 'Edinburgh, Scotland';
+          else if (fullText.includes('glasgow')) enrichedData.location = 'Glasgow, Scotland';
+          else if (fullText.includes('london')) enrichedData.location = 'London, England';
+          else if (fullText.includes('scotland')) enrichedData.location = 'Scotland, United Kingdom';
+          else if (fullText.includes('iowa')) enrichedData.location = 'Iowa, United States';
+          else if (fullText.includes('des moines')) enrichedData.location = 'Des Moines, Iowa';
         }
       } else {
         return NextResponse.json({ error: `SerpAPI returned status ${res.status}` }, { status: 500 });
@@ -83,11 +92,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
 
-    // Fallback: Use Edge Scraper Playbook to scrape contact info overlay if missing email or phone
+    // Fallback: Use Edge Scraper Playbook to scrape contact info or profile details if missing email, phone, or location
     const targetUrl = linkedinUrl || enrichedData.linkedinUrl;
-    if ((!enrichedData.email || !enrichedData.phone) && targetUrl && process.env.ENABLE_EDGE_SCRAPER === 'true') {
+    if ((!enrichedData.email || !enrichedData.phone || !enrichedData.location) && targetUrl && process.env.ENABLE_EDGE_SCRAPER === 'true') {
       const edgeEngineUrl = process.env.EDGE_SCRAPER_URL || 'https://x402-edge-execution-engine.magnetarsenti.workers.dev';
       try {
+        // First try extracting location & headline from main LinkedIn profile page
+        const mainProfileRes = await fetch(edgeEngineUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            version: '1.0',
+            actions: [
+              { type: 'NAVIGATE', url: targetUrl },
+              { type: 'EXTRACT', selector: '.text-body-small.inline', dataKey: 'location' },
+              { type: 'EXTRACT', selector: '.text-body-medium', dataKey: 'role' }
+            ]
+          })
+        });
+        if (mainProfileRes.ok) {
+          const edgeProfileData = await mainProfileRes.json();
+          if (edgeProfileData.extractedData?.location && !enrichedData.location) enrichedData.location = edgeProfileData.extractedData.location;
+          if (edgeProfileData.extractedData?.role && !enrichedData.role) enrichedData.role = edgeProfileData.extractedData.role;
+        }
+
+        // Next scrape contact info overlay
         const contactOverlayUrl = targetUrl.endsWith('/') ? `${targetUrl}overlay/contact-info/` : `${targetUrl}/overlay/contact-info/`;
         const playbookRes = await fetch(edgeEngineUrl, {
           method: 'POST',
