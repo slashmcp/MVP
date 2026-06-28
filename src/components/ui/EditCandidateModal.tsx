@@ -78,7 +78,7 @@ export function EditCandidateModal({ candidate, onClose, onSuccess }: EditCandid
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Email</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} className="input" />
+                <input type="text" name="email" value={formData.email} onChange={handleChange} className="input" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Phone</label>

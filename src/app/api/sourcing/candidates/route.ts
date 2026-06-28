@@ -119,13 +119,15 @@ export async function POST(req: Request) {
               actions: [
                 { type: 'NAVIGATE', url: link },
                 { type: 'EXTRACT', selector: 'h1', dataKey: 'name' },
-                { type: 'EXTRACT', selector: '.text-body-medium', dataKey: 'headline' }
+                { type: 'EXTRACT', selector: '.text-body-medium', dataKey: 'headline' },
+                { type: 'EXTRACT', selector: '.text-body-small.inline', dataKey: 'location' }
               ]
             })
           });
           if (playbookResponse.ok) {
             const edgeData = await playbookResponse.json();
             if (edgeData.extractedData?.headline) candidateData.role = edgeData.extractedData.headline;
+            if (edgeData.extractedData?.location) candidateData.location = edgeData.extractedData.location;
             enrichedCount++;
           }
         } catch (edgeErr) {
@@ -133,10 +135,15 @@ export async function POST(req: Request) {
         }
       }
 
-      // Add simple location fallback if still unknown
+      // Add smart location fallback from search snippet or query if still unknown
       if (candidateData.location === 'Unknown Location') {
-        if (snippet.toLowerCase().includes('glasgow')) candidateData.location = 'Glasgow, Scotland';
-        else if (snippet.toLowerCase().includes('london')) candidateData.location = 'London, England';
+        const fullText = `${snippet} ${title}`.toLowerCase();
+        if (fullText.includes('edinburgh')) candidateData.location = 'Edinburgh, Scotland';
+        else if (fullText.includes('glasgow')) candidateData.location = 'Glasgow, Scotland';
+        else if (fullText.includes('london')) candidateData.location = 'London, England';
+        else if (fullText.includes('scotland')) candidateData.location = 'Scotland, United Kingdom';
+        else if (fullText.includes('iowa')) candidateData.location = 'Iowa, United States';
+        else if (fullText.includes('des moines')) candidateData.location = 'Des Moines, Iowa';
       }
 
       const created = await createCandidate(supabase, candidateData);

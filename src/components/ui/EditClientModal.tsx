@@ -95,7 +95,7 @@ export function EditClientModal({ client, onClose, onSuccess }: EditClientModalP
 
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Email</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} className="input" />
+              <input type="text" name="email" value={formData.email} onChange={handleChange} className="input" />
             </div>
 
             <div>
