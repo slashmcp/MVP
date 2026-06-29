@@ -25,6 +25,7 @@ import {
   Eye,
   EyeOff,
   Zap,
+  Download,
 } from 'lucide-react';
 import { statusColors, candidatePipelineStages } from '@/lib/mock-data';
 import { Candidate } from '@/lib/schemas';
@@ -47,6 +48,7 @@ const ensureAbsoluteUrl = (url: string | undefined | null): string => {
 export default function CandidatesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
@@ -222,8 +224,11 @@ export default function CandidatesPage() {
       return 0;
     });
 
-    return base.filter((c) => statusFilter === 'all' || c.status === statusFilter);
-  }, [search, statusFilter, hiddenCandidateIds, isAiSearch, aiResults, cands, sortKey, sortDir]);
+    return base.filter((c) => 
+      (statusFilter === 'all' || c.status === statusFilter) &&
+      (sourceFilter === 'all' || (sourceFilter === 'AI Sourced' ? c.source === 'AI Sourced' : c.source !== 'AI Sourced'))
+    );
+  }, [search, statusFilter, sourceFilter, hiddenCandidateIds, isAiSearch, aiResults, cands, sortKey, sortDir]);
 
   const availableCandidates = useMemo(() => cands.filter((c) => !hiddenCandidateIds.includes(c.id)), [hiddenCandidateIds, cands]);
 
@@ -293,6 +298,31 @@ export default function CandidatesPage() {
       console.error(e);
       addToast({ type: 'error', message: 'Error deleting candidates' });
     }
+  };
+
+  const handleExportCsv = () => {
+    const selectedCands = cands.filter(c => selectedIds.includes(c.id)).map(c => ({
+      Name: c.name,
+      Email: c.email || '',
+      Phone: c.phone || '',
+      Location: c.location || '',
+      Role: c.role || '',
+      Company: c.company || '',
+      Status: c.status,
+      Source: c.source || '',
+      Skills: (c.skills || []).join(', '),
+      LinkedIn: c.linkedinUrl || '',
+    }));
+    const csv = Papa.unparse(selectedCands);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `candidates_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast({ type: 'success', message: `Exported ${selectedCands.length} candidates to CSV` });
   };
 
   const [isBulkEnriching, setIsBulkEnriching] = useState(false);
@@ -517,6 +547,17 @@ export default function CandidatesPage() {
               {stage}
             </button>
           ))}
+          <div className="w-[1px] h-6 bg-border mx-1 self-center hidden sm:block" />
+          <button
+            onClick={() => setSourceFilter(s => s === 'all' ? 'AI Sourced' : 'all')}
+            className={`btn-xs rounded-md px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1 ${
+              sourceFilter === 'AI Sourced'
+                ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                : 'text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)] border border-border'
+            }`}
+          >
+            ✨ AI Sourced
+          </button>
         </div>
         <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto sm:ml-0">
           <button
@@ -993,6 +1034,13 @@ export default function CandidatesPage() {
             className="btn btn-secondary btn-sm min-w-[120px]"
           >
             {isBulkEnriching ? (enrichProgress.total > 0 ? `Enriching (${enrichProgress.current}/${enrichProgress.total})...` : 'Enriching...') : 'Enrich Data'}
+          </button>
+          <button
+            onClick={handleExportCsv}
+            className="btn btn-secondary btn-sm flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
           </button>
           <button
             onClick={handleBulkDelete}

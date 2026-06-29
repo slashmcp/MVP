@@ -162,6 +162,7 @@ export async function getCandidates(supabase: SupabaseClient): Promise<Candidate
     websiteUrl: c.website_url,
     notes: c.notes,
     resume: c.resume_url,
+    createdAt: c.created_at,
   }));
 }
 
@@ -184,6 +185,7 @@ export async function getJobs(supabase: SupabaseClient): Promise<Job[]> {
     priority: j.priority,
     postedDate: j.posted_date,
     applicants: j.applicants,
+    createdAt: j.created_at,
   }));
 }
 
@@ -210,6 +212,7 @@ export async function getClients(supabase: SupabaseClient): Promise<Client[]> {
       totalPlacements: c.total_placements,
       activeSince: c.active_since,
       notes: c.notes,
+      createdAt: c.created_at,
     };
   });
 }
@@ -308,6 +311,7 @@ export async function createCandidate(supabase: SupabaseClient, candidate: Parti
     websiteUrl: data.website_url,
     notes: data.notes,
     resume: data.resume_url,
+    createdAt: data.created_at,
   };
 }
 

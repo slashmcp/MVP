@@ -18,7 +18,8 @@ import {
   Globe,
   Phone,
   UploadCloud,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
 import { statusColors } from '@/lib/mock-data';
@@ -52,9 +53,9 @@ export default function ClientsPage() {
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
   // Sort State (list mode)
-  type SortKey = 'companyName' | 'location' | 'contactPerson' | 'status' | 'openRoles';
-  const [sortKey, setSortKey] = useState<SortKey>('companyName');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  type SortKey = 'companyName' | 'location' | 'contactPerson' | 'status' | 'openRoles' | 'createdAt';
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [isDeduping, setIsDeduping] = useState(false);
 
   const handleSort = (key: SortKey) => {
@@ -255,6 +256,31 @@ export default function ClientsPage() {
       console.error(e);
       alert('Error deleting clients.');
     }
+  };
+
+  const handleExportCsv = () => {
+    const selectedClients = clients.filter(c => selectedIds.includes(c.id)).map(c => ({
+      Company: c.companyName,
+      Contact: c.contactPerson || '',
+      Email: c.email || '',
+      Phone: c.phone || '',
+      Location: c.location || '',
+      Industry: c.industry || '',
+      Status: c.status,
+      OpenRoles: c.openRoles || 0,
+      Website: c.websiteUrl || '',
+      LinkedIn: c.linkedinUrl || '',
+    }));
+    const csv = Papa.unparse(selectedClients);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `clients_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast({ type: 'success', message: `Exported ${selectedClients.length} clients to CSV` });
   };
 
   const handleBulkEnrich = async () => {
@@ -642,7 +668,7 @@ export default function ClientsPage() {
                   {([
                     { key: 'companyName', label: 'Company', className: '' },
                     { key: 'contactPerson', label: 'Contact', className: 'hidden sm:table-cell' },
-                    { key: 'location', label: 'Location', className: 'hidden md:table-cell' },
+                    { key: 'location', label: 'Location', className: '' },
                     { key: 'status', label: 'Status', className: '' },
                     { key: 'openRoles', label: 'Open Roles', className: 'hidden lg:table-cell' },
                   ] as { key: SortKey; label: string; className: string }[]).map(col => (
@@ -687,7 +713,16 @@ export default function ClientsPage() {
                       {client.contactPerson || '—'}
                       {client.email && client.email !== 'N/A' && <div className="text-xs text-text-tertiary">{client.email}</div>}
                     </td>
-                    <td className="px-4 py-3 text-text-secondary hidden md:table-cell">{client.location && client.location !== 'Unknown Location' ? client.location : '—'}</td>
+                    <td className="px-4 py-3 text-text-secondary">
+                      {client.location && client.location !== 'Unknown Location' ? (
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-text-primary">
+                          <MapPin className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                          {client.location}
+                        </span>
+                      ) : (
+                        <span className="text-text-tertiary text-xs">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`badge ${statusColors[client.status] || 'badge-blue'}`}>{client.status}</span>
                     </td>
@@ -837,6 +872,13 @@ export default function ClientsPage() {
           >
             {isEnriching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             {isEnriching ? 'Enriching...' : 'Enrich Selected'}
+          </button>
+          <button
+            onClick={handleExportCsv}
+            className="btn btn-secondary btn-sm flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
           </button>
           <button
             onClick={handleBulkDelete}
