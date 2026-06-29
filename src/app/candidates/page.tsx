@@ -397,9 +397,10 @@ export default function CandidatesPage() {
           <button 
             className="btn bg-accent-soft text-accent border border-accent/20 hover:bg-accent/10"
             onClick={() => setShowSourcing(!showSourcing)}
+            title="Automatically source new candidate leads across the web using keyword search"
           >
             <Sparkles className="w-4 h-4" strokeWidth={1.75} />
-            AI Source
+            Source Leads
           </button>
           <button
             className="btn btn-secondary"
@@ -482,46 +483,13 @@ export default function CandidatesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" strokeWidth={1.75} />
             <input
               type="text"
-              placeholder={isAiSearch ? "Ask AI: e.g. 'Senior React dev with AWS'" : "Search by name, skill, or email..."}
+              placeholder="Search by name, skill, or email..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                if (isAiSearch && !e.target.value) setAiResults(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && isAiSearch) {
-                  performAiSearch();
-                }
-              }}
-              className={`input pl-10 ${isAiSearch ? 'pr-10 border-accent/30 focus:border-accent/50 focus:ring-accent/20 bg-accent/5' : ''}`}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input pl-10"
               id="candidate-search"
             />
-            {isAiSearch && search && (
-               <button 
-                onClick={performAiSearch} 
-                disabled={isSearching} 
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-accent hover:bg-accent/10 transition-colors"
-                title="Search with AI"
-               >
-                 {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-               </button>
-            )}
           </div>
-          <button
-            onClick={() => {
-               setIsAiSearch(!isAiSearch);
-               setAiResults(null);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all shrink-0 ${
-              isAiSearch 
-                ? 'bg-accent/10 border-accent/20 text-accent' 
-                : 'bg-surface border-border text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)]'
-            }`}
-            title="Toggle Semantic AI Search"
-          >
-            <Sparkles className="w-4 h-4" strokeWidth={1.75} />
-            AI Search
-          </button>
         </div>
         <div className="flex gap-1.5 flex-wrap">
           <button
@@ -550,13 +518,14 @@ export default function CandidatesPage() {
           <div className="w-[1px] h-6 bg-border mx-1 self-center hidden sm:block" />
           <button
             onClick={() => setSourceFilter(s => s === 'all' ? 'AI Sourced' : 'all')}
+            title="Filter to show only candidates discovered via web sourcing"
             className={`btn-xs rounded-md px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1 ${
               sourceFilter === 'AI Sourced'
-                ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                ? 'bg-accent-soft text-accent border border-accent/30'
                 : 'text-text-secondary hover:text-text-primary hover:bg-[var(--surface-elevated)] border border-border'
             }`}
           >
-            ✨ AI Sourced
+            Sourced Leads
           </button>
         </div>
         <div className="flex bg-[var(--surface-elevated)] p-1 rounded-md border border-border ml-auto sm:ml-0">
@@ -690,11 +659,6 @@ export default function CandidatesPage() {
                     >
                       <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
                         {candidate.name}
-                        {candidate.source === 'AI Sourced' && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-500/10 text-purple-600 border border-purple-500/20 flex items-center gap-1 shadow-sm">
-                            ✨ AI Sourced
-                          </span>
-                        )}
                         {candidate.aiMatch && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                             candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
@@ -869,11 +833,6 @@ export default function CandidatesPage() {
                     <Link href={`/candidates/${candidate.id}`}>
                       <div className="font-medium text-text-primary group-hover:text-accent transition-colors flex items-center gap-2">
                         {candidate.name}
-                        {candidate.source === 'AI Sourced' && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-500/10 text-purple-600 border border-purple-500/20 flex items-center gap-1 shadow-sm">
-                            ✨ AI Sourced
-                          </span>
-                        )}
                         {candidate.aiMatch && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                             candidate.aiMatch.score >= 80 ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'
