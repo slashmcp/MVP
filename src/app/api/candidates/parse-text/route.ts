@@ -32,7 +32,7 @@ If you cannot find a piece of information for a candidate, return an empty strin
 Return ONLY a valid JSON array (e.g., [{"name": "John", ...}]). Do not include any markdown formatting like \`\`\`json.`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307', // Using standard Haiku to ensure compatibility
+      model: 'claude-haiku-4-5-20251001', // Using requested model ID
       max_tokens: 4000,
       temperature: 0.1,
       system: "You are a JSON extractor. Only output raw JSON, nothing else. It must be an array of objects.",
