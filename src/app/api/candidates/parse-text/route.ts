@@ -23,6 +23,7 @@ Your job is to extract the following information for EACH candidate found in the
 - phone: The candidate's phone number
 - location: The candidate's current city/state or location
 - role: The primary job title they are applying for or their current title
+- seniority: The candidate's seniority level (e.g. Junior, Mid-Level, Senior, Director, etc.)
 - company: Their current or most recent company
 - linkedinUrl: The candidate's LinkedIn profile URL, if provided.
 - websiteUrl: The candidate's GitHub, personal portfolio, or other website URL, if provided.
