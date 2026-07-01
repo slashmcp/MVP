@@ -361,79 +361,72 @@ function MasterFunnel() {
     }
   };
 
-  useEffect(() => {
-    const handleGlobalPaste = async (e: ClipboardEvent) => {
-      // Ignore if typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      
-      const text = e.clipboardData?.getData('text');
-      if (!text || !text.trim()) return;
-
-      e.preventDefault();
-      setIsProcessing(true);
-      setProgressText('Extracting candidates from pasted text...');
-      
-      try {
-        const response = await fetch('/api/candidates/parse-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
-        
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || 'Failed to parse pasted text');
-        }
-        
-        const { data } = await response.json();
-        
-        let added = 0;
-        let updated = 0;
-        
-        for (const parsedData of data) {
-          if (!parsedData.name && !parsedData.email) continue;
-          
-          const existing = dbCandidates.find(c => 
-            (c.email && parsedData.email && c.email.toLowerCase() === parsedData.email.toLowerCase()) || 
-            (c.name && parsedData.name && c.name.toLowerCase() === parsedData.name.toLowerCase())
-          );
-          
-          const payload = {
-            name: parsedData.name || existing?.name || '',
-            email: parsedData.email || existing?.email || '',
-            phone: parsedData.phone || existing?.phone || '',
-            resume: existing?.resume || '',
-            skills: Array.isArray(parsedData.skills) && parsedData.skills.length > 0 ? parsedData.skills : (existing?.skills || []),
-            notes: parsedData.notes || existing?.notes || '',
-            status: existing ? existing.status : 'New',
-            source: existing ? existing.source : 'Text Paste',
-          };
-
-          if (existing) {
-            await fetch('/api/candidates', { method: 'PATCH', body: JSON.stringify({ ...payload, id: existing.id }) });
-            updated++;
-          } else {
-            await fetch('/api/candidates', { method: 'POST', body: JSON.stringify(payload) });
-            added++;
-          }
-        }
-        
-        await fetchDatabase();
-        addToast({ type: 'success', message: `Pasted text processed! Added ${added}, Updated ${updated}.` });
-      } catch (err) {
-        console.error(err);
-        addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to process pasted text.' });
-      } finally {
-        setIsProcessing(false);
-        setProgressText('');
-      }
-    };
+  const handleTextareaPaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    window.addEventListener('paste', handleGlobalPaste);
-    return () => window.removeEventListener('paste', handleGlobalPaste);
-  }, [dbCandidates, addToast, fetchDatabase]);
+    const text = e.clipboardData.getData('text');
+    if (!text || !text.trim()) return;
+
+    setIsProcessing(true);
+    setProgressText('Extracting candidates from pasted text...');
+    
+    try {
+      const response = await fetch('/api/candidates/parse-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to parse pasted text');
+      }
+      
+      const { data } = await response.json();
+      
+      let added = 0;
+      let updated = 0;
+      
+      for (const parsedData of data) {
+        if (!parsedData.name && !parsedData.email) continue;
+        
+        const existing = dbCandidates.find(c => 
+          (c.email && parsedData.email && c.email.toLowerCase() === parsedData.email.toLowerCase()) || 
+          (c.name && parsedData.name && c.name.toLowerCase() === parsedData.name.toLowerCase())
+        );
+        
+        const payload = {
+          name: parsedData.name || existing?.name || '',
+          email: parsedData.email || existing?.email || '',
+          phone: parsedData.phone || existing?.phone || '',
+          resume: existing?.resume || '',
+          skills: Array.isArray(parsedData.skills) && parsedData.skills.length > 0 ? parsedData.skills : (existing?.skills || []),
+          notes: parsedData.notes || existing?.notes || '',
+          status: existing ? existing.status : 'New',
+          source: existing ? existing.source : 'Text Paste',
+        };
+
+        if (existing) {
+          await fetch('/api/candidates', { method: 'PATCH', body: JSON.stringify({ ...payload, id: existing.id }) });
+          updated++;
+        } else {
+          await fetch('/api/candidates', { method: 'POST', body: JSON.stringify(payload) });
+          added++;
+        }
+      }
+      
+      await fetchDatabase();
+      addToast({ type: 'success', message: `Pasted text processed! Added ${added}, Updated ${updated}.` });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to process pasted text.' });
+    } finally {
+      setIsProcessing(false);
+      setProgressText('');
+    }
+  };
+
 
   return (
     <div 
@@ -466,11 +459,18 @@ function MasterFunnel() {
               <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${isDragging ? 'bg-accent/20' : 'bg-accent/10'}`}>
                 <Upload className={`w-6 h-6 ${isDragging ? 'text-accent' : 'text-accent/70'}`} />
               </div>
-              <div>
+              <div className="flex-1 w-full">
                 <h2 className="text-lg font-semibold text-text-primary mb-1">Master Funnel</h2>
-                <p className="text-sm text-text-secondary">
-                  Drag & drop, click to upload, or just <strong className="text-text-primary">Press Ctrl+V to paste any text list of candidates</strong> to intelligently populate your CRM.
+                <p className="text-sm text-text-secondary mb-4">
+                  Drag & drop files, click to upload, or paste a list of candidates into the field below to populate your CRM.
                 </p>
+                <textarea 
+                  className="w-full bg-[var(--surface-overlay)] border border-border/60 hover:border-accent/40 rounded-lg p-3 text-sm text-text-primary focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none shadow-inner"
+                  rows={3}
+                  placeholder="Right-click and paste candidate text here..."
+                  onClick={(e) => e.stopPropagation()}
+                  onPaste={handleTextareaPaste}
+                />
               </div>
             </div>
           </>
