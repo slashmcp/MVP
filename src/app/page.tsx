@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Users,
   Building2,
@@ -361,6 +361,77 @@ function MasterFunnel() {
     }
   };
 
+  useEffect(() => {
+    const handleGlobalPaste = async (e: ClipboardEvent) => {
+      // Ignore if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      const text = e.clipboardData?.getData('text');
+      if (!text || !text.trim()) return;
+
+      e.preventDefault();
+      setIsProcessing(true);
+      setProgressText('Extracting candidates from pasted text...');
+      
+      try {
+        const response = await fetch('/api/candidates/parse-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        
+        if (!response.ok) throw new Error('Failed to parse pasted text');
+        
+        const { data } = await response.json();
+        
+        let added = 0;
+        let updated = 0;
+        
+        for (const parsedData of data) {
+          if (!parsedData.name && !parsedData.email) continue;
+          
+          const existing = dbCandidates.find(c => 
+            (c.email && parsedData.email && c.email.toLowerCase() === parsedData.email.toLowerCase()) || 
+            (c.name && parsedData.name && c.name.toLowerCase() === parsedData.name.toLowerCase())
+          );
+          
+          const payload = {
+            name: parsedData.name || existing?.name || '',
+            email: parsedData.email || existing?.email || '',
+            phone: parsedData.phone || existing?.phone || '',
+            resume: existing?.resume || '',
+            skills: Array.isArray(parsedData.skills) && parsedData.skills.length > 0 ? parsedData.skills : (existing?.skills || []),
+            notes: parsedData.notes || existing?.notes || '',
+            status: existing ? existing.status : 'New',
+            source: existing ? existing.source : 'Text Paste',
+          };
+
+          if (existing) {
+            await fetch('/api/candidates', { method: 'PATCH', body: JSON.stringify({ ...payload, id: existing.id }) });
+            updated++;
+          } else {
+            await fetch('/api/candidates', { method: 'POST', body: JSON.stringify(payload) });
+            added++;
+          }
+        }
+        
+        await fetchDatabase();
+        addToast({ type: 'success', message: `Pasted text processed! Added ${added}, Updated ${updated}.` });
+      } catch (err) {
+        console.error(err);
+        addToast({ type: 'error', message: 'Failed to process pasted text.' });
+      } finally {
+        setIsProcessing(false);
+        setProgressText('');
+      }
+    };
+    
+    window.addEventListener('paste', handleGlobalPaste);
+    return () => window.removeEventListener('paste', handleGlobalPaste);
+  }, [dbCandidates, addToast, fetchDatabase]);
+
   return (
     <div 
       onClick={() => fileInputRef.current?.click()}
@@ -395,7 +466,7 @@ function MasterFunnel() {
               <div>
                 <h2 className="text-lg font-semibold text-text-primary mb-1">Master Funnel</h2>
                 <p className="text-sm text-text-secondary">
-                  Drag and drop anything here to intelligently populate your CRM. Supports <span className="font-medium text-text-primary">PDF/DOCX Resumes</span> and <span className="font-medium text-text-primary">CSV files</span>.
+                  Drag & drop, click to upload, or just <strong className="text-text-primary">Press Ctrl+V to paste any text list of candidates</strong> to intelligently populate your CRM.
                 </p>
               </div>
             </div>
