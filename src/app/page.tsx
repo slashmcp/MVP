@@ -382,7 +382,10 @@ function MasterFunnel() {
           body: JSON.stringify({ text })
         });
         
-        if (!response.ok) throw new Error('Failed to parse pasted text');
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to parse pasted text');
+        }
         
         const { data } = await response.json();
         
@@ -421,7 +424,7 @@ function MasterFunnel() {
         addToast({ type: 'success', message: `Pasted text processed! Added ${added}, Updated ${updated}.` });
       } catch (err) {
         console.error(err);
-        addToast({ type: 'error', message: 'Failed to process pasted text.' });
+        addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to process pasted text.' });
       } finally {
         setIsProcessing(false);
         setProgressText('');
