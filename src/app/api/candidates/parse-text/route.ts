@@ -24,7 +24,9 @@ Your job is to extract the following information for EACH candidate found in the
 - location: The candidate's current city/state or location
 - role: The primary job title they are applying for or their current title
 - company: Their current or most recent company
-- notes: A detailed summary of their experience, key strengths, or any "Source / Method" information provided (e.g. "Found via GitHub commit..."). If it says "Not found", include that context here.
+- linkedinUrl: The candidate's LinkedIn profile URL, if provided.
+- websiteUrl: The candidate's GitHub, personal portfolio, or other website URL, if provided.
+- notes: A detailed summary of their experience, key strengths, any "Source / Method" information provided, or their full profile context.
 - skills: An array of strings representing their key technical skills
 
 If you cannot find a piece of information for a candidate, return an empty string "" for that field, or an empty array [] for skills.

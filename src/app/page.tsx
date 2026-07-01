@@ -400,6 +400,8 @@ function MasterFunnel() {
           name: parsedData.name || existing?.name || '',
           email: parsedData.email || existing?.email || '',
           phone: parsedData.phone || existing?.phone || '',
+          linkedinUrl: parsedData.linkedinUrl || existing?.linkedin_url || existing?.linkedinUrl || '',
+          websiteUrl: parsedData.websiteUrl || existing?.website_url || existing?.websiteUrl || '',
           resume: existing?.resume || '',
           skills: Array.isArray(parsedData.skills) && parsedData.skills.length > 0 ? parsedData.skills : (existing?.skills || []),
           notes: parsedData.notes || existing?.notes || '',
